@@ -38,13 +38,16 @@ func _ready() -> void:
 			preview.texture = sf.get_frame_texture("idle", 0)   # 기본은 idle 첫 프레임
 
 		var btn: Button = box.get_node("Btn")
-		btn.text = JOBS[job]
+		btn.text = GameState.job_title(job)   # Lv별 호칭(예: 견습 보안관)
+		# 등급 라벨(직업명 아래, 색으로). 맨몸은 없음.
+		var rank: Label = box.get_node("Rank")
+		_set_rank_label(rank, job)
 		# 1-1은 맨몸만, 1-2부터 전 직업 해금. 잠긴 직업은 반투명 + 비활성.
 		var unlocked: bool = (job == "base") or GameState.jobs_unlocked
 		btn.disabled = not unlocked
 		box.modulate = Color(1, 1, 1, 1.0) if unlocked else Color(1, 1, 1, 0.35)
 		if not unlocked:
-			btn.text = JOBS[job] + " (잠김)"
+			btn.text = GameState.job_title(job) + " (잠김)"
 		btn.pressed.connect(_pick.bind(job))
 		if unlocked:
 			btn.mouse_entered.connect(_on_hover.bind(job))
@@ -64,7 +67,7 @@ func _input(event: InputEvent) -> void:
 			var btn: Button = box.get_node("Btn")
 			btn.disabled = false
 			box.modulate = Color(1, 1, 1, 1.0)
-			btn.text = JOBS[job]
+			btn.text = GameState.job_title(job)
 			if not was_unlocked:   # 원래 잠겨있던 직업만 호버 연결(중복 방지)
 				btn.mouse_entered.connect(_on_hover.bind(job))
 				btn.mouse_exited.connect(_on_unhover.bind(job))
@@ -99,6 +102,17 @@ func _on_unhover(job: String) -> void:
 		var sf: SpriteFrames = _sf.get(job)
 		if sf and sf.has_animation("idle"):
 			_preview[job].texture = sf.get_frame_texture("idle", 0)   # 첫 프레임으로 복귀
+
+
+## 등급 라벨 텍스트 + 색 적용 (맨몸은 숨김)
+func _set_rank_label(rank: Label, job: String) -> void:
+	var txt := GameState.rank_label(job)
+	if txt == "":
+		rank.visible = false
+	else:
+		rank.visible = true
+		rank.text = "「" + txt + "」"
+		rank.add_theme_color_override("font_color", GameState.rank_color(job))
 
 
 func _pick(job: String) -> void:

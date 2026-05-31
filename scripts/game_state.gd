@@ -48,6 +48,63 @@ const JOB_STATS := {
 }
 
 
+# ============================================================
+#  직업 명칭 & 등급 표기 시스템
+#   · 직업명 = 직업 + Lv 조합으로 결정(직업마다 Lv별 호칭 다름)
+#   · 등급 라벨 = Lv만으로 결정(전 직업 공통), 색은 Lv별
+#   · 맨몸(길냥이)은 Lv/등급 없음 — 직업명만
+# ============================================================
+
+## 직업별 Lv1~5 호칭. 맨몸은 단일("길냥이").
+const JOB_TITLES := {
+	"base":    ["길냥이"],
+	"sheriff": ["견습 보안관", "부보안관", "보안관", "주 보안관", "보안관장"],
+	"maid":    ["견습 메이드", "초급 메이드", "중급 메이드", "고급 메이드", "시녀장"],
+	"jazz":    ["거리 악사", "연주자", "악장", "명연주자", "마에스트로"],
+}
+
+## 등급 라벨(Lv1~5 공통)
+const RANK_LABELS := ["이름 없는 등급", "떠오르는 등급", "소문난 등급", "이름난 등급", "전설의 등급"]
+
+## 등급 라벨 색(Lv1 회색 → Lv5 금색). 나중에 조정 가능하게 변수.
+var rank_colors := [
+	Color(0.72, 0.72, 0.72),  # Lv1 회색
+	Color(0.45, 0.80, 1.00),  # Lv2 하늘
+	Color(0.45, 0.90, 0.50),  # Lv3 초록
+	Color(0.85, 0.55, 1.00),  # Lv4 보라
+	Color(1.00, 0.84, 0.30),  # Lv5 금색
+]
+
+## 직업별 현재 등급(Lv). 지금은 전부 1(레벨 시스템 붙으면 여기 갱신).
+var job_level := {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
+
+
+## 맨몸은 등급 라벨이 없다
+func has_rank(job: String) -> bool:
+	return job != "base"
+
+
+## 직업+Lv 호칭 (예: 견습 보안관)
+func job_title(job: String) -> String:
+	var names: Array = JOB_TITLES.get(job, ["?"])
+	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, names.size() - 1)
+	return names[idx]
+
+
+## 등급 라벨 텍스트 (맨몸은 "")
+func rank_label(job: String) -> String:
+	if not has_rank(job):
+		return ""
+	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, RANK_LABELS.size() - 1)
+	return RANK_LABELS[idx]
+
+
+## 등급 라벨 색
+func rank_color(job: String) -> Color:
+	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, rank_colors.size() - 1)
+	return rank_colors[idx]
+
+
 ## 선택 직업의 SpriteFrames 경로
 func job_frames_path() -> String:
 	return "res://assets/sprites/cheese/%s/cheese_%s.tres" % [selected_job, selected_job]

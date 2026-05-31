@@ -56,6 +56,11 @@ custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "맨몸"
 
+[node name="Rank" type="Label" parent="Center/Box/Row/base"]
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 1
+
 [node name="sheriff" type="VBoxContainer" parent="Center/Box/Row"]
 theme_override_constants/separation = 10
 
@@ -68,6 +73,11 @@ stretch_mode = 6
 custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "보안관"
+
+[node name="Rank" type="Label" parent="Center/Box/Row/sheriff"]
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 1
 
 [node name="maid" type="VBoxContainer" parent="Center/Box/Row"]
 theme_override_constants/separation = 10
@@ -82,6 +92,11 @@ custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "메이드"
 
+[node name="Rank" type="Label" parent="Center/Box/Row/maid"]
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 1
+
 [node name="jazz" type="VBoxContainer" parent="Center/Box/Row"]
 theme_override_constants/separation = 10
 
@@ -94,3 +109,8 @@ stretch_mode = 6
 custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "음악가"
+
+[node name="Rank" type="Label" parent="Center/Box/Row/jazz"]
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 1
