@@ -23,8 +23,8 @@ Touch="*res://scripts/touch.gd"
 
 [display]
 
-; 가로 모드(랜드스케이프) · 모바일 기준 해상도 1280x720
-window/size/viewport_width=1280
+; 가로 모드(랜드스케이프) · 요즘 폰 비율 19.5:9 (아이폰 등) 기준 1560x720
+window/size/viewport_width=1560
 window/size/viewport_height=720
 window/handheld/orientation=0
 window/stretch/mode="canvas_items"
