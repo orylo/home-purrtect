@@ -5,13 +5,14 @@ extends Node
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
-## 직업별 기본 스탯 (시스템밸런스 §4, Lv1 기준)
-##  hp=체력 / ranged=원거리공격력 / near=근거리공격력 / atk_spd=공격속도 / move=이동속도배율
+## 직업별 기본 스탯 + 크리티컬
+##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
+##  crit=크리율 / crit_type=크리효과(strike 강타·knockback 강넉백·stun 스턴) / crit_mult=강타 배수
 const JOB_STATS := {
-	"base":    {"hp": 100.0, "ranged": 8.0,  "near": 12.0, "atk_spd": 1.0, "move": 1.0},
-	"sheriff": {"hp": 130.0, "ranged": 11.0, "near": 10.0, "atk_spd": 1.1, "move": 1.0},
-	"maid":    {"hp": 120.0, "ranged": 6.0,  "near": 16.0, "atk_spd": 1.0, "move": 1.15},
-	"jazz":    {"hp": 110.0, "ranged": 14.0, "near": 6.0,  "atk_spd": 1.0, "move": 1.0},
+	"base":    {"hp": 80.0,  "ranged": 6.0,  "near": 8.0,  "atk_spd": 0.9, "move": 1.0,  "crit": 0.05, "crit_type": "strike",    "crit_mult": 1.5},
+	"sheriff": {"hp": 140.0, "ranged": 13.0, "near": 11.0, "atk_spd": 1.1, "move": 1.0,  "crit": 0.15, "crit_type": "strike",    "crit_mult": 2.0},
+	"maid":    {"hp": 110.0, "ranged": 5.0,  "near": 18.0, "atk_spd": 1.0, "move": 1.25, "crit": 0.15, "crit_type": "knockback", "crit_mult": 1.0},
+	"jazz":    {"hp": 90.0,  "ranged": 16.0, "near": 4.0,  "atk_spd": 1.2, "move": 0.9,  "crit": 0.12, "crit_type": "stun",      "crit_mult": 1.0},
 }
 
 

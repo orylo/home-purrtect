@@ -33,6 +33,16 @@ extends CharacterBody2D
 @export var melee_hit_delay: float = 0.25     # 근접: 공격 시작 후 이만큼 뒤에 딜(펀치 맞는 순간)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
+## --- 넉백/스턴 세기(평타는 약, 크리는 강) ---
+const NORMAL_KNOCKBACK := 70.0    # 평타 살짝 움찔
+const CRIT_KNOCKBACK := 460.0     # 메이드 강넉백
+const CRIT_STUN := 0.7            # 음악가 스턴(초)
+
+## 크리 스탯(직업에서 _ready에 채움)
+var crit_chance: float = 0.05
+var crit_type: String = "strike"
+var crit_mult: float = 1.5
+
 signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처리)
 
 var health: float
@@ -62,6 +72,9 @@ func _ready() -> void:
 	near_damage = st["near"]
 	attack_interval = 1.0 / float(st["atk_spd"])
 	move_multiplier = st["move"]
+	crit_chance = st["crit"]
+	crit_type = st["crit_type"]
+	crit_mult = st["crit_mult"]
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	# 선택한 직업의 스프라이트로 교체
@@ -177,8 +190,24 @@ func _handle_attack() -> void:
 		_fire_straight()           # 멀거나 적 없으면 일직선 발사
 
 
-## 근접 공격 — 사정거리 안 적들에게 할퀴기 데미지
+## 크리 판정 — 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
+## 평타는 약하게(작은 넉백), 크리 터지면 직업 효과가 강하게.
+func _roll_attack(base_dmg: float) -> Dictionary:
+	var dmg := base_dmg
+	var kb := NORMAL_KNOCKBACK
+	var stun := 0.0
+	var is_crit := randf() < crit_chance
+	if is_crit:
+		match crit_type:
+			"strike":    dmg *= crit_mult       # 보안관/맨몸: 강타
+			"knockback": kb = CRIT_KNOCKBACK    # 메이드: 강넉백
+			"stun":      stun = CRIT_STUN        # 음악가: 스턴
+	return {"dmg": dmg, "kb": kb, "stun": stun, "crit": is_crit}
+
+
+## 근접 공격 — 사정거리 안 적들에게 데미지 + 직업 크리 효과
 func _melee_attack() -> void:
+	var hit := _roll_attack(near_damage)
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
 			continue
@@ -186,17 +215,18 @@ func _melee_attack() -> void:
 			continue
 		if global_position.distance_to((e as Node2D).global_position) <= melee_range:
 			if e.has_method("take_damage"):
-				e.take_damage(near_damage)
+				e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
 
 
 ## 일직선(오른쪽) 발사 — 적 위치로 각도 조준하지 않고 곧게 나간다.
 func _fire_straight() -> void:
 	if bullet_scene == null:
 		return
+	var hit := _roll_attack(ranged_damage)
 	var bullet := bullet_scene.instantiate()
 	var muzzle := global_position + muzzle_offset
 	if bullet.has_method("setup"):
-		bullet.setup(Vector2.RIGHT, ranged_damage)
+		bullet.setup(Vector2.RIGHT, hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
 	bullet.global_position = muzzle
 	get_parent().add_child(bullet)
 	if is_instance_valid(muzzle_fx):

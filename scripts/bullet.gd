@@ -8,12 +8,18 @@ extends Area2D
 
 var _velocity: Vector2 = Vector2.RIGHT * 700.0
 var damage: float = 8.0
+var knockback: float = 70.0
+var stun: float = 0.0
+var crit: bool = false
 
 
-## 치즈가 발사할 때 방향과 데미지를 정해준다.
-func setup(direction: Vector2, dmg: float) -> void:
+## 치즈가 발사할 때 방향·데미지·넉백·스턴·크리를 정해준다.
+func setup(direction: Vector2, dmg: float, kb: float = 70.0, stn: float = 0.0, is_crit: bool = false) -> void:
 	_velocity = direction.normalized() * speed
 	damage = dmg
+	knockback = kb
+	stun = stn
+	crit = is_crit
 
 
 func _ready() -> void:
@@ -34,7 +40,7 @@ func _on_area_entered(area: Area2D) -> void:
 	var enemy := area.get_parent()
 	if enemy and enemy.is_in_group("enemies"):
 		if enemy.has_method("take_damage"):
-			enemy.take_damage(damage)
+			enemy.take_damage(damage, knockback, stun, crit)
 		queue_free()
 
 

@@ -23,8 +23,10 @@ var _walking: bool = true
 var _hit: bool = false
 var _attack_timer: float = 0.0
 var _push_vx: float = 0.0
-var _flash: float = 0.0       # 피격 흰 번쩍 타이머
-var _knockback: float = 0.0   # 피격 시 오른쪽으로 살짝 움찔
+var _flash: float = 0.0       # 피격 번쩍 타이머
+var _flash_crit: bool = false # 크리 피격이면 금색 번쩍
+var _knockback: float = 0.0   # 피격 시 오른쪽으로 밀림
+var _stun_timer: float = 0.0  # 스턴(음악가 크리) 남은 시간
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -49,36 +51,44 @@ func _physics_process(delta: float) -> void:
 		_push_vx = 0.0
 		return
 
-	# 1) 걷고-멈추기 리듬
-	_phase_timer -= delta
-	if _phase_timer <= 0.0:
-		_walking = not _walking
-		_phase_timer = walk_time if _walking else stop_time
+	var stunned := _stun_timer > 0.0
+	if stunned:
+		_stun_timer -= delta
 
-	# 2) 이동: 밀리는 중이면 오른쪽, 아니면 전진(왼쪽). + 피격 넉백(오른쪽 살짝 움찔)
+	# 1) 걷고-멈추기 리듬 (스턴 중엔 멈춤)
+	if not stunned:
+		_phase_timer -= delta
+		if _phase_timer <= 0.0:
+			_walking = not _walking
+			_phase_timer = walk_time if _walking else stop_time
+
+	# 2) 이동: 스턴이면 전진 정지. 밀림(넉백)은 그대로 적용.
 	var base_vx := 0.0
-	if _push_vx > 0.0:
-		base_vx = _push_vx
-	elif _walking and not _hit:
-		base_vx = -move_speed
-	_knockback = move_toward(_knockback, 0.0, 280.0 * delta)
+	if not stunned:
+		if _push_vx > 0.0:
+			base_vx = _push_vx
+		elif _walking and not _hit:
+			base_vx = -move_speed
+	_knockback = move_toward(_knockback, 0.0, 420.0 * delta)
 	velocity.x = base_vx + _knockback
 	velocity.y = 0.0
 	move_and_slide()
 	_push_vx = 0.0   # 매 프레임 리셋(치즈가 계속 밀면 다시 설정됨)
 
-	# 3) 치즈에 닿아 있으면 공격
+	# 3) 치즈에 닿아 있으면 공격 (스턴 중엔 못 함)
 	_attack_timer -= delta
-	if _is_touching_player() and _attack_timer <= 0.0:
+	if not stunned and _is_touching_player() and _attack_timer <= 0.0:
 		_attack_timer = attack_interval
 		var player := get_tree().get_first_node_in_group("player")
 		if player and player.has_method("take_damage"):
 			player.take_damage(damage)
 
-	# 피격 흰 번쩍
+	# 피격 번쩍(크리=금색) / 스턴(파랑) / 평소
 	if _flash > 0.0:
 		_flash -= delta
-		anim.modulate = Color(1.9, 1.9, 1.9)
+		anim.modulate = Color(2.0, 1.7, 0.4) if _flash_crit else Color(1.9, 1.9, 1.9)
+	elif stunned:
+		anim.modulate = Color(0.6, 0.75, 1.1)
 	else:
 		anim.modulate = Color(1, 1, 1)
 
@@ -125,8 +135,8 @@ func is_dead() -> bool:
 	return dead
 
 
-## 탄환 등에서 호출 — 데미지를 받는다.
-func take_damage(amount: float) -> void:
+## 탄환/근접에서 호출 — 데미지 + 넉백 + 스턴 + 크리(금색)
+func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
 	health -= amount
@@ -134,9 +144,12 @@ func take_damage(amount: float) -> void:
 		_die()
 	else:
 		_hit = true
-		_flash = 0.12       # 흰 번쩍
-		_knockback = 70.0   # 오른쪽으로 살짝 움찔
-		Fx.request_shake(3.0)
+		_flash = 0.12
+		_flash_crit = crit
+		_knockback = maxf(_knockback, knockback)   # 오른쪽으로 밀림(크리=강넉백)
+		if stun > 0.0:
+			_stun_timer = stun
+		Fx.request_shake(7.0 if crit else 3.0)
 		anim.play("hit")
 
 
