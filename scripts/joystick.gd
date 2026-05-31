@@ -90,6 +90,7 @@ func _draw() -> void:
 		draw_arc(_center, base_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.45), 3.0)
 		draw_circle(_knob, knob_radius, Color(1, 1, 1, 0.40))
 		draw_arc(_knob, knob_radius, 0.0, TAU, 32, Color(1, 1, 1, 0.8), 3.0)
+		_draw_wasd(_center)
 	else:
 		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙에 흐릿하게 표시
 		var band_cy := (Layout.band_top() + size.y) * 0.5
@@ -97,3 +98,23 @@ func _draw() -> void:
 		draw_circle(rest, base_radius, Color(1, 1, 1, 0.08))
 		draw_arc(rest, base_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.25), 2.0)
 		draw_circle(rest, knob_radius, Color(1, 1, 1, 0.15))
+		_draw_wasd(rest)
+
+
+## 상하좌우에 W S A D 키 힌트(컴퓨터 사용자용)
+func _draw_wasd(c: Vector2) -> void:
+	var font := get_theme_default_font()
+	if font == null:
+		return
+	var d := base_radius * 0.60
+	_key_label(font, c + Vector2(0.0, -d), "W")
+	_key_label(font, c + Vector2(0.0, d), "S")
+	_key_label(font, c + Vector2(-d, 0.0), "A")
+	_key_label(font, c + Vector2(d, 0.0), "D")
+
+
+func _key_label(font: Font, center: Vector2, ch: String) -> void:
+	var fs := 22
+	var pos := center + Vector2(-14.0, 8.0)   # 대략 가운데 정렬
+	draw_string_outline(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 28.0, fs, 4, Color(0, 0, 0, 0.6))
+	draw_string(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 28.0, fs, Color(1, 1, 1, 0.85))

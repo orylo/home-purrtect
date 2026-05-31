@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -16,6 +16,18 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
+
+[sub_resource type="StyleBoxFlat" id="PauseBtnSB"]
+bg_color = Color(0, 0, 0, 0.45)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="HPBarBG"]
 bg_color = Color(0.1, 0.06, 0.06, 0.75)
@@ -99,6 +111,14 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("11_attack")
 
+[node name="TopDim" type="ColorRect" parent="HUD"]
+mouse_filter = 2
+offset_left = 16.0
+offset_top = 18.0
+offset_right = 398.0
+offset_bottom = 82.0
+color = Color(0, 0, 0, 0.5)
+
 [node name="Heart" type="Label" parent="HUD"]
 offset_left = 36.0
 offset_top = 26.0
@@ -150,16 +170,31 @@ offset_left = -110.0
 offset_top = 26.0
 offset_right = -36.0
 offset_bottom = 74.0
+theme_override_styles/normal = SubResource("PauseBtnSB")
+theme_override_styles/hover = SubResource("PauseBtnSB")
+theme_override_styles/pressed = SubResource("PauseBtnSB")
 theme_override_font_sizes/font_size = 22
 text = "II"
 
 [node name="StageLabel" type="Label" parent="HUD"]
 anchor_right = 1.0
-offset_top = 28.0
-offset_bottom = 66.0
+offset_top = 24.0
+offset_bottom = 60.0
 theme_override_colors/font_color = Color(1, 0.95, 0.7, 1)
 theme_override_font_sizes/font_size = 28
 text = "1-1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AutoInfo" type="Label" parent="HUD"]
+anchor_right = 1.0
+offset_top = 62.0
+offset_bottom = 86.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.82)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 17
+text = "적이 가까우면 근접 · 멀면 원거리 자동 전환"
 horizontal_alignment = 1
 vertical_alignment = 1
 

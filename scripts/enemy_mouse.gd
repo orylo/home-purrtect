@@ -27,6 +27,8 @@ var _flash: float = 0.0       # 피격 번쩍 타이머
 var _flash_crit: bool = false # 크리 피격이면 금색 번쩍
 var _knockback: float = 0.0   # 피격 시 오른쪽으로 밀림
 var _stun_timer: float = 0.0  # 스턴(음악가 크리) 남은 시간
+var _popups: Array = []       # 머리 위로 떠오르는 데미지 숫자들 {amount, t, crit}
+const DMG_POP_DUR := 0.8      # 데미지 숫자 지속(상승+페이드) 시간
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -46,6 +48,14 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# 데미지 숫자 상승/소멸은 죽어도 계속(마지막 일격 표시)
+	if not _popups.is_empty():
+		for p in _popups:
+			p["t"] += delta
+		while not _popups.is_empty() and _popups[0]["t"] >= DMG_POP_DUR:
+			_popups.pop_front()
+		queue_redraw()
+
 	if dead:
 		velocity = Vector2.ZERO
 		_push_vx = 0.0
@@ -97,6 +107,7 @@ func _physics_process(delta: float) -> void:
 
 # 머리 위 HP 게이지 — 데미지를 입은 뒤부터 표시
 func _draw() -> void:
+	_draw_damage_popups()   # 데미지 숫자(죽어도 표시)
 	if dead:
 		return
 	# 발밑 그림자 — 검정 30% 타원(항상 표시)
@@ -113,6 +124,24 @@ func _draw() -> void:
 		draw_rect(Rect2(x, y, w, h), Color(0, 0, 0, 0.65))                       # 배경
 		draw_rect(Rect2(x, y, w * ratio, h), Color(0.95, 0.25, 0.2, 1.0))        # 체력
 		draw_rect(Rect2(x, y, w, h), Color(1, 1, 1, 0.6), false, 1.5)            # 테두리
+
+
+## 데미지 숫자 — 머리 위(HP바 위)로 상승하며 점점 투명해짐. 크리는 금색.
+func _draw_damage_popups() -> void:
+	if _popups.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	if font == null:
+		return
+	for p in _popups:
+		var f: float = clampf(p["t"] / DMG_POP_DUR, 0.0, 1.0)
+		var y := -174.0 - 48.0 * f                    # HP바(-158) 위에서 더 상승
+		var a := 1.0 - f                              # 점점 투명
+		var col := Color(1.0, 0.82, 0.2, a) if p["crit"] else Color(1.0, 0.96, 0.96, a)
+		var txt := str(p["amount"])
+		var pos := Vector2(-40.0, y)
+		draw_string_outline(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 26, 5, Color(0, 0, 0, a * 0.85))
+		draw_string(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 26, col)
 
 
 func _is_touching_player() -> bool:
@@ -145,6 +174,9 @@ func is_dead() -> bool:
 func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
+	# 닳은 HP 숫자를 머리 위로 띄움
+	if amount >= 1.0:
+		_popups.append({"amount": int(round(amount)), "t": 0.0, "crit": crit})
 	health -= amount
 	if health <= 0.0:
 		_die()

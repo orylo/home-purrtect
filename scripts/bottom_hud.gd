@@ -50,6 +50,7 @@ func _draw() -> void:
 	var atk_active := Touch.attack_held or Input.is_action_pressed("attack")
 	_slot_quarter(corner, atk_r, atk_active)
 	_caption(font, 22, "공격", corner + Vector2(-atk_r * 0.5, -atk_r * 0.42))
+	_caption(font, 26, "L", corner + Vector2(-atk_r * 0.5, -atk_r * 0.42 + 30.0))   # 키보드 힌트
 
 	# --- 스킬 1~4: 공격을 둘러싸는 부채꼴 ---
 	var angles := [192.0, 214.0, 236.0, 258.0]
