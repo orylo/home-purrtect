@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/cheese_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://scripts/spawner.gd" id="3_spawner"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_mouse.tscn" id="4_mouse"]
 [ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="5_bullet"]
+[ext_resource type="Script" path="res://scripts/stage_background.gd" id="6_bg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(50, 300)
@@ -14,23 +15,8 @@ size = Vector2(50, 300)
 [node name="BG" type="CanvasLayer" parent="."]
 layer = -10
 
-[node name="Background" type="ColorRect" parent="BG"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.12, 0.14, 0.2, 1)
-
-[node name="Floor" type="ColorRect" parent="BG"]
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -100.0
-grow_horizontal = 2
-grow_vertical = 0
-color = Color(0.32, 0.28, 0.24, 1)
+[node name="StageBackground" type="Node2D" parent="BG"]
+script = ExtResource("6_bg")
 
 [node name="Player" type="CharacterBody2D" parent="." groups=["player"] collision_layer=4 collision_mask=2]
 position = Vector2(200, 620)
