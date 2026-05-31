@@ -69,6 +69,7 @@ var _jump_prep_timer: float = 0.0
 var _jump_land_timer: float = 0.0
 var _sit_phase: String = ""      # ""/down/up
 var _hurt_flash_timer: float = 0.0
+var _move_was_active: bool = false   # 직전 프레임에 이동 입력이 있었는지(새로 미는 순간 감지용)
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @onready var muzzle_fx: Node = $MuzzleFlash
@@ -123,6 +124,16 @@ func _physics_process(delta: float) -> void:
 	if absf(direction) < 0.2:
 		direction = 0.0               # 조이스틱 미세 떨림 무시(데드존)
 
+	# --- 이동/공격 상호배타 ---
+	# 공격(사격/근접) 중에 "새로" 이동을 시작하면(다시 미는 순간) 공격 모션을 취소하고 이동 우선.
+	# (계속 누르고 있던 입력으로는 취소 안 됨 → 공격 누르면 멈춰 있는 상태가 유지)
+	var move_active := direction != 0.0
+	var move_just_started := move_active and not _move_was_active
+	if move_just_started and (_committed_anim == "shoot" or _committed_anim == "melee"):
+		_committed_anim = ""
+		_melee_pending = -1.0   # 근접 딜 대기도 취소
+	_move_was_active = move_active
+
 	# --- 앉기 상태머신: 숙여서 홀드 → 떼면 일어남(스프라이트 끝까지) ---
 	var want_crouch := on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
 	if want_crouch and _sit_phase == "" and _jump_state == "" and _committed_anim == "":
@@ -132,6 +143,10 @@ func _physics_process(delta: float) -> void:
 	crouching = _sit_phase == "down"
 	if _sit_phase != "":
 		direction = 0.0   # 앉기/일어나기 중 이동 잠금
+
+	# 사격/근접 모션 중에는 제자리에 멈춤(움직이면서 공격 불가)
+	if on_ground and (_committed_anim == "shoot" or _committed_anim == "melee"):
+		direction = 0.0
 
 	velocity.x = direction * base_speed * move_multiplier
 

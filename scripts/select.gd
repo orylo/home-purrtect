@@ -8,7 +8,7 @@ const JOBS := {
 	"maid": "메이드",
 	"jazz": "음악가",
 }
-const BUILD := "v4"   # 배포할 때마다 올림 — 폰에서 최신인지 확인용
+const BUILD := "v5"   # 배포할 때마다 올림 — 폰에서 최신인지 확인용
 
 
 func _ready() -> void:
