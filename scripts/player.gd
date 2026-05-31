@@ -156,10 +156,10 @@ func _handle_attack() -> void:
 	var target := _nearest_enemy()
 	_fire_timer = attack_interval
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
-		_melee_anim_timer = 0.35   # 근접 모션
+		_melee_anim_timer = 0.5    # 근접 모션(2배속이면 16프레임=0.5초)
 		_melee_attack()            # 가까우면 근접
 	else:
-		_shoot_anim_timer = 0.35   # 사격 모션
+		_shoot_anim_timer = 0.5    # 사격 모션(2배속)
 		_fire_straight()           # 멀거나 적 없으면 일직선 발사
 
 
@@ -243,4 +243,6 @@ func _update_animation(direction: float) -> void:
 		if reversed:
 			anim.play_backwards(next)
 		else:
-			anim.play(next)
+			# 공격(사격/근접)은 2배속으로 — 안 그러면 다 끝나기 전에 idle로 돌아감
+			var spd := 2.0 if (next == "shoot" or next == "melee") else 1.0
+			anim.play(next, spd)
