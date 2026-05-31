@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bxnow1vc0sndm"
-path="res://.godot/imported/Pretendard-Regular.otf-375f78108183715aa325a9c9dc71177f.fontdata"
+uid="uid://ccyebfwtbqu3p"
+path="res://.godot/imported/Pretendard-Bold.ttf-10452bd575160037b68bdbcf415ddd07.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Pretendard-Regular.otf"
-dest_files=["res://.godot/imported/Pretendard-Regular.otf-375f78108183715aa325a9c9dc71177f.fontdata"]
+source_file="res://assets/fonts/Pretendard-Bold.ttf"
+dest_files=["res://.godot/imported/Pretendard-Bold.ttf-10452bd575160037b68bdbcf415ddd07.fontdata"]
 
 [params]
 

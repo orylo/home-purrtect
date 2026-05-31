@@ -53,7 +53,7 @@ func _style_primary(btn: Button) -> void:
 
 func _ready() -> void:
 	$Build.text = GameState.BUILD + " ver."
-	_head_font = load("res://assets/fonts/Pretendard-Black.otf")
+	_head_font = load("res://assets/fonts/Pretendard-Black.ttf")
 	_pill_normal = _make_pill(Color(0.9882, 0.3137, 0.0))   # Digital Orange
 	_pill_hover = _make_pill(Color(0.86, 0.27, 0.0))
 	_pill_disabled = _make_pill(Color(0.80, 0.52, 0.40))    # 잠김(흐린 오렌지)

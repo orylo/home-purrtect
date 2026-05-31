@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://d15b05phsqj78"
-path="res://.godot/imported/Pretendard-Black.otf-e24b05473bd92daed72abca520244524.fontdata"
+uid="uid://by74tvdvltc78"
+path="res://.godot/imported/Pretendard-Black.ttf-0b606e09254a602e91f1df00b23cd88a.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Pretendard-Black.otf"
-dest_files=["res://.godot/imported/Pretendard-Black.otf-e24b05473bd92daed72abca520244524.fontdata"]
+source_file="res://assets/fonts/Pretendard-Black.ttf"
+dest_files=["res://.godot/imported/Pretendard-Black.ttf-0b606e09254a602e91f1df00b23cd88a.fontdata"]
 
 [params]
 
