@@ -55,12 +55,19 @@ func _physics_process(delta: float) -> void:
 		_hurt_flash_timer -= delta
 
 	var direction := Input.get_axis("move_left", "move_right")
+	if direction == 0.0:
+		direction = Touch.move_axis   # 키보드 입력 없으면 가상 조이스틱 사용
+	if absf(direction) < 0.2:
+		direction = 0.0               # 조이스틱 미세 떨림 무시(데드존)
 
 	# 좌우 이동
 	velocity.x = direction * base_speed * move_multiplier
 
-	# 점프(회피)
-	if on_ground and Input.is_action_just_pressed("jump"):
+	# 점프(회피) — 키보드 또는 조이스틱 탭
+	var want_jump := Input.is_action_just_pressed("jump")
+	if Touch.consume_jump():
+		want_jump = true
+	if on_ground and want_jump:
 		velocity.y = -jump_force
 		on_ground = false
 	if not on_ground:

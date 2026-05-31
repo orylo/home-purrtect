@@ -19,6 +19,7 @@ run/main_scene="res://scenes/main.tscn"
 [autoload]
 
 Layout="*res://scripts/layout.gd"
+Touch="*res://scripts/touch.gd"
 
 [display]
 

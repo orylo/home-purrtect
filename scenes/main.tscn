@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/backgrounds/stage1_wall.jpg" id="7_bgtex"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
 [ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
+[ext_resource type="Script" path="res://scripts/joystick.gd" id="10_joystick"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -51,6 +52,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("9_bottomhud")
+
+[node name="Joystick" type="Control" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("10_joystick")
 
 [node name="Heart" type="Label" parent="HUD"]
 offset_left = 36.0
