@@ -204,7 +204,7 @@ vertical_alignment = 1
 [node name="PausePanel" type="ColorRect" parent="HUD"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.55)
+color = Color(0, 0, 0, 0.72)
 
 [node name="Center" type="CenterContainer" parent="HUD/PausePanel"]
 anchor_right = 1.0
@@ -232,7 +232,7 @@ text = "직업 다시 고르기"
 visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.05, 0.15, 0.05, 0.62)
+color = Color(0, 0, 0, 0.72)
 
 [node name="Center" type="CenterContainer" parent="HUD/ClearPanel"]
 anchor_right = 1.0
