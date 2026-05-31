@@ -8,9 +8,11 @@ const JOBS := {
 	"maid": "메이드",
 	"jazz": "음악가",
 }
+const BUILD := "v3"   # 배포할 때마다 올림 — 폰에서 최신인지 확인용
 
 
 func _ready() -> void:
+	$Build.text = "build " + BUILD
 	for job in JOBS:
 		var box: Control = $Center/Box/Row.get_node(job)
 		var preview: TextureRect = box.get_node("Preview")
