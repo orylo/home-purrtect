@@ -34,7 +34,7 @@ window/handheld/orientation="sensor_landscape"
 
 [gui]
 
-theme/custom_font="res://assets/fonts/DoHyeon-Regular.ttf"
+theme/custom_font="res://assets/fonts/Pretendard-Regular.otf"
 
 [rendering]
 

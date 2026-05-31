@@ -3,7 +3,14 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.10"
+const BUILD := "0.11"
+
+
+## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
+func _ready() -> void:
+	var f := load("res://assets/fonts/Pretendard-Regular.otf")
+	if f:
+		ThemeDB.fallback_font = f
 
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
