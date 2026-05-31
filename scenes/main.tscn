@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
-[ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/cheese_frames.tres" id="2_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
 [ext_resource type="Script" path="res://scripts/spawner.gd" id="3_spawner"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_mouse.tscn" id="4_mouse"]
 [ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="5_bullet"]
