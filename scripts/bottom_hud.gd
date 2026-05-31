@@ -8,15 +8,15 @@ extends Control
 
 const SIDE_MARGIN: float = 50.0   # 좌우 가장자리 여백
 
-# 가운데 — 소모품(정사각형) 4칸
-const CONSUMABLE_COUNT: int = 4
+# 가운데 — 소모품(정사각형) 5칸
+const CONSUMABLE_COUNT: int = 5
 const SQ: float = 62.0
 const SQ_GAP: float = 14.0
 
-# 오른손 — 스킬/동료(원). 띠를 얇게 하려고 조금 더 컴팩트하게.
-const R_BIG: float = 42.0     # 동료 호출(큰 원)
-const R_SMALL: float = 20.0   # 스킬(작은 원) 4개
-const RING_D: float = 88.0    # 큰 원 중심에서 작은 원 중심까지 거리
+# 오른손 — 스킬/동료(원). 작은 원을 키우고, 겹침 방지를 위해 링 반경도 넓힘.
+const R_BIG: float = 46.0     # 동료 호출(큰 원)
+const R_SMALL: float = 28.0   # 스킬(작은 원) 4개
+const RING_D: float = 122.0   # 큰 원 중심에서 작은 원 중심까지 거리
 
 
 func _ready() -> void:
