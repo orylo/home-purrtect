@@ -31,7 +31,6 @@ extends CharacterBody2D
 @export var muzzle_offset: Vector2 = Vector2(45, -70)  # 총구 위치(치즈 기준)
 
 var health: float
-var ground_y: float
 var on_ground: bool = true
 
 var _fire_timer: float = 0.0
@@ -42,7 +41,7 @@ var _hurt_flash_timer: float = 0.0
 
 
 func _ready() -> void:
-	ground_y = position.y
+	position.y = Layout.ground_y()   # 어떤 기기에서도 바닥에 서도록
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	add_to_group("player")
@@ -74,9 +73,10 @@ func _physics_process(delta: float) -> void:
 	if direction > 0.0:
 		_push_blocking_enemies()
 
-	# 바닥 라인 착지
-	if position.y >= ground_y:
-		position.y = ground_y
+	# 바닥 라인 착지 (화면 아래에 동적으로 맞춰진 바닥)
+	var gy := Layout.ground_y()
+	if position.y >= gy:
+		position.y = gy
 		velocity.y = 0.0
 		on_ground = true
 

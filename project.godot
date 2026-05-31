@@ -16,6 +16,10 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 run/main_scene="res://scenes/main.tscn"
 
+[autoload]
+
+Layout="*res://scripts/layout.gd"
+
 [display]
 
 ; 가로 모드(랜드스케이프) · 모바일 기준 해상도 1280x720
