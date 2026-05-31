@@ -1,9 +1,6 @@
 extends CanvasLayer
-## 전투 HUD — 상단 정보바 (기획서 §7-B)
-##   좌: ♥ 체력 게이지 + 숫자 / 우: 남은 적 수 + 일시정지 버튼[II]
-##   일시정지 누르면 게임이 멈추고 패널 표시 → 계속하기로 재개.
-##
-## ※ 스킬·소모품·동료 버튼(하단)과 웨이브 N/M는 해당 시스템이 생기면 추가.
+## 전투 HUD — 상단 정보바 + 일시정지/클리어/게임오버 패널
+##   좌: ♥ 체력 + 숫자 / 우: 웨이브·남은 적 + 일시정지[II]
 
 @onready var hp_bar: ProgressBar = $HPBar
 @onready var hp_value: Label = $HPBar/HPValue
@@ -11,23 +8,34 @@ extends CanvasLayer
 @onready var pause_button: Button = $PauseButton
 @onready var pause_panel: ColorRect = $PausePanel
 @onready var resume_button: Button = $PausePanel/Center/Box/ResumeButton
+@onready var clear_panel: ColorRect = $ClearPanel
+@onready var clear_restart: Button = $ClearPanel/Center/Box/Restart
+@onready var gameover_panel: ColorRect = $GameOverPanel
+@onready var gameover_restart: Button = $GameOverPanel/Center/Box/Restart
+
+var _wave_cur: int = 0
+var _wave_total: int = 0
 
 
 func _ready() -> void:
 	pause_button.pressed.connect(_on_pause_pressed)
 	resume_button.pressed.connect(_on_resume_pressed)
+	clear_restart.pressed.connect(_on_restart)
+	gameover_restart.pressed.connect(_on_restart)
 	pause_panel.visible = false
+	clear_panel.visible = false
+	gameover_panel.visible = false
 
 
 func _process(_delta: float) -> void:
-	# 치즈 체력 표시
+	# 치즈 체력
 	var player := get_tree().get_first_node_in_group("player")
 	if player:
 		hp_bar.max_value = player.max_health
 		hp_bar.value = player.health
 		hp_value.text = "%d / %d" % [int(round(player.health)), int(round(player.max_health))]
 
-	# 남은 적 수(살아있는 것만)
+	# 웨이브 + 남은 적
 	var alive := 0
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
@@ -35,7 +43,24 @@ func _process(_delta: float) -> void:
 		if e.has_method("is_dead") and e.is_dead():
 			continue
 		alive += 1
-	enemy_label.text = "남은 적: %d" % alive
+	if _wave_total == 0:
+		enemy_label.text = "준비 중..."
+	else:
+		enemy_label.text = "웨이브 %d/%d   남은 적 %d" % [_wave_cur, _wave_total, alive]
+
+
+## 스포너가 새 웨이브 시작 시 호출
+func set_wave(current: int, total: int) -> void:
+	_wave_cur = current
+	_wave_total = total
+
+
+func show_clear() -> void:
+	clear_panel.visible = true
+
+
+func show_gameover() -> void:
+	gameover_panel.visible = true
 
 
 func _on_pause_pressed() -> void:
@@ -46,3 +71,8 @@ func _on_pause_pressed() -> void:
 func _on_resume_pressed() -> void:
 	get_tree().paused = false
 	pause_panel.visible = false
+
+
+func _on_restart() -> void:
+	get_tree().paused = false
+	get_tree().reload_current_scene()

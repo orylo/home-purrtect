@@ -32,8 +32,11 @@ extends CharacterBody2D
 @export var melee_range: float = 130.0        # 이 안이면 근접, 밖이면 원거리
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
+signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처리)
+
 var health: float
 var on_ground: bool = true
+var _dead: bool = false
 
 var _fire_timer: float = 0.0
 var _shoot_anim_timer: float = 0.0
@@ -177,11 +180,14 @@ func _nearest_enemy() -> Node2D:
 
 ## 적의 공격에서 호출 — 데미지를 받는다(넉백 없음).
 func take_damage(amount: float) -> void:
+	if _dead:
+		return
 	health -= amount
 	_hurt_flash_timer = 0.15
 	if health <= 0.0:
-		# 게임오버 — 지금은 임시로 스테이지 재시작(연출은 나중에)
-		get_tree().reload_current_scene()
+		health = 0.0
+		_dead = true
+		died.emit()   # 게임오버 — game.gd가 연출 처리
 
 
 func _update_animation(direction: float) -> void:

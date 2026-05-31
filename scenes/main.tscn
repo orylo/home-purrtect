@@ -11,11 +11,13 @@
 [ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
 [ext_resource type="Script" path="res://scripts/joystick.gd" id="10_joystick"]
 [ext_resource type="Script" path="res://scripts/attack_button.gd" id="11_attack"]
+[ext_resource type="Script" path="res://scripts/game.gd" id="12_game"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
 
 [node name="Main" type="Node2D"]
+script = ExtResource("12_game")
 
 [node name="BG" type="CanvasLayer" parent="."]
 layer = -10
@@ -136,3 +138,56 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(220, 64)
 theme_override_font_sizes/font_size = 26
 text = "계속하기"
+
+[node name="ClearPanel" type="ColorRect" parent="HUD"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.15, 0.05, 0.62)
+
+[node name="Center" type="CenterContainer" parent="HUD/ClearPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="HUD/ClearPanel/Center"]
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="HUD/ClearPanel/Center/Box"]
+theme_override_colors/font_color = Color(1, 0.95, 0.5, 1)
+theme_override_font_sizes/font_size = 56
+text = "스테이지 클리어!"
+horizontal_alignment = 1
+
+[node name="Restart" type="Button" parent="HUD/ClearPanel/Center/Box"]
+custom_minimum_size = Vector2(240, 64)
+theme_override_font_sizes/font_size = 26
+text = "다시 하기"
+
+[node name="GameOverPanel" type="ColorRect" parent="HUD"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.15, 0.03, 0.03, 0.66)
+
+[node name="Center" type="CenterContainer" parent="HUD/GameOverPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="HUD/GameOverPanel/Center"]
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="HUD/GameOverPanel/Center/Box"]
+theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 56
+text = "게임 오버"
+horizontal_alignment = 1
+
+[node name="Sub" type="Label" parent="HUD/GameOverPanel/Center/Box"]
+theme_override_font_sizes/font_size = 22
+text = "정신 차려라! 마지막 기회를 주마. — G"
+horizontal_alignment = 1
+
+[node name="Restart" type="Button" parent="HUD/GameOverPanel/Center/Box"]
+custom_minimum_size = Vector2(240, 64)
+theme_override_font_sizes/font_size = 26
+text = "다시 도전"
