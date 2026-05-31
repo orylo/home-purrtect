@@ -28,7 +28,7 @@ extends CharacterBody2D
 @export var bullet_scene: PackedScene
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 1초에 1발
-@export var muzzle_offset: Vector2 = Vector2(45, -70)  # 총구 위치(치즈 기준)
+@export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
 var health: float
 var on_ground: bool = true
