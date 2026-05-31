@@ -42,7 +42,8 @@ func _process(delta: float) -> void:
 			if _to_spawn > 0:
 				_spawn_timer -= delta
 				if _spawn_timer <= 0.0:
-					_spawn_timer = float(_waves[_wave_index]["interval"])
+					# 등장 간격도 ±20% 흩어 단조롭지 않게
+					_spawn_timer = float(_waves[_wave_index]["interval"]) * randf_range(0.8, 1.2)
 					_spawn_one()
 					_to_spawn -= 1
 			elif _alive_count() == 0:

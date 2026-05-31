@@ -21,6 +21,8 @@ var _walking: bool = true
 var _hit: bool = false
 var _attack_timer: float = 0.0
 var _push_vx: float = 0.0
+var _flash: float = 0.0       # 피격 흰 번쩍 타이머
+var _knockback: float = 0.0   # 피격 시 오른쪽으로 살짝 움찔
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -29,8 +31,13 @@ func _ready() -> void:
 	add_to_group("enemies")
 	health = max_health
 	anim.flip_h = false  # 쥐는 그림 자체가 왼쪽을 봄(진행 방향) — 뒤집지 않음
+	# 개체마다 속도·리듬을 살짝 다르게 + 시작 박자를 흩어 로봇처럼 안 보이게
+	move_speed *= randf_range(0.85, 1.18)
+	walk_time *= randf_range(0.8, 1.25)
+	stop_time *= randf_range(0.75, 1.25)
+	_walking = randf() > 0.3
+	_phase_timer = randf_range(0.15, walk_time if _walking else stop_time)
 	anim.play("walk")
-	_phase_timer = walk_time
 	anim.animation_finished.connect(_on_anim_finished)
 
 
@@ -46,16 +53,24 @@ func _physics_process(delta: float) -> void:
 		_walking = not _walking
 		_phase_timer = walk_time if _walking else stop_time
 
-	# 2) 이동: 밀리는 중이면 오른쪽으로, 아니면 전진(왼쪽)
+	# 2) 이동: 밀리는 중이면 오른쪽, 아니면 전진(왼쪽). + 피격 넉백(오른쪽 살짝 움찔)
+	var base_vx := 0.0
 	if _push_vx > 0.0:
-		velocity.x = _push_vx
+		base_vx = _push_vx
 	elif _walking and not _hit:
-		velocity.x = -move_speed
-	else:
-		velocity.x = 0.0
+		base_vx = -move_speed
+	_knockback = move_toward(_knockback, 0.0, 280.0 * delta)
+	velocity.x = base_vx + _knockback
 	velocity.y = 0.0
 	move_and_slide()
 	_push_vx = 0.0   # 매 프레임 리셋(치즈가 계속 밀면 다시 설정됨)
+
+	# 피격 흰 번쩍
+	if _flash > 0.0:
+		_flash -= delta
+		anim.modulate = Color(1.9, 1.9, 1.9)
+	else:
+		anim.modulate = Color(1, 1, 1)
 
 	# 3) 치즈에 닿아 있으면 공격
 	_attack_timer -= delta
@@ -101,6 +116,8 @@ func take_damage(amount: float) -> void:
 		_die()
 	else:
 		_hit = true
+		_flash = 0.12       # 흰 번쩍
+		_knockback = 70.0   # 오른쪽으로 살짝 움찔
 		anim.play("hit")
 
 
@@ -115,5 +132,6 @@ func _on_anim_finished() -> void:
 func _die() -> void:
 	dead = true
 	velocity = Vector2.ZERO
+	anim.modulate = Color(1, 1, 1)  # 번쩍 중 죽어도 유령은 정상 색
 	$CollisionShape2D.set_deferred("disabled", true)  # 죽으면 충돌 끔
 	anim.play("ghost")

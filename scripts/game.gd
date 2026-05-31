@@ -7,6 +7,7 @@ extends Node2D
 
 
 func _ready() -> void:
+	randomize()   # 매 판 적의 리듬·등장이 달라지게
 	spawner.wave_started.connect(hud.set_wave)
 	spawner.stage_cleared.connect(_on_stage_cleared)
 	player.died.connect(_on_player_died)
