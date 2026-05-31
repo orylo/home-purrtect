@@ -44,6 +44,22 @@ jobs:
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ls -la build/web
 
+      - name: Cache-bust filenames (버전별 파일명으로 브라우저 캐시 무력화)
+        run: |
+          cd build/web
+          V="${GITHUB_SHA::8}"
+          for ext in js wasm pck audio.worklet.js; do
+            if [ -f "index.$ext" ]; then mv "index.$ext" "index.$V.$ext"; fi
+          done
+          sed -i \
+            -e "s/index\.audio\.worklet\.js/index.$V.audio.worklet.js/g" \
+            -e "s/index\.pck/index.$V.pck/g" \
+            -e "s/index\.wasm/index.$V.wasm/g" \
+            -e "s/src=\"index\.js\"/src=\"index.$V.js\"/g" \
+            -e "s/\"executable\":\"index\"/\"executable\":\"index.$V\"/g" \
+            index.html
+          echo "버전 V=$V 적용됨"; ls -la
+
       - name: Copy OG image into site
         run: cp web/og-image.jpg build/web/og-image.jpg
 
