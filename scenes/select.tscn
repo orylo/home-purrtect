@@ -47,12 +47,12 @@ alignment = 1
 theme_override_constants/separation = 10
 
 [node name="Preview" type="TextureRect" parent="Center/Box/Row/base"]
-custom_minimum_size = Vector2(190, 190)
+custom_minimum_size = Vector2(300, 340)
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/base"]
-custom_minimum_size = Vector2(190, 56)
+custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "맨몸"
 
@@ -60,12 +60,12 @@ text = "맨몸"
 theme_override_constants/separation = 10
 
 [node name="Preview" type="TextureRect" parent="Center/Box/Row/sheriff"]
-custom_minimum_size = Vector2(190, 190)
+custom_minimum_size = Vector2(300, 340)
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/sheriff"]
-custom_minimum_size = Vector2(190, 56)
+custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "보안관"
 
@@ -73,12 +73,12 @@ text = "보안관"
 theme_override_constants/separation = 10
 
 [node name="Preview" type="TextureRect" parent="Center/Box/Row/maid"]
-custom_minimum_size = Vector2(190, 190)
+custom_minimum_size = Vector2(300, 340)
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/maid"]
-custom_minimum_size = Vector2(190, 56)
+custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "메이드"
 
@@ -86,11 +86,11 @@ text = "메이드"
 theme_override_constants/separation = 10
 
 [node name="Preview" type="TextureRect" parent="Center/Box/Row/jazz"]
-custom_minimum_size = Vector2(190, 190)
+custom_minimum_size = Vector2(300, 340)
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/jazz"]
-custom_minimum_size = Vector2(190, 56)
+custom_minimum_size = Vector2(230, 62)
 theme_override_font_sizes/font_size = 26
 text = "음악가"

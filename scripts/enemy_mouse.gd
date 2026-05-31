@@ -97,16 +97,22 @@ func _physics_process(delta: float) -> void:
 
 # 머리 위 HP 게이지 — 데미지를 입은 뒤부터 표시
 func _draw() -> void:
-	if dead or health >= max_health:
+	if dead:
 		return
-	var w := 76.0
-	var h := 9.0
-	var x := -w * 0.5
-	var y := -158.0   # 머리 위
-	var ratio := clampf(health / max_health, 0.0, 1.0)
-	draw_rect(Rect2(x, y, w, h), Color(0, 0, 0, 0.65))                       # 배경
-	draw_rect(Rect2(x, y, w * ratio, h), Color(0.95, 0.25, 0.2, 1.0))        # 체력
-	draw_rect(Rect2(x, y, w, h), Color(1, 1, 1, 0.6), false, 1.5)            # 테두리
+	# 발밑 그림자 — 검정 30% 타원(항상 표시)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.28))
+	draw_circle(Vector2.ZERO, 52.0, Color(0, 0, 0, 0.3))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# HP 바 — 피해 입었을 때만
+	if health < max_health:
+		var w := 76.0
+		var h := 9.0
+		var x := -w * 0.5
+		var y := -158.0   # 머리 위
+		var ratio := clampf(health / max_health, 0.0, 1.0)
+		draw_rect(Rect2(x, y, w, h), Color(0, 0, 0, 0.65))                       # 배경
+		draw_rect(Rect2(x, y, w * ratio, h), Color(0.95, 0.25, 0.2, 1.0))        # 체력
+		draw_rect(Rect2(x, y, w, h), Color(1, 1, 1, 0.6), false, 1.5)            # 테두리
 
 
 func _is_touching_player() -> bool:

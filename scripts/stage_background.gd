@@ -8,6 +8,10 @@ extends Node2D
 @export var stage_texture: Texture2D
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
 @export var show_ground_line: bool = true
+## 배경 추가 확대 배율(1.0 = 기본, 비율 유지 커버). 필요 시만 키움.
+@export var bg_zoom: float = 1.0
+## 배경을 아래로 내리는 양(px). 양수면 그림이 내려가 위쪽이 더 보인다.
+@export var offset_y: float = 0.0
 
 
 func _ready() -> void:
@@ -24,11 +28,14 @@ func _draw() -> void:
 	var s := Layout.cover_scale()
 
 	if stage_texture != null:
-		# 1920x1080 그림을 비율 유지로 커버 + 가로 가운데 + 바닥 정렬
-		var art_w := Layout.REF_W * s
-		var art_h := Layout.REF_H * s
-		var art_x := (vis.x - art_w) * 0.5
-		var art_y := vis.y - art_h
+		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
+		# 가로/세로 비율 중 더 큰 쪽으로 맞춰 빈틈 없이 채우고, 넘치는 부분만 크롭.
+		var tex := stage_texture.get_size()
+		var sc := maxf(vis.x / tex.x, vis.y / tex.y) * bg_zoom
+		var art_w := tex.x * sc
+		var art_h := tex.y * sc
+		var art_x := (vis.x - art_w) * 0.5         # 가로 가운데
+		var art_y := vis.y - art_h + offset_y      # 바닥 고정 + offset_y만큼 아래로
 		draw_texture_rect(stage_texture, Rect2(Vector2(art_x, art_y), Vector2(art_w, art_h)), false)
 	else:
 		# 임시 배경: 하늘 + 땅 + 바닥선 (실제 그림이 들어오면 위 분기로 교체됨)

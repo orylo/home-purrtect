@@ -1,6 +1,6 @@
 extends Control
 ## 시작 직업 선택 화면 (테스트용) — 4직업 중 하나 고르면 게임 시작.
-## 원래는 장비/직업 변경으로 바뀌지만, 테스트 편의를 위해 시작 시 선택.
+## 버튼에 마우스를 올리면(호버) 그 직업의 idle 애니메이션이 미리보기에서 재생된다.
 
 const JOBS := {
 	"base": "맨몸",
@@ -8,11 +8,19 @@ const JOBS := {
 	"maid": "메이드",
 	"jazz": "음악가",
 }
-const BUILD := "0.07"   # 배포할 때마다 올림 — 폰에서 최신인지 확인용 (0.0N ver.)
+const IDLE_FPS := 9.0   # 호버 시 idle 재생 속도
+# 버전은 GameState.BUILD 로 통일(시작 화면과 공유)
+
+var _sf := {}        # job -> SpriteFrames
+var _preview := {}   # job -> TextureRect
+var _hover := ""     # 현재 호버 중인 직업
+var _t := 0.0
+var _frame := 0
+var _test_unlocked := false   # 0키 치트로 전 직업 해금했는지
 
 
 func _ready() -> void:
-	$Build.text = BUILD + " ver."
+	$Build.text = GameState.BUILD + " ver."
 	# 스테이지 표시 + 해금 안내
 	var title: Label = $Center/Box/Title
 	if GameState.jobs_unlocked:
@@ -23,7 +31,12 @@ func _ready() -> void:
 	for job in JOBS:
 		var box: Control = $Center/Box/Row.get_node(job)
 		var preview: TextureRect = box.get_node("Preview")
-		preview.texture = load("res://assets/sprites/cheese/%s/idle/idle_01.png" % job)
+		var sf: SpriteFrames = load("res://assets/sprites/cheese/%s/cheese_%s.tres" % [job, job])
+		_sf[job] = sf
+		_preview[job] = preview
+		if sf and sf.has_animation("idle"):
+			preview.texture = sf.get_frame_texture("idle", 0)   # 기본은 idle 첫 프레임
+
 		var btn: Button = box.get_node("Btn")
 		btn.text = JOBS[job]
 		# 1-1은 맨몸만, 1-2부터 전 직업 해금. 잠긴 직업은 반투명 + 비활성.
@@ -33,6 +46,59 @@ func _ready() -> void:
 		if not unlocked:
 			btn.text = JOBS[job] + " (잠김)"
 		btn.pressed.connect(_pick.bind(job))
+		if unlocked:
+			btn.mouse_entered.connect(_on_hover.bind(job))
+			btn.mouse_exited.connect(_on_unhover.bind(job))
+
+
+## [테스트 치트] 숫자 0 키 → 잠긴 직업까지 전부 선택 가능
+func _input(event: InputEvent) -> void:
+	if _test_unlocked:
+		return
+	if event is InputEventKey and event.pressed and not event.echo \
+			and (event.keycode == KEY_0 or event.keycode == KEY_KP_0):
+		_test_unlocked = true
+		for job in JOBS:
+			var was_unlocked: bool = (job == "base") or GameState.jobs_unlocked
+			var box: Control = $Center/Box/Row.get_node(job)
+			var btn: Button = box.get_node("Btn")
+			btn.disabled = false
+			box.modulate = Color(1, 1, 1, 1.0)
+			btn.text = JOBS[job]
+			if not was_unlocked:   # 원래 잠겨있던 직업만 호버 연결(중복 방지)
+				btn.mouse_entered.connect(_on_hover.bind(job))
+				btn.mouse_exited.connect(_on_unhover.bind(job))
+		$Center/Box/Title.text = "스테이지 %s — [테스트] 전 직업 해금" % GameState.stage_label()
+
+
+func _process(delta: float) -> void:
+	if _hover == "":
+		return
+	var sf: SpriteFrames = _sf.get(_hover)
+	if sf == null:
+		return
+	var n := sf.get_frame_count("idle")
+	if n <= 1:
+		return
+	_t += delta
+	if _t >= 1.0 / IDLE_FPS:
+		_t -= 1.0 / IDLE_FPS
+		_frame = (_frame + 1) % n
+		_preview[_hover].texture = sf.get_frame_texture("idle", _frame)
+
+
+func _on_hover(job: String) -> void:
+	_hover = job
+	_frame = 0
+	_t = 0.0
+
+
+func _on_unhover(job: String) -> void:
+	if _hover == job:
+		_hover = ""
+		var sf: SpriteFrames = _sf.get(job)
+		if sf and sf.has_animation("idle"):
+			_preview[job].texture = sf.get_frame_texture("idle", 0)   # 첫 프레임으로 복귀
 
 
 func _pick(job: String) -> void:

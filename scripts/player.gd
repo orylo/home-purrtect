@@ -29,7 +29,8 @@ extends CharacterBody2D
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
 @export var near_damage: float = 12.0         # 맨몸 치즈 근거리공격력(할퀴기) 12
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
-@export var melee_range: float = 170.0        # 이 안이면 근접, 밖이면 원거리
+@export var melee_range: float = 340.0        # 이 안이면 근접, 밖이면 원거리(2배로 넓힘)
+const MELEE_MAX_TARGETS := 3                  # 한 번에 때리는 최대 적 수(가까운 순)
 @export var melee_hit_delay: float = 0.25     # 근접: 공격 시작 후 이만큼 뒤에 딜(펀치 맞는 순간)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
@@ -96,6 +97,7 @@ var _jump_prep_timer: float = 0.0
 var _jump_land_timer: float = 0.0
 var _sit_phase: String = ""      # ""/down/up
 var _hurt_flash_timer: float = 0.0
+# 눕기 그림자 크기는 현재 sit 스프라이트 프레임에 직접 맞춘다(_draw 참고)
 var _move_was_active: bool = false   # 직전 프레임에 이동 입력이 있었는지(새로 미는 순간 감지용)
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -199,11 +201,18 @@ func _physics_process(delta: float) -> void:
 	_move_was_active = move_active
 
 	# --- 앉기 상태머신: 숙여서 홀드 → 떼면 일어남(스프라이트 끝까지) ---
+	# 전환 시점에 anim.play("sit")를 "명시적으로" 호출해야 함.
+	# (이전에 sit이 끝나 멈춰있으면 speed만 올려선 다시 안 움직여 → 일어나기 영구 잠김 버그)
 	var want_crouch := on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
 	if want_crouch and _sit_phase == "" and _jump_state == "" and _committed_anim == "":
 		_sit_phase = "down"
+		anim.play("sit")              # 처음부터 숙이기 시작
+		anim.speed_scale = 1.0
 	elif _sit_phase == "down" and not want_crouch:
 		_sit_phase = "up"
+		anim.play("sit")              # 멈춰있던 sit을 확실히 재생 상태로
+		anim.frame = SIT_HOLD_FRAME   # 숙인 프레임(7)부터 이어서 일어남
+		anim.speed_scale = 1.0
 	crouching = _sit_phase == "down"
 	if _sit_phase != "":
 		direction = 0.0   # 앉기/일어나기 중 이동 잠금
@@ -263,6 +272,31 @@ func _physics_process(delta: float) -> void:
 	anim.modulate = Color(1.9, 1.9, 1.9) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
 
 	_update_animation(direction)
+	queue_redraw()   # 발밑 그림자(점프 높이/눕기 반영) 갱신
+
+
+## 발밑 그림자 — 검정 30% 타원. 점프하면 바닥에 남고 작아진다.
+## 누우면(crouch) 좌우로 넓고 + 위로 올라가 "지면에 누운" 느낌.
+func _draw() -> void:
+	var gy_local := Layout.ground_y() - position.y
+	if gy_local < 0.0:
+		gy_local = 0.0
+	var t := clampf(1.0 - gy_local / 500.0, 0.35, 1.0)   # 높이 오를수록 작고 옅게
+	# 그림자 크기를 "현재 sit 스프라이트 프레임"에 직접 맞춤 — 누운 프레임=크게, 선 프레임=작게
+	var blend := 0.0
+	if _sit_phase == "down":
+		# 0프레임(섬)→7프레임(완전히 누움)으로 갈수록 1
+		blend = clampf(float(anim.frame) / float(SIT_HOLD_FRAME), 0.0, 1.0)
+	elif _sit_phase == "up" and anim.sprite_frames != null:
+		# 7프레임(누움)→마지막(섬)으로 갈수록 0
+		var last := float(maxi(anim.sprite_frames.get_frame_count("sit") - 1, SIT_HOLD_FRAME + 1))
+		blend = clampf((last - float(anim.frame)) / (last - float(SIT_HOLD_FRAME)), 0.0, 1.0)
+	var rx := lerpf(76.0, 120.0, blend)          # 좌우 반경(누울수록 넓게)
+	var ry_scale := lerpf(0.26, 0.30, blend)     # 위아래 납작 정도
+	var sy := gy_local - 20.0 * blend            # 누울수록 위로
+	draw_set_transform(Vector2(0.0, sy), 0.0, Vector2(1.0, ry_scale))
+	draw_circle(Vector2.ZERO, rx * t, Color(0, 0, 0, 0.3 * t))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 ## 몸으로 밀기 — move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
@@ -318,17 +352,26 @@ func _roll_attack(base_dmg: float) -> Dictionary:
 	return {"dmg": dmg, "kb": kb, "stun": stun, "crit": is_crit}
 
 
-## 근접 공격 — 사정거리 안 적들에게 데미지 + 직업 크리 효과
+## 근접 공격 — 사정거리 안에서 "가까운 순으로 최대 3마리"만 때린다.
 func _melee_attack() -> void:
 	var hit := _roll_attack(near_damage)
+	# 사정거리 안 적들을 거리와 함께 모은다
+	var targets: Array = []
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
 			continue
 		if e.has_method("is_dead") and e.is_dead():
 			continue
-		if global_position.distance_to((e as Node2D).global_position) <= melee_range:
-			if e.has_method("take_damage"):
-				e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
+		var d := global_position.distance_to((e as Node2D).global_position)
+		if d <= melee_range:
+			targets.append({"e": e, "d": d})
+	# 가까운 순 정렬 후 최대 MELEE_MAX_TARGETS마리만 타격
+	targets.sort_custom(func(a, b): return a["d"] < b["d"])
+	var n := mini(targets.size(), MELEE_MAX_TARGETS)
+	for i in range(n):
+		var e = targets[i]["e"]
+		if e.has_method("take_damage"):
+			e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
 
 
 ## 직업별 원거리 발사.

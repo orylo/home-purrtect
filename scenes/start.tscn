@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/start.gd" id="1_start"]
+[ext_resource type="Texture2D" path="res://assets/ui/title.jpg" id="2_title"]
+
+[node name="Start" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_start")
+
+[node name="Title" type="TextureRect" parent="."]
+texture = ExtResource("2_title")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="StartButton" type="Button" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -240.0
+offset_right = 230.0
+offset_bottom = -120.0
+theme_override_font_sizes/font_size = 52
+text = "게임 시작"
+
+[node name="Version" type="Label" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -108.0
+offset_right = 200.0
+offset_bottom = -64.0
+theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 24
+text = "0.07 ver."
+horizontal_alignment = 1
+vertical_alignment = 1

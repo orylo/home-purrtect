@@ -36,6 +36,15 @@ var _shattering: bool = false      # 바닥에서 깨지는 중(접시·돌)
 var _shatter_t: float = 0.0
 
 
+## 모양별 바닥 그림자 반지름(시각 크기에 맞춤)
+func _shadow_radius() -> float:
+	match shape:
+		"plate": return 22.0
+		"stone": return 15.0
+		"note":  return 9.0
+		_:       return 9.0
+
+
 ## 모양별 히트박스 반지름(시각 크기에 맞춤)
 func _hit_radius() -> float:
 	match shape:
@@ -167,6 +176,14 @@ func _draw() -> void:
 		else:
 			_draw_shatter_stone(p)                       # 돌: 회색 덩어리 + 먼지
 		return
+	# 바닥 그림자 — 모든 탄환. 회전(돌·접시)해도 바닥에 평평하게(역회전 보정).
+	var dy := _ground_y - global_position.y
+	if dy > 2.0:
+		var t := clampf(1.0 - dy / 450.0, 0.3, 1.0)
+		var sp := Vector2(0.0, dy).rotated(-rotation)   # 회전 보정한 바닥 위치
+		draw_set_transform(sp, -rotation, Vector2(1.0, 0.3))
+		draw_circle(Vector2.ZERO, _shadow_radius() * t, Color(0, 0, 0, 0.22 * t * _alpha))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	match shape:
 		"note":  _draw_note(_alpha, note_type)
 		"stone": _draw_stone(_alpha)
