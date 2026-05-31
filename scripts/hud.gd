@@ -31,6 +31,49 @@ func _ready() -> void:
 	pause_panel.visible = false
 	clear_panel.visible = false
 	gameover_panel.visible = false
+	# Caldera 규정 버튼: 주요 액션=Digital Orange 알약 / 보조=고스트(흰 테두리)
+	_style_primary(resume_button)
+	_style_ghost(to_select_button)
+	_style_primary(clear_next)
+	_style_ghost(clear_restart)
+	_style_primary(gameover_restart)
+
+
+## 알약(pill) 스타일 박스 — bw>0이면 테두리(고스트)
+func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = bg
+	sb.set_corner_radius_all(100)
+	sb.content_margin_left = 32.0
+	sb.content_margin_right = 32.0
+	sb.content_margin_top = 16.0
+	sb.content_margin_bottom = 16.0
+	if bw > 0.0:
+		sb.set_border_width_all(int(bw))
+		sb.border_color = bc
+	return sb
+
+
+func _style_primary(btn: Button) -> void:
+	var o := Color(0.9882, 0.3137, 0.0)
+	var oh := Color(0.86, 0.27, 0.0)
+	btn.add_theme_stylebox_override("normal", _pill(o, 0.0, o))
+	btn.add_theme_stylebox_override("hover", _pill(oh, 0.0, oh))
+	btn.add_theme_stylebox_override("pressed", _pill(oh, 0.0, oh))
+	btn.add_theme_stylebox_override("focus", _pill(o, 0.0, o))
+	btn.add_theme_color_override("font_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+
+
+func _style_ghost(btn: Button) -> void:
+	btn.add_theme_stylebox_override("normal", _pill(Color(1, 1, 1, 0.0), 2.5, Color(1, 1, 1, 0.9)))
+	btn.add_theme_stylebox_override("hover", _pill(Color(1, 1, 1, 0.14), 2.5, Color(1, 1, 1, 1)))
+	btn.add_theme_stylebox_override("pressed", _pill(Color(1, 1, 1, 0.2), 2.5, Color(1, 1, 1, 1)))
+	btn.add_theme_stylebox_override("focus", _pill(Color(1, 1, 1, 0.0), 2.5, Color(1, 1, 1, 0.9)))
+	btn.add_theme_color_override("font_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
 
 
 func _process(_delta: float) -> void:

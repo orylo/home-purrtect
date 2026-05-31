@@ -211,7 +211,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Box" type="VBoxContainer" parent="HUD/PausePanel/Center"]
-theme_override_constants/separation = 24
+theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="HUD/PausePanel/Center/Box"]
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -239,7 +239,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Box" type="VBoxContainer" parent="HUD/ClearPanel/Center"]
-theme_override_constants/separation = 24
+theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="HUD/ClearPanel/Center/Box"]
 theme_override_colors/font_color = Color(0.9882, 0.3137, 0, 1)
@@ -267,7 +267,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Box" type="VBoxContainer" parent="HUD/GameOverPanel/Center"]
-theme_override_constants/separation = 18
+theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="HUD/GameOverPanel/Center/Box"]
 theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)

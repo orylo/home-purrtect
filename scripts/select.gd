@@ -19,6 +19,7 @@ var _frame := 0
 var _test_unlocked := false   # 0키 치트로 전 직업 해금했는지
 var _pill_normal: StyleBoxFlat
 var _pill_hover: StyleBoxFlat
+var _pill_disabled: StyleBoxFlat
 var _head_font: Font
 
 
@@ -40,9 +41,11 @@ func _style_primary(btn: Button) -> void:
 	btn.add_theme_stylebox_override("hover", _pill_hover)
 	btn.add_theme_stylebox_override("pressed", _pill_hover)
 	btn.add_theme_stylebox_override("focus", _pill_normal)
+	btn.add_theme_stylebox_override("disabled", _pill_disabled)   # 잠긴 직업도 오렌지(흐리게)
 	btn.add_theme_color_override("font_color", Color(1, 1, 1))
 	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_disabled_color", Color(1, 1, 1))
 	if _head_font:
 		btn.add_theme_font_override("font", _head_font)
 	btn.add_theme_font_size_override("font_size", 40)
@@ -53,6 +56,7 @@ func _ready() -> void:
 	_head_font = load("res://assets/fonts/Pretendard-Black.otf")
 	_pill_normal = _make_pill(Color(0.9882, 0.3137, 0.0))   # Digital Orange
 	_pill_hover = _make_pill(Color(0.86, 0.27, 0.0))
+	_pill_disabled = _make_pill(Color(0.80, 0.52, 0.40))    # 잠김(흐린 오렌지)
 	# 스테이지 표시 + 해금 안내
 	var title: Label = $Center/Box/Title
 	if GameState.jobs_unlocked:
@@ -80,9 +84,9 @@ func _ready() -> void:
 		box.modulate = Color(1, 1, 1, 1.0) if unlocked else Color(1, 1, 1, 0.35)
 		if not unlocked:
 			btn.text = GameState.job_title(job) + " (잠김)"
+		_style_primary(btn)   # 모든 직업 버튼 = 오렌지 메인 CTA로 통일
 		btn.pressed.connect(_pick.bind(job))
 		if unlocked:
-			_style_primary(btn)   # 메인 컬러 + 크게(등급 라벨보다 위계 ↑)
 			btn.mouse_entered.connect(_on_hover.bind(job))
 			btn.mouse_exited.connect(_on_unhover.bind(job))
 
