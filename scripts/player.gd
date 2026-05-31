@@ -97,6 +97,8 @@ var _jump_prep_timer: float = 0.0
 var _jump_land_timer: float = 0.0
 var _sit_phase: String = ""      # ""/down/up
 var _hurt_flash_timer: float = 0.0
+var _hurt_popups: Array = []     # 치즈가 받은 데미지 숫자(머리 위로 상승+페이드)
+const HURT_POP_DUR := 0.8
 # 눕기 그림자 크기는 현재 sit 스프라이트 프레임에 직접 맞춘다(_draw 참고)
 var _move_was_active: bool = false   # 직전 프레임에 이동 입력이 있었는지(새로 미는 순간 감지용)
 
@@ -271,8 +273,15 @@ func _physics_process(delta: float) -> void:
 	# 피격 시 흰 번쩍(몹과 통일)
 	anim.modulate = Color(1.9, 1.9, 1.9) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
 
+	# 받은 데미지 숫자 상승/소멸
+	if not _hurt_popups.is_empty():
+		for p in _hurt_popups:
+			p["t"] += delta
+		while not _hurt_popups.is_empty() and _hurt_popups[0]["t"] >= HURT_POP_DUR:
+			_hurt_popups.pop_front()
+
 	_update_animation(direction)
-	queue_redraw()   # 발밑 그림자(점프 높이/눕기 반영) 갱신
+	queue_redraw()   # 발밑 그림자(점프 높이/눕기 반영) + 데미지 숫자 갱신
 
 
 ## 발밑 그림자 — 검정 30% 타원. 점프하면 바닥에 남고 작아진다.
@@ -297,6 +306,25 @@ func _draw() -> void:
 	draw_set_transform(Vector2(0.0, sy), 0.0, Vector2(1.0, ry_scale))
 	draw_circle(Vector2.ZERO, rx * t, Color(0, 0, 0, 0.3 * t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	_draw_hurt_popups()
+
+
+## 치즈가 받은 데미지 숫자 — 머리 위로 상승하며 점점 투명(빨강)
+func _draw_hurt_popups() -> void:
+	if _hurt_popups.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	if font == null:
+		return
+	for p in _hurt_popups:
+		var f: float = clampf(p["t"] / HURT_POP_DUR, 0.0, 1.0)
+		var y := -236.0 - 48.0 * f
+		var a := 1.0 - f
+		var col := Color(1.0, 0.35, 0.3, a)   # 빨강(피해)
+		var txt := "-" + str(p["amount"])
+		var pos := Vector2(-40.0, y)
+		draw_string_outline(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 28, 5, Color(0, 0, 0, a * 0.85))
+		draw_string(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 28, col)
 
 
 ## 몸으로 밀기 — move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
@@ -454,6 +482,8 @@ func _nearest_enemy() -> Node2D:
 func take_damage(amount: float) -> void:
 	if _dead:
 		return
+	if amount >= 1.0:
+		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})   # 받은 데미지 숫자
 	health -= amount
 	_hurt_flash_timer = 0.15
 	_committed_anim = "hit"   # 피격 모션(끝까지·빠르게), 진행 중 공격 취소
