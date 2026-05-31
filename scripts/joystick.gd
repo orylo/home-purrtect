@@ -12,6 +12,7 @@ extends Control
 
 var _active: bool = false
 var _touch_index: int = -99   # 멀티터치 구분(공격 버튼과 동시 사용 가능하게)
+var _up_active: bool = false  # 위로 올려 점프한 상태(연속 점프 방지)
 var _center: Vector2 = Vector2.ZERO
 var _knob: Vector2 = Vector2.ZERO
 var _moved: float = 0.0
@@ -50,6 +51,7 @@ func _handle_press(pressed: bool, pos: Vector2, index: int) -> void:
 				Touch.request_jump()   # 거의 안 움직였으면 탭 = 점프
 			_active = false
 			_touch_index = -99
+			_up_active = false
 			Touch.move_axis = 0.0
 			Touch.crouch_held = false
 			queue_redraw()
@@ -61,11 +63,22 @@ func _handle_drag(pos: Vector2) -> void:
 	if off.length() > base_radius:
 		off = off.normalized() * base_radius
 	_knob = _center + off
-	# 아래로 충분히 당기면 앉기(회피), 아니면 좌우 이동
-	if off.y > base_radius * 0.5:
+	var thr := base_radius * 0.5
+	if off.y < -thr:
+		# 위로 올리면 점프(한 번만 — 내렸다 다시 올려야 또 점프)
+		if not _up_active:
+			Touch.request_jump()
+			_up_active = true
+		Touch.crouch_held = false
+		Touch.move_axis = clampf(off.x / base_radius, -1.0, 1.0)
+	elif off.y > thr:
+		# 아래로 당기면 앉기(회피)
+		_up_active = false
 		Touch.crouch_held = true
 		Touch.move_axis = 0.0
 	else:
+		# 가운데 영역: 좌우 이동
+		_up_active = false
 		Touch.crouch_held = false
 		Touch.move_axis = clampf(off.x / base_radius, -1.0, 1.0)
 	queue_redraw()
