@@ -38,6 +38,7 @@ var health: float
 var on_ground: bool = true
 var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격을 피함(추후 큰 적용)
 var _dead: bool = false
+var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 
 var _fire_timer: float = 0.0
 var _shoot_anim_timer: float = 0.0
@@ -51,6 +52,13 @@ var _hurt_anim_timer: float = 0.0
 
 func _ready() -> void:
 	position.y = Layout.ground_y()   # 어떤 기기에서도 바닥에 서도록
+	# 선택 직업 스탯 적용(시스템밸런스 §4)
+	var st: Dictionary = GameState.job_stats()
+	max_health = st["hp"]
+	ranged_damage = st["ranged"]
+	near_damage = st["near"]
+	attack_interval = 1.0 / float(st["atk_spd"])
+	move_multiplier = st["move"]
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	# 선택한 직업의 스프라이트로 교체
@@ -213,6 +221,7 @@ func _update_animation(direction: float) -> void:
 	# 우선순위: 피격(hit) > 사격 > 점프 > 걷기/뒷걸음 > 정지
 	# → 맞으면 잠깐 hit 모션이 우선 보인다.
 	var next := "idle"
+	var reversed := false
 	if _hurt_anim_timer > 0.0:
 		next = "hit"
 	elif crouching:
@@ -226,7 +235,12 @@ func _update_animation(direction: float) -> void:
 	elif direction > 0.0:
 		next = "walk"
 	elif direction < 0.0:
-		next = "back"
+		next = "walk"
+		reversed = true   # 뒷걸음질 = walk 역재생(전용 모션 없음)
 
-	if anim.animation != next:
-		anim.play(next)
+	if anim.animation != next or _anim_reversed != reversed:
+		_anim_reversed = reversed
+		if reversed:
+			anim.play_backwards(next)
+		else:
+			anim.play(next)

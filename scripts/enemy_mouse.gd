@@ -67,13 +67,6 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_vx = 0.0   # 매 프레임 리셋(치즈가 계속 밀면 다시 설정됨)
 
-	# 피격 흰 번쩍
-	if _flash > 0.0:
-		_flash -= delta
-		anim.modulate = Color(1.9, 1.9, 1.9)
-	else:
-		anim.modulate = Color(1, 1, 1)
-
 	# 3) 치즈에 닿아 있으면 공격
 	_attack_timer -= delta
 	if _is_touching_player() and _attack_timer <= 0.0:
@@ -81,6 +74,29 @@ func _physics_process(delta: float) -> void:
 		var player := get_tree().get_first_node_in_group("player")
 		if player and player.has_method("take_damage"):
 			player.take_damage(damage)
+
+	# 피격 흰 번쩍
+	if _flash > 0.0:
+		_flash -= delta
+		anim.modulate = Color(1.9, 1.9, 1.9)
+	else:
+		anim.modulate = Color(1, 1, 1)
+
+	queue_redraw()   # 머리 위 HP 게이지 갱신
+
+
+# 머리 위 HP 게이지 — 데미지를 입은 뒤부터 표시
+func _draw() -> void:
+	if dead or health >= max_health:
+		return
+	var w := 76.0
+	var h := 9.0
+	var x := -w * 0.5
+	var y := -158.0   # 머리 위
+	var ratio := clampf(health / max_health, 0.0, 1.0)
+	draw_rect(Rect2(x, y, w, h), Color(0, 0, 0, 0.65))                       # 배경
+	draw_rect(Rect2(x, y, w * ratio, h), Color(0.95, 0.25, 0.2, 1.0))        # 체력
+	draw_rect(Rect2(x, y, w, h), Color(1, 1, 1, 0.6), false, 1.5)            # 테두리
 
 
 func _is_touching_player() -> bool:
@@ -139,6 +155,7 @@ func _die() -> void:
 	$CollisionShape2D.set_deferred("disabled", true)  # 죽으면 충돌(벽) 끔
 	$Hitbox.set_deferred("monitorable", false)         # 총알도 더는 안 맞게
 	anim.play("ghost")
+	queue_redraw()   # 머리 위 HP 게이지 제거
 	# 처치 "펑!" + 화면 흔들림 + 히트스톱
 	var pop := POP.instantiate()
 	get_parent().add_child(pop)
