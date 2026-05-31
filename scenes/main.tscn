@@ -13,7 +13,7 @@
 [ext_resource type="Script" path="res://scripts/attack_button.gd" id="11_attack"]
 [ext_resource type="Script" path="res://scripts/game.gd" id="12_game"]
 [ext_resource type="Script" path="res://scripts/muzzle_flash.gd" id="13_muzzle"]
-[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Black.ttf" id="14_head"]
+[ext_resource type="FontFile" path="res://assets/fonts/DoHyeon-Regular.ttf" id="14_head"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -197,7 +197,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.82)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 22
-text = "적이 가까우면 근접 · 멀면 원거리 자동 전환"
+text = "적이 가까우면 근접 / 멀면 원거리 자동 전환"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -279,7 +279,7 @@ horizontal_alignment = 1
 [node name="Sub" type="Label" parent="HUD/GameOverPanel/Center/Box"]
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 24
-text = "정신 차려라! 마지막 기회를 주마. — G"
+text = "정신 차려라! 마지막 기회를 주마. - G"
 horizontal_alignment = 1
 
 [node name="Restart" type="Button" parent="HUD/GameOverPanel/Center/Box"]

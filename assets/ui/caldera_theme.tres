@@ -1,7 +1,7 @@
 [gd_resource type="Theme" load_steps=8 format=3]
 
-[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Medium.ttf" id="1_body"]
-[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Bold.ttf" id="2_btn"]
+[ext_resource type="FontFile" path="res://assets/fonts/DoHyeon-Regular.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/DoHyeon-Regular.ttf" id="2_btn"]
 
 [sub_resource type="StyleBoxFlat" id="BtnNormal"]
 content_margin_left = 24.0
