@@ -113,10 +113,8 @@ script = ExtResource("11_attack")
 
 [node name="TopDim" type="ColorRect" parent="HUD"]
 mouse_filter = 2
-offset_left = 16.0
-offset_top = 18.0
-offset_right = 398.0
-offset_bottom = 82.0
+anchor_right = 1.0
+offset_bottom = 96.0
 color = Color(0, 0, 0, 0.5)
 
 [node name="Heart" type="Label" parent="HUD"]
