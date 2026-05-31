@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=71 format=3]
+[gd_resource type="SpriteFrames" load_steps=72 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/idle/idle1.png" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/idle/idle2.png" id="2"]
@@ -70,6 +70,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/hit/hit6.png" id="68"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/hit/hit7.png" id="69"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/hit/hit8.png" id="70"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sit/sit1.png" id="71"]
 
 [resource]
 animations = [{
@@ -312,4 +313,12 @@ animations = [{
 "loop": false,
 "name": &"hit",
 "speed": 14.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("71")
+}],
+"loop": false,
+"name": &"sit",
+"speed": 1.0
 }]
