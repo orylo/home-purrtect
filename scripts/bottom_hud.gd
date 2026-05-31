@@ -50,8 +50,9 @@ func _draw() -> void:
 	_slot_circle(comp, COMP_R)
 	_caption(font, 16, "동료", comp)
 
-	# --- 스킬 1~4: 동료 위로 부채꼴(좌하 → 우상) ---
-	var angles := [200.0, 235.0, 270.0, 305.0]
+	# --- 스킬 1~4: 동료의 왼쪽~위쪽으로만 부채꼴(오른쪽으로 안 감김) ---
+	#     스킬1 = 정좌측, 스킬4 = 정상단. 동료는 공격 옆 독립 버튼으로 남는다.
+	var angles := [180.0, 210.0, 240.0, 270.0]
 	for k in angles.size():
 		var a := deg_to_rad(angles[k])
 		var c := comp + Vector2(SKILL_RING * cos(a), SKILL_RING * sin(a))
