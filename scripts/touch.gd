@@ -4,6 +4,7 @@ extends Node
 
 var move_axis: float = 0.0       # 좌우 이동(-1 왼쪽 ~ +1 오른쪽), 조이스틱이 갱신
 var attack_held: bool = false    # 공격 버튼을 누르고 있는 중인지(연사용)
+var crouch_held: bool = false    # 조이스틱을 아래로 당겨 앉기(회피) 중인지
 var _jump_queued: bool = false
 
 

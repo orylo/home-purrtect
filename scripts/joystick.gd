@@ -51,6 +51,7 @@ func _handle_press(pressed: bool, pos: Vector2, index: int) -> void:
 			_active = false
 			_touch_index = -99
 			Touch.move_axis = 0.0
+			Touch.crouch_held = false
 			queue_redraw()
 
 
@@ -60,7 +61,13 @@ func _handle_drag(pos: Vector2) -> void:
 	if off.length() > base_radius:
 		off = off.normalized() * base_radius
 	_knob = _center + off
-	Touch.move_axis = clampf(off.x / base_radius, -1.0, 1.0)
+	# 아래로 충분히 당기면 앉기(회피), 아니면 좌우 이동
+	if off.y > base_radius * 0.5:
+		Touch.crouch_held = true
+		Touch.move_axis = 0.0
+	else:
+		Touch.crouch_held = false
+		Touch.move_axis = clampf(off.x / base_radius, -1.0, 1.0)
 	queue_redraw()
 
 

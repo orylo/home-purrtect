@@ -36,6 +36,7 @@ signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처�
 
 var health: float
 var on_ground: bool = true
+var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격을 피함(추후 큰 적용)
 var _dead: bool = false
 
 var _fire_timer: float = 0.0
@@ -69,14 +70,19 @@ func _physics_process(delta: float) -> void:
 	if absf(direction) < 0.2:
 		direction = 0.0               # 조이스틱 미세 떨림 무시(데드존)
 
+	# 앉기(회피) — S키 또는 조이스틱 아래로. 앉으면 이동·점프 불가.
+	crouching = on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
+	if crouching:
+		direction = 0.0
+
 	# 좌우 이동
 	velocity.x = direction * base_speed * move_multiplier
 
-	# 점프(회피) — 키보드 또는 조이스틱 탭
+	# 점프(회피) — 키보드 또는 조이스틱 탭 (앉은 중엔 불가)
 	var want_jump := Input.is_action_just_pressed("jump")
 	if Touch.consume_jump():
 		want_jump = true
-	if on_ground and want_jump:
+	if on_ground and not crouching and want_jump:
 		velocity.y = -jump_force
 		on_ground = false
 	if not on_ground:
@@ -132,15 +138,12 @@ func _handle_attack() -> void:
 	if not attacking or _fire_timer > 0.0:
 		return
 	var target := _nearest_enemy()
-	if target == null:
-		return
 	_fire_timer = attack_interval
 	_shoot_anim_timer = 0.35   # 공격 모션 잠깐 표시(근접 모션은 추후 제작)
-	var dist := global_position.distance_to(target.global_position)
-	if dist <= melee_range:
+	if target != null and global_position.distance_to(target.global_position) <= melee_range:
 		_melee_attack()        # 가까우면 근접
 	else:
-		_fire_at(target)       # 멀면 원거리
+		_fire_straight()       # 멀거나 적 없으면 일직선 발사
 
 
 ## 근접 공격 — 사정거리 안 적들에게 할퀴기 데미지
@@ -155,14 +158,14 @@ func _melee_attack() -> void:
 				e.take_damage(near_damage)
 
 
-func _fire_at(target: Node2D) -> void:
+## 일직선(오른쪽) 발사 — 적 위치로 각도 조준하지 않고 곧게 나간다.
+func _fire_straight() -> void:
 	if bullet_scene == null:
 		return
 	var bullet := bullet_scene.instantiate()
 	var muzzle := global_position + muzzle_offset
-	var dir := (target.global_position - muzzle).normalized()
 	if bullet.has_method("setup"):
-		bullet.setup(dir, ranged_damage)
+		bullet.setup(Vector2.RIGHT, ranged_damage)
 	bullet.global_position = muzzle
 	get_parent().add_child(bullet)
 	if is_instance_valid(muzzle_fx):
@@ -203,6 +206,8 @@ func _update_animation(direction: float) -> void:
 	var next := "idle"
 	if _hurt_anim_timer > 0.0:
 		next = "hit"
+	elif crouching:
+		next = "sit"
 	elif _shoot_anim_timer > 0.0:
 		next = "shoot"
 	elif not on_ground:
