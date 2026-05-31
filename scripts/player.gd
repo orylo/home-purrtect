@@ -41,6 +41,7 @@ var _dead: bool = false
 
 var _fire_timer: float = 0.0
 var _shoot_anim_timer: float = 0.0
+var _melee_anim_timer: float = 0.0
 var _hurt_flash_timer: float = 0.0
 var _hurt_anim_timer: float = 0.0
 
@@ -52,6 +53,11 @@ func _ready() -> void:
 	position.y = Layout.ground_y()   # 어떤 기기에서도 바닥에 서도록
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
+	# 선택한 직업의 스프라이트로 교체
+	var frames := load(GameState.job_frames_path())
+	if frames:
+		anim.sprite_frames = frames
+		anim.play("idle")
 	add_to_group("player")
 
 
@@ -59,6 +65,8 @@ func _physics_process(delta: float) -> void:
 	_fire_timer -= delta
 	if _shoot_anim_timer > 0.0:
 		_shoot_anim_timer -= delta
+	if _melee_anim_timer > 0.0:
+		_melee_anim_timer -= delta
 	if _hurt_flash_timer > 0.0:
 		_hurt_flash_timer -= delta
 	if _hurt_anim_timer > 0.0:
@@ -139,11 +147,12 @@ func _handle_attack() -> void:
 		return
 	var target := _nearest_enemy()
 	_fire_timer = attack_interval
-	_shoot_anim_timer = 0.35   # 공격 모션 잠깐 표시(근접 모션은 추후 제작)
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
-		_melee_attack()        # 가까우면 근접
+		_melee_anim_timer = 0.35   # 근접 모션
+		_melee_attack()            # 가까우면 근접
 	else:
-		_fire_straight()       # 멀거나 적 없으면 일직선 발사
+		_shoot_anim_timer = 0.35   # 사격 모션
+		_fire_straight()           # 멀거나 적 없으면 일직선 발사
 
 
 ## 근접 공격 — 사정거리 안 적들에게 할퀴기 데미지
@@ -208,6 +217,8 @@ func _update_animation(direction: float) -> void:
 		next = "hit"
 	elif crouching:
 		next = "sit"
+	elif _melee_anim_timer > 0.0:
+		next = "melee"
 	elif _shoot_anim_timer > 0.0:
 		next = "shoot"
 	elif not on_ground:

@@ -1,0 +1,85 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/select.gd" id="1_select"]
+
+[node name="Select" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_select")
+
+[node name="BG" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.12, 0.14, 0.2, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="Center"]
+theme_override_constants/separation = 30
+
+[node name="Title" type="Label" parent="Center/Box"]
+theme_override_font_sizes/font_size = 44
+text = "직업을 골라줘 (테스트)"
+horizontal_alignment = 1
+
+[node name="Row" type="HBoxContainer" parent="Center/Box"]
+theme_override_constants/separation = 36
+alignment = 1
+
+[node name="base" type="VBoxContainer" parent="Center/Box/Row"]
+theme_override_constants/separation = 10
+
+[node name="Preview" type="TextureRect" parent="Center/Box/Row/base"]
+custom_minimum_size = Vector2(190, 190)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Btn" type="Button" parent="Center/Box/Row/base"]
+custom_minimum_size = Vector2(190, 56)
+theme_override_font_sizes/font_size = 26
+text = "맨몸"
+
+[node name="sheriff" type="VBoxContainer" parent="Center/Box/Row"]
+theme_override_constants/separation = 10
+
+[node name="Preview" type="TextureRect" parent="Center/Box/Row/sheriff"]
+custom_minimum_size = Vector2(190, 190)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Btn" type="Button" parent="Center/Box/Row/sheriff"]
+custom_minimum_size = Vector2(190, 56)
+theme_override_font_sizes/font_size = 26
+text = "보안관"
+
+[node name="maid" type="VBoxContainer" parent="Center/Box/Row"]
+theme_override_constants/separation = 10
+
+[node name="Preview" type="TextureRect" parent="Center/Box/Row/maid"]
+custom_minimum_size = Vector2(190, 190)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Btn" type="Button" parent="Center/Box/Row/maid"]
+custom_minimum_size = Vector2(190, 56)
+theme_override_font_sizes/font_size = 26
+text = "메이드"
+
+[node name="jazz" type="VBoxContainer" parent="Center/Box/Row"]
+theme_override_constants/separation = 10
+
+[node name="Preview" type="TextureRect" parent="Center/Box/Row/jazz"]
+custom_minimum_size = Vector2(190, 190)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Btn" type="Button" parent="Center/Box/Row/jazz"]
+custom_minimum_size = Vector2(190, 56)
+theme_override_font_sizes/font_size = 26
+text = "음악가"

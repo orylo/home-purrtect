@@ -1,76 +1,117 @@
-[gd_resource type="SpriteFrames" load_steps=72 format=3]
+[gd_resource type="SpriteFrames" load_steps=113 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle1.png" id="1"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle2.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle3.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle4.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle5.png" id="5"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle6.png" id="6"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle7.png" id="7"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle8.png" id="8"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle9.png" id="9"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle10.png" id="10"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle11.png" id="11"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle12.png" id="12"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk1.png" id="13"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk2.png" id="14"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk3.png" id="15"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk4.png" id="16"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk5.png" id="17"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk6.png" id="18"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk7.png" id="19"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk8.png" id="20"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk9.png" id="21"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk10.png" id="22"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk11.png" id="23"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk12.png" id="24"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk13.png" id="25"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk14.png" id="26"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk15.png" id="27"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/1.png" id="28"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/2.png" id="29"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/3.png" id="30"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/4.png" id="31"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/5.png" id="32"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/6.png" id="33"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/7.png" id="34"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/8.png" id="35"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/9.png" id="36"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/10.png" id="37"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/11.png" id="38"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/12.png" id="39"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/13.png" id="40"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/14.png" id="41"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/back/15.png" id="42"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump1.png" id="43"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump2.png" id="44"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump3.png" id="45"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump4.png" id="46"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump5.png" id="47"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump6.png" id="48"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump7.png" id="49"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump8.png" id="50"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump9.png" id="51"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump10.png" id="52"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump11.png" id="53"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump12.png" id="54"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot1.png" id="55"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot4.png" id="56"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot5.png" id="57"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot6.png" id="58"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot7.png" id="59"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot8.png" id="60"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot9.png" id="61"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shot10.png" id="62"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit1.png" id="63"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit2.png" id="64"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit3.png" id="65"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit4.png" id="66"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit5.png" id="67"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit6.png" id="68"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit7.png" id="69"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit8.png" id="70"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit1.png" id="71"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_01.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_02.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_03.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_04.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_05.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_06.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_07.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_08.png" id="8"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_09.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_10.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_11.png" id="11"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_12.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_13.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_14.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_15.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/idle/idle_16.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_01.png" id="17"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_02.png" id="18"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_03.png" id="19"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_04.png" id="20"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_05.png" id="21"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_06.png" id="22"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_07.png" id="23"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_08.png" id="24"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_09.png" id="25"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_10.png" id="26"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_11.png" id="27"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_12.png" id="28"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_13.png" id="29"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_14.png" id="30"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_15.png" id="31"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/walk/walk_16.png" id="32"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_01.png" id="33"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_02.png" id="34"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_03.png" id="35"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_04.png" id="36"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_05.png" id="37"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_06.png" id="38"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_07.png" id="39"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_08.png" id="40"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_09.png" id="41"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_10.png" id="42"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_11.png" id="43"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_12.png" id="44"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_13.png" id="45"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_14.png" id="46"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_15.png" id="47"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/jump/jump_16.png" id="48"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_01.png" id="49"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_02.png" id="50"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_03.png" id="51"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_04.png" id="52"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_05.png" id="53"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_06.png" id="54"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_07.png" id="55"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_08.png" id="56"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_09.png" id="57"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_10.png" id="58"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_11.png" id="59"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_12.png" id="60"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_13.png" id="61"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_14.png" id="62"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_15.png" id="63"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/shoot/shoot_16.png" id="64"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_01.png" id="65"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_02.png" id="66"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_03.png" id="67"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_04.png" id="68"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_05.png" id="69"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_06.png" id="70"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_07.png" id="71"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_08.png" id="72"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_09.png" id="73"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_10.png" id="74"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_11.png" id="75"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_12.png" id="76"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_13.png" id="77"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_14.png" id="78"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_15.png" id="79"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/melee/melee_16.png" id="80"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_01.png" id="81"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_02.png" id="82"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_03.png" id="83"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_04.png" id="84"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_05.png" id="85"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_06.png" id="86"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_07.png" id="87"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_08.png" id="88"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_09.png" id="89"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_10.png" id="90"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_11.png" id="91"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_12.png" id="92"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_13.png" id="93"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_14.png" id="94"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_15.png" id="95"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/hit/hit_16.png" id="96"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_01.png" id="97"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_02.png" id="98"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_03.png" id="99"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_04.png" id="100"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_05.png" id="101"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_06.png" id="102"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_07.png" id="103"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_08.png" id="104"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_09.png" id="105"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_10.png" id="106"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_11.png" id="107"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_12.png" id="108"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_13.png" id="109"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_14.png" id="110"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_15.png" id="111"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/base/sit/sit_16.png" id="112"]
 
 [resource]
 animations = [{
@@ -110,12 +151,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("12")
-}],
-"loop": true,
-"name": &"idle",
-"speed": 10.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("13")
 }, {
@@ -127,7 +163,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("16")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 10.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("17")
 }, {
@@ -160,12 +201,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("27")
-}],
-"loop": true,
-"name": &"walk",
-"speed": 14.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("28")
 }, {
@@ -180,7 +216,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("32")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 14.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("33")
 }, {
@@ -210,12 +251,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("42")
-}],
-"loop": true,
-"name": &"back",
-"speed": 14.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("43")
 }, {
@@ -233,7 +269,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("48")
+}],
+"loop": false,
+"name": &"jump",
+"speed": 16.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("49")
 }, {
@@ -251,12 +292,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("54")
-}],
-"loop": false,
-"name": &"jump",
-"speed": 18.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("55")
 }, {
@@ -280,18 +316,18 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("62")
+}, {
+"duration": 1.0,
+"texture": ExtResource("63")
+}, {
+"duration": 1.0,
+"texture": ExtResource("64")
 }],
 "loop": false,
 "name": &"shoot",
 "speed": 16.0
 }, {
 "frames": [{
-"duration": 1.0,
-"texture": ExtResource("63")
-}, {
-"duration": 1.0,
-"texture": ExtResource("64")
-}, {
 "duration": 1.0,
 "texture": ExtResource("65")
 }, {
@@ -309,6 +345,89 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("70")
+}, {
+"duration": 1.0,
+"texture": ExtResource("71")
+}, {
+"duration": 1.0,
+"texture": ExtResource("72")
+}, {
+"duration": 1.0,
+"texture": ExtResource("73")
+}, {
+"duration": 1.0,
+"texture": ExtResource("74")
+}, {
+"duration": 1.0,
+"texture": ExtResource("75")
+}, {
+"duration": 1.0,
+"texture": ExtResource("76")
+}, {
+"duration": 1.0,
+"texture": ExtResource("77")
+}, {
+"duration": 1.0,
+"texture": ExtResource("78")
+}, {
+"duration": 1.0,
+"texture": ExtResource("79")
+}, {
+"duration": 1.0,
+"texture": ExtResource("80")
+}],
+"loop": false,
+"name": &"melee",
+"speed": 16.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("81")
+}, {
+"duration": 1.0,
+"texture": ExtResource("82")
+}, {
+"duration": 1.0,
+"texture": ExtResource("83")
+}, {
+"duration": 1.0,
+"texture": ExtResource("84")
+}, {
+"duration": 1.0,
+"texture": ExtResource("85")
+}, {
+"duration": 1.0,
+"texture": ExtResource("86")
+}, {
+"duration": 1.0,
+"texture": ExtResource("87")
+}, {
+"duration": 1.0,
+"texture": ExtResource("88")
+}, {
+"duration": 1.0,
+"texture": ExtResource("89")
+}, {
+"duration": 1.0,
+"texture": ExtResource("90")
+}, {
+"duration": 1.0,
+"texture": ExtResource("91")
+}, {
+"duration": 1.0,
+"texture": ExtResource("92")
+}, {
+"duration": 1.0,
+"texture": ExtResource("93")
+}, {
+"duration": 1.0,
+"texture": ExtResource("94")
+}, {
+"duration": 1.0,
+"texture": ExtResource("95")
+}, {
+"duration": 1.0,
+"texture": ExtResource("96")
 }],
 "loop": false,
 "name": &"hit",
@@ -316,9 +435,107 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("71")
+"texture": ExtResource("97")
+}, {
+"duration": 1.0,
+"texture": ExtResource("98")
+}, {
+"duration": 1.0,
+"texture": ExtResource("99")
+}, {
+"duration": 1.0,
+"texture": ExtResource("100")
+}, {
+"duration": 1.0,
+"texture": ExtResource("101")
+}, {
+"duration": 1.0,
+"texture": ExtResource("102")
+}, {
+"duration": 1.0,
+"texture": ExtResource("103")
+}, {
+"duration": 1.0,
+"texture": ExtResource("104")
+}, {
+"duration": 1.0,
+"texture": ExtResource("105")
+}, {
+"duration": 1.0,
+"texture": ExtResource("106")
+}, {
+"duration": 1.0,
+"texture": ExtResource("107")
+}, {
+"duration": 1.0,
+"texture": ExtResource("108")
+}, {
+"duration": 1.0,
+"texture": ExtResource("109")
+}, {
+"duration": 1.0,
+"texture": ExtResource("110")
+}, {
+"duration": 1.0,
+"texture": ExtResource("111")
+}, {
+"duration": 1.0,
+"texture": ExtResource("112")
 }],
-"loop": false,
+"loop": true,
 "name": &"sit",
-"speed": 1.0
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("17")
+}, {
+"duration": 1.0,
+"texture": ExtResource("18")
+}, {
+"duration": 1.0,
+"texture": ExtResource("19")
+}, {
+"duration": 1.0,
+"texture": ExtResource("20")
+}, {
+"duration": 1.0,
+"texture": ExtResource("21")
+}, {
+"duration": 1.0,
+"texture": ExtResource("22")
+}, {
+"duration": 1.0,
+"texture": ExtResource("23")
+}, {
+"duration": 1.0,
+"texture": ExtResource("24")
+}, {
+"duration": 1.0,
+"texture": ExtResource("25")
+}, {
+"duration": 1.0,
+"texture": ExtResource("26")
+}, {
+"duration": 1.0,
+"texture": ExtResource("27")
+}, {
+"duration": 1.0,
+"texture": ExtResource("28")
+}, {
+"duration": 1.0,
+"texture": ExtResource("29")
+}, {
+"duration": 1.0,
+"texture": ExtResource("30")
+}, {
+"duration": 1.0,
+"texture": ExtResource("31")
+}, {
+"duration": 1.0,
+"texture": ExtResource("32")
+}],
+"loop": true,
+"name": &"back",
+"speed": 14.0
 }]

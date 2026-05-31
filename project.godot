@@ -14,13 +14,14 @@ config/name="Home Purrtect"
 config/description="고양이 치즈가 집을 지키는 횡스크롤 액션 디펜스 (1막 개발 빌드)"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/select.tscn"
 
 [autoload]
 
 Layout="*res://scripts/layout.gd"
 Touch="*res://scripts/touch.gd"
 Fx="*res://scripts/fx.gd"
+GameState="*res://scripts/game_state.gd"
 
 [display]
 
