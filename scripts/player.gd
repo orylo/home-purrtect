@@ -166,13 +166,13 @@ func _update_hp_bar() -> void:
 
 
 func _update_animation(direction: float) -> void:
-	# 우선순위: 점프 > 사격(쏘는 순간 잠깐) > 걷기/뒷걸음 > 정지
-	# → 걸으면서 쏴도 "탕!(사격 포즈) → 다시 걷기"가 보인다.
+	# 우선순위: 사격(쏘는 순간 잠깐) > 점프 > 걷기/뒷걸음 > 정지
+	# → 걷거나 점프 중에 쏴도 "탕!(사격 포즈)"가 잠깐 보인다.
 	var next := "idle"
-	if not on_ground:
-		next = "jump"
-	elif _shoot_anim_timer > 0.0:
+	if _shoot_anim_timer > 0.0:
 		next = "shoot"
+	elif not on_ground:
+		next = "jump"
 	elif direction > 0.0:
 		next = "walk"
 	elif direction < 0.0:
