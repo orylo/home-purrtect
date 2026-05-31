@@ -7,12 +7,13 @@ extends Area2D
 ##        - 투명해지면(_alpha<0.4) 데미지 0
 ##   · lob      : 손으로 포물선 던지기(메이드/맨몸). 중력 받아 떨어지고,
 ##                바닥에 닿으면 소멸. 위로 던져지면 공중의 적도 맞출 수 있음.
-## shape : dot(흰 동그라미) / note(음표 ♪)
+## shape : dot(흰 원) / stone(회색 돌) / plate(접시 타원) / note(음표 ♪)
 
 @export var radius: float = 8.0
+const SHATTER_DUR := 0.25          # 바닥에 닿아 깨지는 연출 시간(접시·돌)
 
 var mode: String = "straight"      # straight | lob
-var shape: String = "dot"          # dot | note
+var shape: String = "dot"          # dot | stone | plate | note
 var note_type: int = 0             # 음표 모양 종류(0=8분음표 1=잇단음표 2=4분음표)
 var _velocity: Vector2 = Vector2.RIGHT * 700.0
 var _base_speed: float = 700.0     # 잔상 방향/길이용
@@ -31,6 +32,17 @@ var _base_y: float = 0.0
 var _dist: float = 0.0             # 진행한 가로 거리(물결 위상용)
 var _alpha: float = 1.0
 var _ground_y: float = 0.0
+var _shattering: bool = false      # 바닥에서 깨지는 중(접시·돌)
+var _shatter_t: float = 0.0
+
+
+## 모양별 히트박스 반지름(시각 크기에 맞춤)
+func _hit_radius() -> float:
+	match shape:
+		"stone": return 14.0
+		"plate": return 27.0   # 접시 1.7배에 맞춤
+		"note":  return 9.0
+		_:       return radius
 
 
 ## 발사 정보를 dict로 받는다.
@@ -65,12 +77,30 @@ func _ready() -> void:
 	_start_x = global_position.x
 	_base_y = global_position.y
 	_ground_y = Layout.ground_y()
+	# 모양에 맞게 히트박스 크기 조정(공유 리소스 변형 방지 위해 복제)
+	var cs := get_node_or_null("CollisionShape2D")
+	if cs and cs.shape:
+		cs.shape = cs.shape.duplicate()
+		cs.shape.radius = _hit_radius()
 	queue_redraw()
 
 
 func _physics_process(delta: float) -> void:
+	# 깨지는 중이면 연출만 진행
+	if _shattering:
+		_shatter_t -= delta
+		queue_redraw()
+		if _shatter_t <= 0.0:
+			queue_free()
+		return
+
 	if mode == "lob":
 		_velocity.y += grav * delta
+		# 접시·돌은 날아가며 빙글 회전
+		if shape == "plate":
+			rotation += delta * 7.0
+		elif shape == "stone":
+			rotation += delta * 3.5
 	global_position += _velocity * delta
 
 	# 음악가 음표: 좌우로 가되 위아래로 물결
@@ -92,11 +122,18 @@ func _physics_process(delta: float) -> void:
 			queue_free()
 			return
 
-	# 던지기: 바닥에 떨어지면 소멸(잔상도 갱신)
+	# 던지기: 바닥에 떨어지면 — 접시·돌은 깨짐 연출 후 소멸, 그 외는 바로 소멸
 	if mode == "lob":
 		queue_redraw()
 		if global_position.y >= _ground_y:
-			queue_free()
+			global_position.y = _ground_y
+			if shape == "plate" or shape == "stone":
+				_shattering = true
+				_shatter_t = SHATTER_DUR
+				_velocity = Vector2.ZERO
+				rotation = 0.0
+			else:
+				queue_free()
 			return
 
 	# 화면 밖으로 나가면 제거(메모리 정리)
@@ -106,6 +143,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
+	# 깨지는 중이면 데미지 없음
+	if _shattering:
+		return
+	# 불발(데미지 0)은 통과 — 그냥 바닥에 떨어짐
+	if damage <= 0.0:
+		return
 	# 투명해진 탄환(음악가 사거리 끝)은 데미지 없음
 	if max_range > 0.0 and _alpha < 0.4:
 		return
@@ -117,20 +160,87 @@ func _on_area_entered(area: Area2D) -> void:
 
 
 func _draw() -> void:
-	if shape == "note":
-		_draw_note(_alpha, note_type)
-	else:
-		_draw_dot(_alpha)
+	if _shattering:
+		var p := 1.0 - _shatter_t / SHATTER_DUR
+		if shape == "plate":
+			_draw_shatter(p, Color(0.96, 0.96, 0.92))   # 접시: 얇은 조각
+		else:
+			_draw_shatter_stone(p)                       # 돌: 회색 덩어리 + 먼지
+		return
+	match shape:
+		"note":  _draw_note(_alpha, note_type)
+		"stone": _draw_stone(_alpha)
+		"plate": _draw_plate(_alpha)
+		_:       _draw_dot(_alpha)
+
+
+## 회색 돌멩이 — 흰 탄환의 약 2배 크기
+func _draw_stone(a: float) -> void:
+	var r := radius * 2.0   # ≈16
+	var body := Color(0.55, 0.55, 0.58, a)
+	var edge := Color(0.28, 0.28, 0.30, a)
+	var shade := Color(0.42, 0.42, 0.45, a)
+	var hi := Color(0.72, 0.72, 0.75, a)
+	draw_circle(Vector2.ZERO, r, body)
+	draw_circle(Vector2(r * 0.28, r * 0.3), r * 0.55, shade)   # 아래쪽 그림자
+	draw_circle(Vector2(-r * 0.32, -r * 0.32), r * 0.28, hi)   # 위쪽 하이라이트
+	draw_arc(Vector2.ZERO, r, 0.0, TAU, 24, edge, 2.0, true)
+
+
+## 접시 — 큰 타원형(가로로 납작)
+func _draw_plate(a: float) -> void:
+	var col := Color(0.96, 0.96, 0.92, a)   # 크림빛 도자기
+	var edge := Color(0.5, 0.5, 0.55, a)
+	var rim := Color(0.8, 0.8, 0.85, a)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.42))  # 세로로 눌러 타원
+	draw_circle(Vector2.ZERO, 34.0, col)                       # 1.7배 크게
+	draw_arc(Vector2.ZERO, 34.0, 0.0, TAU, 32, edge, 2.2, true)
+	draw_arc(Vector2.ZERO, 20.0, 0.0, TAU, 28, rim, 1.6, true)  # 안쪽 테
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)         # 변환 원복
+
+
+## 깨짐 — 얇은 파편이 사방으로 튀며 사라짐(접시용)
+func _draw_shatter(p: float, base: Color) -> void:
+	var a := 1.0 - p
+	var dirs := [Vector2(-1, -0.5), Vector2(-0.4, -0.95), Vector2(0.3, -1.0), Vector2(0.9, -0.6), Vector2(1.1, -0.1)]
+	for i in range(dirs.size()):
+		var d: Vector2 = dirs[i]
+		var pos := d * (p * 30.0) + Vector2(0, p * p * 40.0)   # 튀었다가 중력으로 떨어짐
+		draw_circle(pos, 4.0 * a + 1.0, Color(base.r, base.g, base.b, a))
+
+
+## 돌멩이 깨짐 — 회색 덩어리 6조각 + 먼지 퍼프
+func _draw_shatter_stone(p: float) -> void:
+	var a := 1.0 - p
+	# 먼지 퍼프(연하게 퍼짐)
+	draw_circle(Vector2(0, -3), 9.0 + p * 24.0, Color(0.6, 0.6, 0.62, 0.22 * a))
+	var chunks := [
+		[Vector2(-1.0, -0.6), 5.5], [Vector2(-0.3, -1.05), 4.0],
+		[Vector2(0.5, -0.95), 6.0], [Vector2(1.05, -0.5), 4.5],
+		[Vector2(-0.7, -0.25), 3.5], [Vector2(0.25, -0.4), 3.0],
+	]
+	for c in chunks:
+		var d: Vector2 = c[0]
+		var pos := d * (p * 30.0) + Vector2(0, p * p * 44.0)
+		var rr: float = float(c[1]) * a + 1.0
+		draw_circle(pos, rr, Color(0.5, 0.5, 0.53, a))
+		draw_circle(pos + Vector2(-rr * 0.3, -rr * 0.3), rr * 0.42, Color(0.72, 0.72, 0.75, a))
 
 
 func _draw_dot(a: float) -> void:
-	# 진행 반대 방향으로 옅어지는 꼬리(잔상)
 	var dir := _velocity.normalized()
-	for i in range(1, 4):
-		var p := -dir * (i * 7.0)
-		draw_circle(p, radius * (1.0 - i * 0.22), Color(1, 1, 1, (0.32 - i * 0.07) * a))
-	draw_circle(Vector2.ZERO, radius, Color(1, 1, 1, a))
-	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 16, Color(0.1, 0.1, 0.1, a), 1.5, true)
+	# ① 부드러운 외광(글로우) — 따뜻한 빛 번짐
+	draw_circle(Vector2.ZERO, radius * 2.4, Color(1.0, 0.85, 0.5, 0.10 * a))
+	draw_circle(Vector2.ZERO, radius * 1.6, Color(1.0, 0.9, 0.6, 0.18 * a))
+	# ② 모션 스트릭(뒤로 길게 늘어지는 빛줄기)
+	for i in range(1, 6):
+		var p := -dir * (i * 6.0)
+		draw_circle(p, radius * (1.0 - i * 0.16), Color(1.0, 0.88, 0.55, (0.30 - i * 0.05) * a))
+	# ③ 본체 — 달궈진 탄알(가장자리 금속, 중심 흰빛)
+	draw_circle(Vector2.ZERO, radius, Color(0.95, 0.82, 0.55, a))
+	draw_circle(Vector2.ZERO, radius * 0.62, Color(1.0, 0.98, 0.9, a))
+	draw_circle(Vector2(-radius * 0.3, -radius * 0.32), radius * 0.34, Color(1, 1, 1, a))  # 광택
+	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 16, Color(0.25, 0.18, 0.1, a), 1.2, true)
 
 
 func _draw_note(a: float, t: int) -> void:
@@ -158,5 +268,7 @@ func _draw_note(a: float, t: int) -> void:
 
 
 func _note_head(c: Vector2, col: Color, edge: Color) -> void:
+	draw_circle(c, 10.0, Color(0.7, 0.85, 1.0, col.a * 0.16))   # 부드러운 글로우(음악적 푸른빛)
 	draw_circle(c, 7.0, col)
+	draw_circle(c + Vector2(-2.2, -2.4), 2.6, Color(1, 1, 1, col.a))   # 광택 하이라이트
 	draw_arc(c, 7.0, 0.0, TAU, 18, edge, 1.5, true)

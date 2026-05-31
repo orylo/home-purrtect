@@ -9,7 +9,9 @@ extends CanvasLayer
 @onready var pause_panel: ColorRect = $PausePanel
 @onready var resume_button: Button = $PausePanel/Center/Box/ResumeButton
 @onready var to_select_button: Button = $PausePanel/Center/Box/ToSelectButton
+@onready var stage_label: Label = $StageLabel
 @onready var clear_panel: ColorRect = $ClearPanel
+@onready var clear_next: Button = $ClearPanel/Center/Box/Next
 @onready var clear_restart: Button = $ClearPanel/Center/Box/Restart
 @onready var gameover_panel: ColorRect = $GameOverPanel
 @onready var gameover_restart: Button = $GameOverPanel/Center/Box/Restart
@@ -22,8 +24,10 @@ func _ready() -> void:
 	pause_button.pressed.connect(_on_pause_pressed)
 	resume_button.pressed.connect(_on_resume_pressed)
 	to_select_button.pressed.connect(_on_to_select_pressed)
+	clear_next.pressed.connect(_on_clear_next)
 	clear_restart.pressed.connect(_on_restart)
 	gameover_restart.pressed.connect(_on_restart)
+	stage_label.text = GameState.stage_label()   # 상단 스테이지 표시(1-1, 1-2…)
 	pause_panel.visible = false
 	clear_panel.visible = false
 	gameover_panel.visible = false
@@ -77,6 +81,13 @@ func _on_resume_pressed() -> void:
 
 func _on_to_select_pressed() -> void:
 	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/select.tscn")
+
+
+## 클리어 → 다음 스테이지(직업 해금) → 직업 선택 화면
+func _on_clear_next() -> void:
+	get_tree().paused = false
+	GameState.advance_stage()
 	get_tree().change_scene_to_file("res://scenes/select.tscn")
 
 

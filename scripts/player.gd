@@ -47,6 +47,8 @@ var crit_mult: float = 1.5
 var ranged_mode: String = "straight"   # straight 일자 / lob 포물선던지기
 var ranged_limit_frac: float = 0.0      # 일자 사거리(화면폭 비율, 0=끝까지) — 음악가 0.5
 var ranged_misfire: float = 0.0         # 불발 확률 — 보안관
+var ranged_shape: String = "dot"        # 투사체 모양(dot/stone/plate/note)
+var ranged_fire_delay: float = 0.0      # 공격 시작 후 발사까지 딜레이(모션 타이밍)
 
 signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처리)
 
@@ -88,6 +90,7 @@ const SHERIFF_BULLET_SPEED := 840.0
 var _fire_timer: float = 0.0
 var _committed_anim: String = "" # 끝까지 재생할 1회성 모션(hit/shoot/melee)
 var _melee_pending: float = -1.0 # 근접 딜 대기 타이머
+var _ranged_pending: float = -1.0 # 원거리 발사 대기 타이머(모션 타이밍)
 var _jump_state: String = ""     # ""/prep/air/land
 var _jump_prep_timer: float = 0.0
 var _jump_land_timer: float = 0.0
@@ -115,6 +118,8 @@ func _ready() -> void:
 	ranged_mode = st.get("rmode", "straight")
 	ranged_limit_frac = st.get("rlimit", 0.0)
 	ranged_misfire = st.get("misfire", 0.0)
+	ranged_shape = st.get("rshape", "dot")
+	ranged_fire_delay = st.get("rdelay", 0.0)
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	# 선택한 직업의 스프라이트로 교체
@@ -169,6 +174,12 @@ func _physics_process(delta: float) -> void:
 		if _melee_pending <= 0.0:
 			_melee_pending = -1.0
 			_melee_attack()
+	# 원거리: 모션 시작 후 약간 뒤(손이 던지는/총 쏘는 순간)에 실제 발사
+	if _ranged_pending >= 0.0:
+		_ranged_pending -= delta
+		if _ranged_pending <= 0.0:
+			_ranged_pending = -1.0
+			_fire_ranged()
 
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
@@ -183,7 +194,8 @@ func _physics_process(delta: float) -> void:
 	var move_just_started := move_active and not _move_was_active
 	if move_just_started and (_committed_anim == "shoot" or _committed_anim == "melee"):
 		_committed_anim = ""
-		_melee_pending = -1.0   # 근접 딜 대기도 취소
+		_melee_pending = -1.0    # 근접 딜 대기도 취소
+		_ranged_pending = -1.0   # 원거리 발사 대기도 취소
 	_move_was_active = move_active
 
 	# --- 앉기 상태머신: 숙여서 홀드 → 떼면 일어남(스프라이트 끝까지) ---
@@ -285,7 +297,10 @@ func _handle_attack() -> void:
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
 	else:
 		_committed_anim = "shoot"  # 사격 모션(끝까지 재생)
-		_fire_ranged()             # 직업별 원거리(일자/포물선/불발)
+		if ranged_fire_delay > 0.0:
+			_ranged_pending = ranged_fire_delay  # 모션 타이밍 맞춰 늦게 발사
+		else:
+			_fire_ranged()                       # 음악가 등은 즉시 발사
 
 
 ## 크리 판정 — 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
@@ -322,10 +337,18 @@ func _melee_attack() -> void:
 func _fire_ranged() -> void:
 	if bullet_scene == null:
 		return
-	# 보안관 불발 — 모션은 나가지만 탄이 안 나감. 연기 + "철컥" 소리로 알림.
+	# 보안관 불발 — 총알이 힘없이 나가 바로 앞에 툭 떨어짐(데미지 0) + "철컥" 소리.
 	if ranged_misfire > 0.0 and randf() < ranged_misfire:
-		if is_instance_valid(muzzle_fx):
-			muzzle_fx.smoke()
+		var dud := bullet_scene.instantiate()
+		dud.global_position = global_position + muzzle_offset
+		get_parent().add_child(dud)
+		if dud.has_method("setup"):
+			dud.setup({
+				"mode": "lob", "shape": "dot",
+				"dmg": 0.0, "kb": 0.0, "stun": 0.0, "crit": false,
+				"vx": randf_range(120.0, 210.0), "vy": -randf_range(90.0, 180.0),
+				"gravity": 2400.0,
+			})
 		if is_instance_valid(_click_player):
 			_click_player.play()
 		return
@@ -337,7 +360,7 @@ func _fire_ranged() -> void:
 		# 손 던지기: 오른쪽으로, 수평~위 45도 랜덤 각도 → 포물선
 		var ang := deg_to_rad(randf_range(LOB_ANGLE_MIN, LOB_ANGLE_MAX))
 		cfg["mode"] = "lob"
-		cfg["shape"] = "dot"
+		cfg["shape"] = ranged_shape   # 맨몸=돌(stone) / 메이드=접시(plate)
 		cfg["vx"] = cos(ang) * LOB_POWER
 		cfg["vy"] = -sin(ang) * LOB_POWER
 		cfg["gravity"] = LOB_GRAVITY
@@ -392,6 +415,7 @@ func take_damage(amount: float) -> void:
 	_hurt_flash_timer = 0.15
 	_committed_anim = "hit"   # 피격 모션(끝까지·빠르게), 진행 중 공격 취소
 	_melee_pending = -1.0
+	_ranged_pending = -1.0
 	_sit_phase = ""           # 맞으면 앉기 해제
 	if health <= 0.0:
 		health = 0.0
