@@ -51,13 +51,24 @@ var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격�
 var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 
-const ATTACK_ANIM_SPEED := 1.4   # 공격 모션 재생 배속(끝까지 본 뒤 idle 복귀)
+# 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
+const ATTACK_ANIM_SPEED := 1.4
+const HIT_ANIM_SPEED := 2.4
+const JUMP_PREP_TIME := 0.13     # 도약 전 준비(땅에서)
+const JUMP_PREP_SPEED := 3.2     # 준비 빠르게
+const JUMP_AIR_SPEED := 0.42     # 체공 느리게
+const JUMP_LAND_TIME := 0.12     # 착지 마무리(빠르게)
+const JUMP_LAND_SPEED := 2.2
+const SIT_HOLD_FRAME := 7        # 앉기: 완전히 숙인 프레임(여기서 홀드)
 
 var _fire_timer: float = 0.0
-var _attack_anim: String = ""    # 재생 중인 공격 모션("shoot"/"melee"), 끝나면 ""
-var _melee_pending: float = -1.0 # 근접 딜 대기 타이머(>=0이면 카운트다운 중)
+var _committed_anim: String = "" # 끝까지 재생할 1회성 모션(hit/shoot/melee)
+var _melee_pending: float = -1.0 # 근접 딜 대기 타이머
+var _jump_state: String = ""     # ""/prep/air/land
+var _jump_prep_timer: float = 0.0
+var _jump_land_timer: float = 0.0
+var _sit_phase: String = ""      # ""/down/up
 var _hurt_flash_timer: float = 0.0
-var _hurt_anim_timer: float = 0.0
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @onready var muzzle_fx: Node = $MuzzleFlash
@@ -86,18 +97,19 @@ func _ready() -> void:
 	add_to_group("player")
 
 
-# 공격 모션이 끝나면 idle로 돌아갈 수 있게 표시 해제
+# 1회성 모션이 끝나면 해제 → 입력 없을 때만 idle로
 func _on_anim_finished() -> void:
-	if anim.animation == _attack_anim:
-		_attack_anim = ""
+	var a := anim.animation
+	if a == _committed_anim:
+		_committed_anim = ""      # 공격/피격 모션 끝
+	if a == "sit" and _sit_phase == "up":
+		_sit_phase = ""           # 일어나기 끝
 
 
 func _physics_process(delta: float) -> void:
 	_fire_timer -= delta
 	if _hurt_flash_timer > 0.0:
 		_hurt_flash_timer -= delta
-	if _hurt_anim_timer > 0.0:
-		_hurt_anim_timer -= delta
 	# 근접 딜: 모션 시작 후 약간 뒤(펀치 닿는 순간)에 실제 데미지
 	if _melee_pending >= 0.0:
 		_melee_pending -= delta
@@ -111,44 +123,61 @@ func _physics_process(delta: float) -> void:
 	if absf(direction) < 0.2:
 		direction = 0.0               # 조이스틱 미세 떨림 무시(데드존)
 
-	# 앉기(회피) — S키 또는 조이스틱 아래로. 앉으면 이동·점프 불가.
-	crouching = on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
-	if crouching:
-		direction = 0.0
-		_attack_anim = ""     # 앉으면 공격 모션 취소
-		_melee_pending = -1.0 # 대기 중인 근접 딜도 취소
+	# --- 앉기 상태머신: 숙여서 홀드 → 떼면 일어남(스프라이트 끝까지) ---
+	var want_crouch := on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
+	if want_crouch and _sit_phase == "" and _jump_state == "" and _committed_anim == "":
+		_sit_phase = "down"
+	elif _sit_phase == "down" and not want_crouch:
+		_sit_phase = "up"
+	crouching = _sit_phase == "down"
+	if _sit_phase != "":
+		direction = 0.0   # 앉기/일어나기 중 이동 잠금
 
-	# 좌우 이동
 	velocity.x = direction * base_speed * move_multiplier
 
-	# 점프(회피) — 키보드 또는 조이스틱 탭 (앉은 중엔 불가)
+	# --- 점프 상태머신: 준비(땅) → 도약 → 체공(느리게) → 착지(빠르게) ---
 	var want_jump := Input.is_action_just_pressed("jump")
 	if Touch.consume_jump():
 		want_jump = true
-	if on_ground and not crouching and want_jump:
-		velocity.y = -jump_force
-		on_ground = false
+	if on_ground and _jump_state == "" and _sit_phase == "" and _committed_anim == "" and want_jump:
+		_jump_state = "prep"
+		_jump_prep_timer = JUMP_PREP_TIME
+	if _jump_state == "prep":
+		velocity.x = 0.0   # 준비 중엔 제자리(준비 동작이 땅에서 끝나고 도약)
+		_jump_prep_timer -= delta
+		if _jump_prep_timer <= 0.0:
+			velocity.y = -jump_force
+			on_ground = false
+			_jump_state = "air"
+
 	if not on_ground:
 		velocity.y += gravity * delta
 
 	move_and_slide()
 
 	# 오른쪽으로 갈 때, 부딪힌 적을 속도 규칙대로 민다
-	if direction > 0.0:
+	if direction > 0.0 and _jump_state != "prep":
 		_push_blocking_enemies()
 
-	# 바닥 라인 착지 (화면 아래에 동적으로 맞춰진 바닥)
+	# 바닥 라인 착지
 	var gy := Layout.ground_y()
 	if position.y >= gy:
 		position.y = gy
 		velocity.y = 0.0
+		if not on_ground and _jump_state == "air":
+			_jump_state = "land"
+			_jump_land_timer = JUMP_LAND_TIME
 		on_ground = true
+	if _jump_state == "land":
+		_jump_land_timer -= delta
+		if _jump_land_timer <= 0.0:
+			_jump_state = ""
 
 	# 화면 안에서만 (왼쪽 끝 ~ 오른쪽 끝)
 	var screen_width := get_viewport_rect().size.x
 	position.x = clampf(position.x, left_margin, screen_width - right_margin)
 
-	# 공격(공격 버튼/키를 누르고 있으면 연사, 거리에 따라 근접/원거리)
+	# 공격(누르는 동안 연사, 거리에 따라 근접/원거리)
 	_handle_attack()
 
 	# 피격 시 흰 번쩍(몹과 통일)
@@ -177,16 +206,18 @@ func _push_blocking_enemies() -> void:
 
 ## --- 공격 (공격 버튼/키를 누르고 있는 동안 attack_interval마다 발동) ---
 func _handle_attack() -> void:
+	if _sit_phase != "":
+		return   # 앉은 중엔 공격 안 함
 	var attacking := Touch.attack_held or Input.is_action_pressed("attack")
 	if not attacking or _fire_timer > 0.0:
 		return
 	var target := _nearest_enemy()
 	_fire_timer = attack_interval
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
-		_attack_anim = "melee"           # 근접 모션(끝까지 재생)
+		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
 	else:
-		_attack_anim = "shoot"     # 사격 모션(끝까지 재생)
+		_committed_anim = "shoot"  # 사격 모션(끝까지 재생)
 		_fire_straight()           # 멀거나 적 없으면 일직선 발사
 
 
@@ -254,9 +285,9 @@ func take_damage(amount: float) -> void:
 		return
 	health -= amount
 	_hurt_flash_timer = 0.15
-	_hurt_anim_timer = 0.45   # 피격(hit) 모션 잠깐 재생
-	_attack_anim = ""         # 맞으면 공격 모션 취소
-	_melee_pending = -1.0     # 대기 중인 근접 딜도 취소
+	_committed_anim = "hit"   # 피격 모션(끝까지·빠르게), 진행 중 공격 취소
+	_melee_pending = -1.0
+	_sit_phase = ""           # 맞으면 앉기 해제
 	if health <= 0.0:
 		health = 0.0
 		_dead = true
@@ -264,17 +295,15 @@ func take_damage(amount: float) -> void:
 
 
 func _update_animation(direction: float) -> void:
-	# 우선순위: 피격(hit) > 사격 > 점프 > 걷기/뒷걸음 > 정지
-	# → 맞으면 잠깐 hit 모션이 우선 보인다.
+	# 우선순위: 1회성모션(피격/공격) > 앉기 > 점프 > 걷기 > 정지
+	# idle은 "아무 입력/모션도 없을 때"만 나온다.
 	var next := "idle"
 	var reversed := false
-	if _hurt_anim_timer > 0.0:
-		next = "hit"
-	elif crouching:
+	if _committed_anim != "":
+		next = _committed_anim   # hit/shoot/melee — 끝까지 재생
+	elif _sit_phase != "":
 		next = "sit"
-	elif _attack_anim != "":
-		next = _attack_anim   # 공격 모션은 끝날 때까지 유지(_on_anim_finished에서 해제)
-	elif not on_ground:
+	elif _jump_state != "":
 		next = "jump"
 	elif direction > 0.0:
 		next = "walk"
@@ -287,6 +316,22 @@ func _update_animation(direction: float) -> void:
 		if reversed:
 			anim.play_backwards(next)
 		else:
-			# 공격은 약간 빠르게(끝까지 본 뒤 idle 복귀)
-			var spd := ATTACK_ANIM_SPEED if (next == "shoot" or next == "melee") else 1.0
-			anim.play(next, spd)
+			anim.play(next)
+
+	# 모션별 재생 배속
+	var ss := 1.0
+	if next == "shoot" or next == "melee":
+		ss = ATTACK_ANIM_SPEED
+	elif next == "hit":
+		ss = HIT_ANIM_SPEED
+	elif next == "jump":
+		match _jump_state:
+			"prep": ss = JUMP_PREP_SPEED
+			"air":  ss = JUMP_AIR_SPEED
+			"land": ss = JUMP_LAND_SPEED
+	anim.speed_scale = ss
+
+	# 앉기: 누르고 있는 동안 완전히 숙인 프레임에서 정지(떼면 일어남 재생)
+	if next == "sit" and _sit_phase == "down" and anim.frame >= SIT_HOLD_FRAME:
+		anim.frame = SIT_HOLD_FRAME
+		anim.speed_scale = 0.0
