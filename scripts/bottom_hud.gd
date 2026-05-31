@@ -13,14 +13,14 @@ const SQ_GAP: float = 18.0
 const ITEM_CENTER_RATIO: float = 0.62   # 가로 위치(화면 너비 비율)
 const ITEM_BOTTOM_MARGIN: float = 34.0
 
-# 동료(원)
-const COMP_R: float = 52.0
-const COMP_X_GAP: float = 16.0          # 공격 1/4원과의 간격
-const COMP_BOTTOM_MARGIN: float = 26.0
+# 동료(원) — 아이템과 공격·스킬 무리 사이의 독립 버튼
+const COMP_R: float = 50.0
+const COMP_CENTER_RATIO: float = 0.78   # 가로 위치(화면 너비 비율)
+const COMP_BOTTOM_MARGIN: float = 30.0
 
-# 스킬(원) 4개 — 동료 위로 부채꼴
-const SKILL_R: float = 36.0
-const SKILL_RING: float = 128.0
+# 스킬(원) 4개 — 공격(코너)을 둘러싸는 부채꼴
+const SKILL_R: float = 32.0
+const SKILL_RING: float = 189.0         # 코너에서 스킬 원 중심까지(공격 1/4원 바깥)
 
 
 func _ready() -> void:
@@ -45,19 +45,18 @@ func _draw() -> void:
 	_slot_quarter(corner, atk_r)
 	_caption(font, 22, "공격", corner + Vector2(-atk_r * 0.5, -atk_r * 0.42))
 
-	# --- 동료: 공격 왼쪽의 원 ---
-	var comp := Vector2(w - atk_r - COMP_X_GAP - COMP_R, h - COMP_BOTTOM_MARGIN - COMP_R)
-	_slot_circle(comp, COMP_R)
-	_caption(font, 16, "동료", comp)
-
-	# --- 스킬 1~4: 동료의 왼쪽~위쪽으로만 부채꼴(오른쪽으로 안 감김) ---
-	#     스킬1 = 정좌측, 스킬4 = 정상단. 동료는 공격 옆 독립 버튼으로 남는다.
-	var angles := [180.0, 210.0, 240.0, 270.0]
+	# --- 스킬 1~4: 공격(코너)을 둘러싸는 부채꼴 (스킬1 좌하 → 스킬4 상단) ---
+	var angles := [192.0, 214.0, 236.0, 258.0]
 	for k in angles.size():
 		var a := deg_to_rad(angles[k])
-		var c := comp + Vector2(SKILL_RING * cos(a), SKILL_RING * sin(a))
+		var c := corner + Vector2(SKILL_RING * cos(a), SKILL_RING * sin(a))
 		_slot_circle(c, SKILL_R)
 		_caption(font, 13, "스킬" + str(k + 1), c)
+
+	# --- 동료: 아이템 슬롯과 공격·스킬 무리 사이의 독립 버튼 ---
+	var comp := Vector2(w * COMP_CENTER_RATIO, h - COMP_BOTTOM_MARGIN - COMP_R)
+	_slot_circle(comp, COMP_R)
+	_caption(font, 16, "동료", comp)
 
 	# --- 아이템 1~3: 왼쪽 정사각형 ---
 	var total_w := ITEM_COUNT * SQ + (ITEM_COUNT - 1) * SQ_GAP
