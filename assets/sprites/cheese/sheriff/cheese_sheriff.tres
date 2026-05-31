@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=109 format=3]
+[gd_resource type="SpriteFrames" load_steps=105 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/idle/idle_01.png" id="1"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/idle/idle_02.png" id="2"]
@@ -24,90 +24,86 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_06.png" id="22"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_07.png" id="23"]
 [ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_08.png" id="24"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_09.png" id="25"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_10.png" id="26"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_11.png" id="27"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/walk/walk_12.png" id="28"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_01.png" id="29"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_02.png" id="30"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_03.png" id="31"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_04.png" id="32"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_05.png" id="33"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_06.png" id="34"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_07.png" id="35"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_08.png" id="36"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_09.png" id="37"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_10.png" id="38"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_11.png" id="39"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_12.png" id="40"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_13.png" id="41"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_14.png" id="42"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_15.png" id="43"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_16.png" id="44"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_01.png" id="45"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_02.png" id="46"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_03.png" id="47"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_04.png" id="48"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_05.png" id="49"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_06.png" id="50"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_07.png" id="51"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_08.png" id="52"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_09.png" id="53"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_10.png" id="54"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_11.png" id="55"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_12.png" id="56"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_13.png" id="57"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_14.png" id="58"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_15.png" id="59"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_16.png" id="60"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_01.png" id="61"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_02.png" id="62"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_03.png" id="63"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_04.png" id="64"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_05.png" id="65"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_06.png" id="66"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_07.png" id="67"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_08.png" id="68"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_09.png" id="69"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_10.png" id="70"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_11.png" id="71"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_12.png" id="72"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_13.png" id="73"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_14.png" id="74"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_15.png" id="75"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_16.png" id="76"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_01.png" id="77"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_02.png" id="78"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_03.png" id="79"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_04.png" id="80"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_05.png" id="81"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_06.png" id="82"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_07.png" id="83"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_08.png" id="84"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_09.png" id="85"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_10.png" id="86"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_11.png" id="87"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_12.png" id="88"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_13.png" id="89"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_14.png" id="90"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_15.png" id="91"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_16.png" id="92"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_01.png" id="93"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_02.png" id="94"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_03.png" id="95"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_04.png" id="96"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_05.png" id="97"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_06.png" id="98"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_07.png" id="99"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_08.png" id="100"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_09.png" id="101"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_10.png" id="102"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_11.png" id="103"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_12.png" id="104"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_13.png" id="105"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_14.png" id="106"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_15.png" id="107"]
-[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_16.png" id="108"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_01.png" id="25"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_02.png" id="26"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_03.png" id="27"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_04.png" id="28"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_05.png" id="29"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_06.png" id="30"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_07.png" id="31"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_08.png" id="32"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_09.png" id="33"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_10.png" id="34"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_11.png" id="35"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_12.png" id="36"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_13.png" id="37"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_14.png" id="38"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_15.png" id="39"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/jump/jump_16.png" id="40"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_01.png" id="41"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_02.png" id="42"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_03.png" id="43"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_04.png" id="44"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_05.png" id="45"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_06.png" id="46"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_07.png" id="47"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_08.png" id="48"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_09.png" id="49"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_10.png" id="50"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_11.png" id="51"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_12.png" id="52"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_13.png" id="53"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_14.png" id="54"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_15.png" id="55"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/shoot/shoot_16.png" id="56"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_01.png" id="57"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_02.png" id="58"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_03.png" id="59"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_04.png" id="60"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_05.png" id="61"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_06.png" id="62"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_07.png" id="63"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_08.png" id="64"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_09.png" id="65"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_10.png" id="66"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_11.png" id="67"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_12.png" id="68"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_13.png" id="69"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_14.png" id="70"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_15.png" id="71"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/melee/melee_16.png" id="72"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_01.png" id="73"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_02.png" id="74"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_03.png" id="75"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_04.png" id="76"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_05.png" id="77"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_06.png" id="78"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_07.png" id="79"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_08.png" id="80"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_09.png" id="81"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_10.png" id="82"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_11.png" id="83"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_12.png" id="84"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_13.png" id="85"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_14.png" id="86"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_15.png" id="87"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/hit/hit_16.png" id="88"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_01.png" id="89"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_02.png" id="90"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_03.png" id="91"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_04.png" id="92"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_05.png" id="93"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_06.png" id="94"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_07.png" id="95"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_08.png" id="96"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_09.png" id="97"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_10.png" id="98"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_11.png" id="99"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_12.png" id="100"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_13.png" id="101"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_14.png" id="102"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_15.png" id="103"]
+[ext_resource type="Texture2D" path="res://assets/sprites/cheese/sheriff/sit/sit_16.png" id="104"]
 
 [resource]
 animations = [{
@@ -188,7 +184,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("24")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 14.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("25")
 }, {
@@ -200,12 +201,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("28")
-}],
-"loop": true,
-"name": &"walk",
-"speed": 14.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("29")
 }, {
@@ -241,7 +237,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("40")
+}],
+"loop": false,
+"name": &"jump",
+"speed": 16.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("41")
 }, {
@@ -253,12 +254,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("44")
-}],
-"loop": false,
-"name": &"jump",
-"speed": 16.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("45")
 }, {
@@ -294,7 +290,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("56")
+}],
+"loop": false,
+"name": &"shoot",
+"speed": 16.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("57")
 }, {
@@ -306,12 +307,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("60")
-}],
-"loop": false,
-"name": &"shoot",
-"speed": 16.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("61")
 }, {
@@ -347,7 +343,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("72")
+}],
+"loop": false,
+"name": &"melee",
+"speed": 16.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("73")
 }, {
@@ -359,12 +360,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("76")
-}],
-"loop": false,
-"name": &"melee",
-"speed": 16.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("77")
 }, {
@@ -400,7 +396,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("88")
+}],
+"loop": false,
+"name": &"hit",
+"speed": 14.0
 }, {
+"frames": [{
 "duration": 1.0,
 "texture": ExtResource("89")
 }, {
@@ -412,12 +413,7 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("92")
-}],
-"loop": false,
-"name": &"hit",
-"speed": 14.0
 }, {
-"frames": [{
 "duration": 1.0,
 "texture": ExtResource("93")
 }, {
@@ -453,18 +449,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("104")
-}, {
-"duration": 1.0,
-"texture": ExtResource("105")
-}, {
-"duration": 1.0,
-"texture": ExtResource("106")
-}, {
-"duration": 1.0,
-"texture": ExtResource("107")
-}, {
-"duration": 1.0,
-"texture": ExtResource("108")
 }],
 "loop": false,
 "name": &"sit",
@@ -494,18 +478,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("24")
-}, {
-"duration": 1.0,
-"texture": ExtResource("25")
-}, {
-"duration": 1.0,
-"texture": ExtResource("26")
-}, {
-"duration": 1.0,
-"texture": ExtResource("27")
-}, {
-"duration": 1.0,
-"texture": ExtResource("28")
 }],
 "loop": true,
 "name": &"back",
