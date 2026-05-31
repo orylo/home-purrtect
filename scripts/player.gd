@@ -45,7 +45,6 @@ func _ready() -> void:
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	add_to_group("player")
-	_update_hp_bar()
 
 
 func _physics_process(delta: float) -> void:
@@ -152,17 +151,9 @@ func _nearest_enemy() -> Node2D:
 func take_damage(amount: float) -> void:
 	health -= amount
 	_hurt_flash_timer = 0.15
-	_update_hp_bar()
 	if health <= 0.0:
 		# 게임오버 — 지금은 임시로 스테이지 재시작(연출은 나중에)
 		get_tree().reload_current_scene()
-
-
-func _update_hp_bar() -> void:
-	var bar := get_tree().get_first_node_in_group("hp_bar")
-	if bar:
-		bar.max_value = max_health
-		bar.value = health
 
 
 func _update_animation(direction: float) -> void:

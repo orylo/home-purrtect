@@ -6,6 +6,8 @@ extends Node2D
 ## · 바닥 라인은 Layout.ground_y()와 항상 일치 → 캐릭터 발이 그림의 땅에 딱 맞음.
 
 @export var stage_texture: Texture2D
+## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
+@export var show_ground_line: bool = true
 
 
 func _ready() -> void:
@@ -34,3 +36,8 @@ func _draw() -> void:
 		draw_rect(Rect2(0.0, 0.0, vis.x, vis.y), Color(0.12, 0.14, 0.2, 1))            # 하늘(전체)
 		draw_rect(Rect2(0.0, gy, vis.x, vis.y - gy), Color(0.32, 0.28, 0.24, 1))        # 땅
 		draw_line(Vector2(0.0, gy), Vector2(vis.x, gy), Color(0.55, 0.48, 0.4, 1), 2.0) # 바닥선
+
+	# 디버그: 게임 바닥선을 빨간 선으로 표시(정렬 확인용)
+	if show_ground_line:
+		var line_y := Layout.ground_y()
+		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
