@@ -29,7 +29,8 @@ extends CharacterBody2D
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
 @export var near_damage: float = 12.0         # 맨몸 치즈 근거리공격력(할퀴기) 12
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
-@export var melee_range: float = 130.0        # 이 안이면 근접, 밖이면 원거리
+@export var melee_range: float = 170.0        # 이 안이면 근접, 밖이면 원거리
+@export var melee_hit_delay: float = 0.25     # 근접: 공격 시작 후 이만큼 뒤에 딜(펀치 맞는 순간)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
 signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처리)
@@ -44,6 +45,7 @@ const ATTACK_ANIM_SPEED := 1.4   # 공격 모션 재생 배속(끝까지 본 뒤
 
 var _fire_timer: float = 0.0
 var _attack_anim: String = ""    # 재생 중인 공격 모션("shoot"/"melee"), 끝나면 ""
+var _melee_pending: float = -1.0 # 근접 딜 대기 타이머(>=0이면 카운트다운 중)
 var _hurt_flash_timer: float = 0.0
 var _hurt_anim_timer: float = 0.0
 
@@ -83,6 +85,12 @@ func _physics_process(delta: float) -> void:
 		_hurt_flash_timer -= delta
 	if _hurt_anim_timer > 0.0:
 		_hurt_anim_timer -= delta
+	# 근접 딜: 모션 시작 후 약간 뒤(펀치 닿는 순간)에 실제 데미지
+	if _melee_pending >= 0.0:
+		_melee_pending -= delta
+		if _melee_pending <= 0.0:
+			_melee_pending = -1.0
+			_melee_attack()
 
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
@@ -94,7 +102,8 @@ func _physics_process(delta: float) -> void:
 	crouching = on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
 	if crouching:
 		direction = 0.0
-		_attack_anim = ""   # 앉으면 공격 모션 취소
+		_attack_anim = ""     # 앉으면 공격 모션 취소
+		_melee_pending = -1.0 # 대기 중인 근접 딜도 취소
 
 	# 좌우 이동
 	velocity.x = direction * base_speed * move_multiplier
@@ -161,8 +170,8 @@ func _handle_attack() -> void:
 	var target := _nearest_enemy()
 	_fire_timer = attack_interval
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
-		_attack_anim = "melee"     # 근접 모션(끝까지 재생)
-		_melee_attack()            # 가까우면 근접
+		_attack_anim = "melee"           # 근접 모션(끝까지 재생)
+		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
 	else:
 		_attack_anim = "shoot"     # 사격 모션(끝까지 재생)
 		_fire_straight()           # 멀거나 적 없으면 일직선 발사
@@ -217,6 +226,7 @@ func take_damage(amount: float) -> void:
 	_hurt_flash_timer = 0.15
 	_hurt_anim_timer = 0.45   # 피격(hit) 모션 잠깐 재생
 	_attack_anim = ""         # 맞으면 공격 모션 취소
+	_melee_pending = -1.0     # 대기 중인 근접 딜도 취소
 	if health <= 0.0:
 		health = 0.0
 		_dead = true
