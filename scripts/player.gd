@@ -119,7 +119,7 @@ func _handle_shooting() -> void:
 	if target == null:
 		return
 	_fire_timer = attack_interval
-	_shoot_anim_timer = 0.45   # 이 동안 shoot 모션(정지 중일 때만 보임)
+	_shoot_anim_timer = 0.35   # 이 동안 shoot 모션을 잠깐 우선 표시(걷는 중에도)
 	_fire_at(target)
 
 
@@ -166,15 +166,17 @@ func _update_hp_bar() -> void:
 
 
 func _update_animation(direction: float) -> void:
+	# 우선순위: 점프 > 사격(쏘는 순간 잠깐) > 걷기/뒷걸음 > 정지
+	# → 걸으면서 쏴도 "탕!(사격 포즈) → 다시 걷기"가 보인다.
 	var next := "idle"
 	if not on_ground:
 		next = "jump"
+	elif _shoot_anim_timer > 0.0:
+		next = "shoot"
 	elif direction > 0.0:
 		next = "walk"
 	elif direction < 0.0:
 		next = "back"
-	elif _shoot_anim_timer > 0.0:
-		next = "shoot"   # 멈춰서 쏠 때만 사격 모션(이동 중엔 걷기 우선)
 
 	if anim.animation != next:
 		anim.play(next)
