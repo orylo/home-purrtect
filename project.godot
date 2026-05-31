@@ -22,6 +22,7 @@ Layout="*res://scripts/layout.gd"
 Touch="*res://scripts/touch.gd"
 Fx="*res://scripts/fx.gd"
 GameState="*res://scripts/game_state.gd"
+RotateGate="*res://scripts/rotate_gate.gd"
 
 [display]
 
@@ -29,6 +30,11 @@ window/size/viewport_width=1560
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation="sensor_landscape"
+
+[gui]
+
+theme/custom_font="res://assets/fonts/DoHyeon-Regular.ttf"
 
 [rendering]
 

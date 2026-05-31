@@ -8,6 +8,7 @@ extends CanvasLayer
 @onready var pause_button: Button = $PauseButton
 @onready var pause_panel: ColorRect = $PausePanel
 @onready var resume_button: Button = $PausePanel/Center/Box/ResumeButton
+@onready var to_select_button: Button = $PausePanel/Center/Box/ToSelectButton
 @onready var clear_panel: ColorRect = $ClearPanel
 @onready var clear_restart: Button = $ClearPanel/Center/Box/Restart
 @onready var gameover_panel: ColorRect = $GameOverPanel
@@ -20,6 +21,7 @@ var _wave_total: int = 0
 func _ready() -> void:
 	pause_button.pressed.connect(_on_pause_pressed)
 	resume_button.pressed.connect(_on_resume_pressed)
+	to_select_button.pressed.connect(_on_to_select_pressed)
 	clear_restart.pressed.connect(_on_restart)
 	gameover_restart.pressed.connect(_on_restart)
 	pause_panel.visible = false
@@ -71,6 +73,11 @@ func _on_pause_pressed() -> void:
 func _on_resume_pressed() -> void:
 	get_tree().paused = false
 	pause_panel.visible = false
+
+
+func _on_to_select_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/select.tscn")
 
 
 func _on_restart() -> void:
