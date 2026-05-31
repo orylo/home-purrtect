@@ -1,10 +1,15 @@
 extends CharacterBody2D
-## 치즈(주인공) — 좌우 이동 + 점프(회피) + 원거리 자동사격 + 피격/넉백
+## 치즈(주인공) — 좌우 이동 + 점프(회피) + 원거리 자동사격 + 몸으로 밀기
 ##
-## ★핵심 규칙: 치즈는 "살아있는 관문"이고, 적은 항상 오른쪽에서 온다.
-##   그래서 치즈는 절대 좌우 반전하지 않는다 — 언제나 오른쪽을 본다.
-##   · 오른쪽 이동 = 앞으로 걸음(walk) / 왼쪽 이동 = 뒷걸음질(back)
-##   · 정지 = idle / 공중 = jump / 피격·넉백 = hit
+## ★핵심 규칙:
+##   · 치즈는 절대 좌우 반전 안 함 — 언제나 오른쪽을 본다.
+##     오른쪽 이동=walk / 왼쪽 이동=back(뒷걸음질) / 정지=idle / 공중=jump / 사격=shoot
+##   · 적은 통과 못 함(살아있는 관문). 점프해도 적 위로 못 넘어감(적은 키 큰 투명벽).
+##   · "몸으로 밀기": 오른쪽으로 가며 적과 부딪히면, 속도 규칙에 따라 적을 민다.
+##       - 적이 정지 중이면 누구나 밀기 가능
+##       - 적이 전진 중이면 치즈 이동속도 > 적 이동속도일 때만
+##       - 미는 속도 = (치즈 이동속도 − 적 이동속도)
+##   · 데미지는 "접촉"이 아니라 "적의 공격"에서만 받는다(넉백 없음, 피격 플래시만).
 
 ## --- 이동 ---
 @export var base_speed: float = 300.0
@@ -23,21 +28,15 @@ extends CharacterBody2D
 @export var bullet_scene: PackedScene
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 1초에 1발
-@export var muzzle_offset: Vector2 = Vector2(40, -70)  # 총구 위치(치즈 기준)
-
-## --- 접촉 피해/넉백 ---
-@export var contact_distance: float = 70.0    # 적과 이 거리 안이면 밟은 것으로 간주
-@export var knockback_speed: float = 420.0    # 왼쪽으로 튕기는 속도
-@export var knockback_time: float = 0.22      # 튕겨나가는 시간
-@export var invuln_time: float = 0.8          # 피격 후 무적 시간
+@export var muzzle_offset: Vector2 = Vector2(45, -70)  # 총구 위치(치즈 기준)
 
 var health: float
 var ground_y: float
 var on_ground: bool = true
 
 var _fire_timer: float = 0.0
-var _knockback_timer: float = 0.0
-var _invuln_timer: float = 0.0
+var _shoot_anim_timer: float = 0.0
+var _hurt_flash_timer: float = 0.0
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -51,31 +50,29 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	# 타이머 감소
 	_fire_timer -= delta
-	if _knockback_timer > 0.0:
-		_knockback_timer -= delta
-	if _invuln_timer > 0.0:
-		_invuln_timer -= delta
+	if _shoot_anim_timer > 0.0:
+		_shoot_anim_timer -= delta
+	if _hurt_flash_timer > 0.0:
+		_hurt_flash_timer -= delta
 
 	var direction := Input.get_axis("move_left", "move_right")
 
-	# 좌우 이동 (넉백 중이면 입력 무시하고 왼쪽으로 튕김)
-	if _knockback_timer > 0.0:
-		velocity.x = -knockback_speed
-		direction = 0.0
-	else:
-		velocity.x = direction * base_speed * move_multiplier
+	# 좌우 이동
+	velocity.x = direction * base_speed * move_multiplier
 
-	# 점프(회피) — 땅에 있고 넉백 중이 아닐 때만
-	if on_ground and _knockback_timer <= 0.0 and Input.is_action_just_pressed("jump"):
+	# 점프(회피)
+	if on_ground and Input.is_action_just_pressed("jump"):
 		velocity.y = -jump_force
 		on_ground = false
-
 	if not on_ground:
 		velocity.y += gravity * delta
 
 	move_and_slide()
+
+	# 오른쪽으로 갈 때, 부딪힌 적을 속도 규칙대로 민다
+	if direction > 0.0:
+		_push_blocking_enemies()
 
 	# 바닥 라인 착지
 	if position.y >= ground_y:
@@ -90,13 +87,28 @@ func _physics_process(delta: float) -> void:
 	# 원거리 자동 사격
 	_handle_shooting()
 
-	# 적과 접촉 시 피해 + 넉백
-	_handle_contact()
-
-	# 무적 동안 깜빡임
-	anim.modulate.a = 0.45 if _invuln_timer > 0.0 else 1.0
+	# 피격 시 빨간 플래시(넉백 없음)
+	anim.modulate = Color(1, 0.4, 0.4) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
 
 	_update_animation(direction)
+
+
+## 몸으로 밀기 — move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
+func _push_blocking_enemies() -> void:
+	var my_speed := base_speed * move_multiplier
+	for i in get_slide_collision_count():
+		var col := get_slide_collision(i)
+		var other := col.get_collider()
+		if other == null or not other.is_in_group("enemies"):
+			continue
+		if not other.has_method("receive_push"):
+			continue
+		var enemy_speed := 0.0
+		if other.has_method("get_advance_speed"):
+			enemy_speed = other.get_advance_speed()
+		# 적 정지 중(speed 0)이면 누구나 / 전진 중이면 내가 더 빠를 때만
+		if enemy_speed <= 0.0 or my_speed > enemy_speed:
+			other.receive_push(my_speed - enemy_speed)
 
 
 ## --- 사격 ---
@@ -107,6 +119,7 @@ func _handle_shooting() -> void:
 	if target == null:
 		return
 	_fire_timer = attack_interval
+	_shoot_anim_timer = 0.45   # 이 동안 shoot 모션(정지 중일 때만 보임)
 	_fire_at(target)
 
 
@@ -120,7 +133,6 @@ func _fire_at(target: Node2D) -> void:
 	get_parent().add_child(bullet)
 
 
-## 살아있는 가장 가까운 적을 찾는다.
 func _nearest_enemy() -> Node2D:
 	var nearest: Node2D = null
 	var best := INF
@@ -136,24 +148,10 @@ func _nearest_enemy() -> Node2D:
 	return nearest
 
 
-## --- 접촉 피해 + 왼쪽 넉백 ---
-func _handle_contact() -> void:
-	if _invuln_timer > 0.0:
-		return
-	var e := _nearest_enemy()
-	if e == null:
-		return
-	if global_position.distance_to(e.global_position) <= contact_distance:
-		var dmg = e.get("damage")
-		if dmg == null:
-			dmg = 5.0
-		_take_hit(float(dmg))
-
-
-func _take_hit(amount: float) -> void:
+## 적의 공격에서 호출 — 데미지를 받는다(넉백 없음).
+func take_damage(amount: float) -> void:
 	health -= amount
-	_knockback_timer = knockback_time
-	_invuln_timer = invuln_time
+	_hurt_flash_timer = 0.15
 	_update_hp_bar()
 	if health <= 0.0:
 		# 게임오버 — 지금은 임시로 스테이지 재시작(연출은 나중에)
@@ -167,17 +165,16 @@ func _update_hp_bar() -> void:
 		bar.value = health
 
 
-## 상황에 맞는 애니메이션 재생
 func _update_animation(direction: float) -> void:
 	var next := "idle"
-	if _knockback_timer > 0.0:
-		next = "hit"
-	elif not on_ground:
+	if not on_ground:
 		next = "jump"
 	elif direction > 0.0:
 		next = "walk"
 	elif direction < 0.0:
 		next = "back"
+	elif _shoot_anim_timer > 0.0:
+		next = "shoot"   # 멈춰서 쏠 때만 사격 모션(이동 중엔 걷기 우선)
 
 	if anim.animation != next:
 		anim.play(next)

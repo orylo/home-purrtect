@@ -2,25 +2,25 @@ extends CharacterBody2D
 ## 적 — 쥐 (1막 기본 지상 러셔)
 ##
 ## 오른쪽에서 등장해 왼쪽(집)으로 "걷고-멈추기"를 반복하며 전진한다.
-## 치즈(살아있는 관문)에 닿으면 멈춘다 — 통과하지 못한다.
-## 쥐끼리는 서로 부딪혀 줄을 선다.
+## 치즈(살아있는 관문)에 막혀 통과하지 못하고, 키 큰 투명벽이라 점프로도 못 넘는다.
+## 치즈에 닿아 있으면 attack_interval마다 공격(치즈에게 데미지).
+## 치즈가 몸으로 밀면(receive_push) 오른쪽으로 밀린다. 쥐끼리도 부딪혀 줄을 선다.
 ## 탄환에 맞으면 hit 모션 → HP 0이면 ghost(유령) 연출 후 사라진다.
-##
-## ※ 쥐가 치즈를 "공격"하는 근접 전투는 다음 단계. 지금은 치즈가 부딪힐 때만
-##   접촉 데미지(damage)를 준다(치즈 쪽 스크립트가 처리).
 
 @export var move_speed: float = 120.0   # 걷는 단계 이동 속도(px/s) — 튜닝값
 @export var walk_time: float = 1.5      # 걷는 시간(시스템밸런스 §1.1: 쥐 1.5s)
 @export var stop_time: float = 1.0      # 멈추는 시간(쥐 1.0s)
-@export var stop_gap: float = 85.0      # 치즈 앞 이 거리에서 멈춤(관문)
 @export var max_health: float = 20.0    # 쥐 HP (시스템밸런스 §3.1)
-@export var damage: float = 5.0         # 치즈에게 주는 접촉 데미지 (쥐 DMG 5)
+@export var damage: float = 5.0         # 치즈에게 주는 공격 데미지 (쥐 DMG 5)
+@export var attack_interval: float = 1.0  # 공격 간격(쥐 1.0s)
 
 var health: float
 var dead: bool = false
 var _phase_timer: float = 0.0
 var _walking: bool = true
 var _hit: bool = false
+var _attack_timer: float = 0.0
+var _push_vx: float = 0.0
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -37,27 +37,55 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if dead:
 		velocity = Vector2.ZERO
+		_push_vx = 0.0
 		return
 
-	# 1) 걷고-멈추기 리듬 갱신
+	# 1) 걷고-멈추기 리듬
 	_phase_timer -= delta
 	if _phase_timer <= 0.0:
 		_walking = not _walking
 		_phase_timer = walk_time if _walking else stop_time
 
-	# 2) 치즈(관문) 앞에서 멈춤 — 통과 불가
-	var blocked := false
-	var player := get_tree().get_first_node_in_group("player")
-	if player and global_position.x <= (player as Node2D).global_position.x + stop_gap:
-		blocked = true
-
-	# 3) 이동(걷는 단계 + 안 막힘 + 피격중 아님일 때만 전진)
-	if _walking and not blocked and not _hit:
+	# 2) 이동: 밀리는 중이면 오른쪽으로, 아니면 전진(왼쪽)
+	if _push_vx > 0.0:
+		velocity.x = _push_vx
+	elif _walking and not _hit:
 		velocity.x = -move_speed
 	else:
 		velocity.x = 0.0
 	velocity.y = 0.0
 	move_and_slide()
+	_push_vx = 0.0   # 매 프레임 리셋(치즈가 계속 밀면 다시 설정됨)
+
+	# 3) 치즈에 닿아 있으면 공격
+	_attack_timer -= delta
+	if _is_touching_player() and _attack_timer <= 0.0:
+		_attack_timer = attack_interval
+		var player := get_tree().get_first_node_in_group("player")
+		if player and player.has_method("take_damage"):
+			player.take_damage(damage)
+
+
+func _is_touching_player() -> bool:
+	for i in get_slide_collision_count():
+		var other := get_slide_collision(i).get_collider()
+		if other and other.is_in_group("player"):
+			return true
+	return false
+
+
+## 치즈가 밀기 판단에 쓰는 "현재 전진 속도"(전진 중이면 양수, 멈췄으면 0)
+func get_advance_speed() -> float:
+	if _walking and not _hit and not dead:
+		return move_speed
+	return 0.0
+
+
+## 치즈가 몸으로 밀 때 호출 — 이번 프레임 오른쪽으로 밀린다.
+func receive_push(amount: float) -> void:
+	if dead:
+		return
+	_push_vx = max(_push_vx, amount)
 
 
 func is_dead() -> bool:
@@ -81,7 +109,7 @@ func _on_anim_finished() -> void:
 		queue_free()              # ghost(유령) 애니가 끝나면 완전히 제거
 	elif _hit and anim.animation == "hit":
 		_hit = false
-		anim.play("walk")          # 피격 모션 끝 → 다시 걷기
+		anim.play("walk")
 
 
 func _die() -> void:

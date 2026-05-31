@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="5_bullet"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(90, 140)
+size = Vector2(50, 300)
 
 [node name="Main" type="Node2D"]
 
@@ -22,7 +22,7 @@ offset_right = 1280.0
 offset_bottom = 720.0
 color = Color(0.32, 0.28, 0.24, 1)
 
-[node name="Player" type="CharacterBody2D" parent="." groups=["player"]]
+[node name="Player" type="CharacterBody2D" parent="." groups=["player"] collision_layer=4 collision_mask=2]
 position = Vector2(200, 620)
 script = ExtResource("1_player")
 bullet_scene = ExtResource("5_bullet")
@@ -35,7 +35,7 @@ animation = &"idle"
 autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-position = Vector2(0, -70)
+position = Vector2(0, -150)
 shape = SubResource("RectangleShape2D_player")
 
 [node name="Spawner" type="Node2D" parent="."]
