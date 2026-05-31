@@ -35,8 +35,8 @@ func _input(event: InputEvent) -> void:
 
 func _handle_press(pressed: bool, pos: Vector2) -> void:
 	if pressed:
-		# 왼쪽 + 조작 띠(바닥선 아래)에서 시작한 터치만 조이스틱으로
-		if not _active and pos.x < size.x * 0.5 and pos.y > Layout.ground_y():
+		# 왼쪽 + 조작 띠 안에서 시작한 터치만 조이스틱으로
+		if not _active and pos.x < size.x * 0.5 and pos.y > Layout.band_top():
 			_active = true
 			_center = pos
 			_knob = pos
@@ -68,8 +68,8 @@ func _draw() -> void:
 		draw_circle(_knob, knob_radius, Color(1, 1, 1, 0.40))
 		draw_arc(_knob, knob_radius, 0.0, TAU, 32, Color(1, 1, 1, 0.8), 3.0)
 	else:
-		# 쉬는 위치 — 조작 띠(바닥선 아래)의 왼쪽 세로 중앙에 흐릿하게 표시
-		var band_cy := (Layout.ground_y() + size.y) * 0.5
+		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙에 흐릿하게 표시
+		var band_cy := (Layout.band_top() + size.y) * 0.5
 		var rest := Vector2(50.0 + base_radius, band_cy)
 		draw_circle(rest, base_radius, Color(1, 1, 1, 0.08))
 		draw_arc(rest, base_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.25), 2.0)

@@ -28,9 +28,13 @@ func _ready() -> void:
 func _draw() -> void:
 	var w := size.x
 	var h := size.y
-	var band_top := Layout.ground_y()       # 조작 띠 = 바닥선 ~ 화면 아래
+	var band_top := Layout.band_top()        # 조작 띠 = (바닥선+간격) ~ 화면 아래
 	var band_cy := (band_top + h) * 0.5      # 띠의 세로 중앙
 	var font := get_theme_default_font()
+
+	# --- 조작 띠 배경: 50% 블랙 딤 (+ 윗변 얇은 라인) ---
+	draw_rect(Rect2(0.0, band_top, w, h - band_top), Color(0, 0, 0, 0.5), true)
+	draw_line(Vector2(0.0, band_top), Vector2(w, band_top), Color(1, 1, 1, 0.18), 2.0)
 
 	# --- 가운데: 소모품 4칸(정사각형) — 띠 세로 중앙 ---
 	var total_w := CONSUMABLE_COUNT * SQ + (CONSUMABLE_COUNT - 1) * SQ_GAP

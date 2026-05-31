@@ -29,3 +29,12 @@ func cover_scale() -> float:
 func ground_y() -> float:
 	var vis := get_viewport().get_visible_rect().size
 	return vis.y - GROUND_FROM_BOTTOM * cover_scale()
+
+
+## 바닥선과 조작 띠(딤) 사이 간격 — 바닥선이 띠보다 살짝 위로 떠 보이게
+const CONTROL_BAND_GAP: float = 22.0
+
+
+## 조작 띠(하단 딤 + 버튼)의 윗변 y좌표. 바닥선보다 조금 아래.
+func band_top() -> float:
+	return ground_y() + CONTROL_BAND_GAP
