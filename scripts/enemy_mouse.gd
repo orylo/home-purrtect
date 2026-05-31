@@ -136,7 +136,8 @@ func _die() -> void:
 	dead = true
 	velocity = Vector2.ZERO
 	anim.modulate = Color(1, 1, 1)  # 번쩍 중 죽어도 유령은 정상 색
-	$CollisionShape2D.set_deferred("disabled", true)  # 죽으면 충돌 끔
+	$CollisionShape2D.set_deferred("disabled", true)  # 죽으면 충돌(벽) 끔
+	$Hitbox.set_deferred("monitorable", false)         # 총알도 더는 안 맞게
 	anim.play("ghost")
 	# 처치 "펑!" + 화면 흔들림 + 히트스톱
 	var pop := POP.instantiate()

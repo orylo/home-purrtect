@@ -17,7 +17,8 @@ func setup(direction: Vector2, dmg: float) -> void:
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
+	# 적의 "몸 히트박스"(Area2D)에만 맞도록 area_entered 사용
+	area_entered.connect(_on_area_entered)
 	queue_redraw()
 
 
@@ -29,10 +30,11 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-func _on_body_entered(body: Node) -> void:
-	if body.is_in_group("enemies"):
-		if body.has_method("take_damage"):
-			body.take_damage(damage)
+func _on_area_entered(area: Area2D) -> void:
+	var enemy := area.get_parent()
+	if enemy and enemy.is_in_group("enemies"):
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(damage)
 		queue_free()
 
 
