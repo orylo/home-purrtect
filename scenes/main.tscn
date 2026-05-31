@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/cheese_frames.tres" id="2_frames"]
 [ext_resource type="Script" path="res://scripts/spawner.gd" id="3_spawner"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_mouse.tscn" id="4_mouse"]
+[ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="5_bullet"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(90, 140)
@@ -24,6 +25,7 @@ color = Color(0.32, 0.28, 0.24, 1)
 [node name="Player" type="CharacterBody2D" parent="." groups=["player"]]
 position = Vector2(200, 620)
 script = ExtResource("1_player")
+bullet_scene = ExtResource("5_bullet")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player"]
 position = Vector2(0, -75)
@@ -39,3 +41,20 @@ shape = SubResource("RectangleShape2D_player")
 [node name="Spawner" type="Node2D" parent="."]
 script = ExtResource("3_spawner")
 enemy_scene = ExtResource("4_mouse")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="HPLabel" type="Label" parent="HUD"]
+offset_left = 30.0
+offset_top = 18.0
+offset_right = 130.0
+offset_bottom = 44.0
+text = "치즈 체력"
+
+[node name="HPBar" type="ProgressBar" parent="HUD" groups=["hp_bar"]]
+offset_left = 30.0
+offset_top = 46.0
+offset_right = 330.0
+offset_bottom = 74.0
+max_value = 100.0
+value = 100.0
