@@ -40,9 +40,10 @@ var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격�
 var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 
+const ATTACK_ANIM_SPEED := 1.4   # 공격 모션 재생 배속(끝까지 본 뒤 idle 복귀)
+
 var _fire_timer: float = 0.0
-var _shoot_anim_timer: float = 0.0
-var _melee_anim_timer: float = 0.0
+var _attack_anim: String = ""    # 재생 중인 공격 모션("shoot"/"melee"), 끝나면 ""
 var _hurt_flash_timer: float = 0.0
 var _hurt_anim_timer: float = 0.0
 
@@ -66,15 +67,18 @@ func _ready() -> void:
 	if frames:
 		anim.sprite_frames = frames
 		anim.play("idle")
+	anim.animation_finished.connect(_on_anim_finished)
 	add_to_group("player")
+
+
+# 공격 모션이 끝나면 idle로 돌아갈 수 있게 표시 해제
+func _on_anim_finished() -> void:
+	if anim.animation == _attack_anim:
+		_attack_anim = ""
 
 
 func _physics_process(delta: float) -> void:
 	_fire_timer -= delta
-	if _shoot_anim_timer > 0.0:
-		_shoot_anim_timer -= delta
-	if _melee_anim_timer > 0.0:
-		_melee_anim_timer -= delta
 	if _hurt_flash_timer > 0.0:
 		_hurt_flash_timer -= delta
 	if _hurt_anim_timer > 0.0:
@@ -90,6 +94,7 @@ func _physics_process(delta: float) -> void:
 	crouching = on_ground and (Touch.crouch_held or Input.is_action_pressed("crouch"))
 	if crouching:
 		direction = 0.0
+		_attack_anim = ""   # 앉으면 공격 모션 취소
 
 	# 좌우 이동
 	velocity.x = direction * base_speed * move_multiplier
@@ -156,10 +161,10 @@ func _handle_attack() -> void:
 	var target := _nearest_enemy()
 	_fire_timer = attack_interval
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
-		_melee_anim_timer = 0.5    # 근접 모션(2배속이면 16프레임=0.5초)
+		_attack_anim = "melee"     # 근접 모션(끝까지 재생)
 		_melee_attack()            # 가까우면 근접
 	else:
-		_shoot_anim_timer = 0.5    # 사격 모션(2배속)
+		_attack_anim = "shoot"     # 사격 모션(끝까지 재생)
 		_fire_straight()           # 멀거나 적 없으면 일직선 발사
 
 
@@ -211,6 +216,7 @@ func take_damage(amount: float) -> void:
 	health -= amount
 	_hurt_flash_timer = 0.15
 	_hurt_anim_timer = 0.45   # 피격(hit) 모션 잠깐 재생
+	_attack_anim = ""         # 맞으면 공격 모션 취소
 	if health <= 0.0:
 		health = 0.0
 		_dead = true
@@ -226,10 +232,8 @@ func _update_animation(direction: float) -> void:
 		next = "hit"
 	elif crouching:
 		next = "sit"
-	elif _melee_anim_timer > 0.0:
-		next = "melee"
-	elif _shoot_anim_timer > 0.0:
-		next = "shoot"
+	elif _attack_anim != "":
+		next = _attack_anim   # 공격 모션은 끝날 때까지 유지(_on_anim_finished에서 해제)
 	elif not on_ground:
 		next = "jump"
 	elif direction > 0.0:
@@ -243,6 +247,6 @@ func _update_animation(direction: float) -> void:
 		if reversed:
 			anim.play_backwards(next)
 		else:
-			# 공격(사격/근접)은 2배속으로 — 안 그러면 다 끝나기 전에 idle로 돌아감
-			var spd := 2.0 if (next == "shoot" or next == "melee") else 1.0
+			# 공격은 약간 빠르게(끝까지 본 뒤 idle 복귀)
+			var spd := ATTACK_ANIM_SPEED if (next == "shoot" or next == "melee") else 1.0
 			anim.play(next, spd)
