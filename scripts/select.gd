@@ -1,5 +1,5 @@
 extends Control
-## 시작 직업 선택 화면 (테스트용) — 4직업 중 하나 고르면 게임 시작.
+## 시작 직업 선택 화면 (테스트용) - 4직업 중 하나 고르면 게임 시작.
 ## 버튼에 마우스를 올리면(호버) 그 직업의 idle 애니메이션이 미리보기에서 재생된다.
 
 const JOBS := {
@@ -60,9 +60,9 @@ func _ready() -> void:
 	# 스테이지 표시 + 해금 안내
 	var title: Label = $Center/Box/Title
 	if GameState.jobs_unlocked:
-		title.text = "스테이지 %s — 직업 선택" % GameState.stage_label()
+		title.text = "스테이지 %s - 직업 선택" % GameState.stage_label()
 	else:
-		title.text = "스테이지 %s — 길냥이로 시작!\n(클리어하면 직업 해금)" % GameState.stage_label()
+		title.text = "스테이지 %s - 길냥이로 시작!\n(클리어하면 직업 해금)" % GameState.stage_label()
 
 	for job in JOBS:
 		var box: Control = $Center/Box/Row.get_node(job)
@@ -109,7 +109,7 @@ func _input(event: InputEvent) -> void:
 			if not was_unlocked:   # 원래 잠겨있던 직업만 호버 연결(중복 방지)
 				btn.mouse_entered.connect(_on_hover.bind(job))
 				btn.mouse_exited.connect(_on_unhover.bind(job))
-		$Center/Box/Title.text = "스테이지 %s — [테스트] 전 직업 해금" % GameState.stage_label()
+		$Center/Box/Title.text = "스테이지 %s - [테스트] 전 직업 해금" % GameState.stage_label()
 
 
 func _process(delta: float) -> void:
@@ -150,6 +150,7 @@ func _set_rank_label(rank: Label, job: String) -> void:
 	else:
 		rank.visible = true
 		rank.text = txt
+		rank.add_theme_font_override("font", _head_font)
 		rank.add_theme_color_override("font_color", GameState.rank_color(job))
 
 

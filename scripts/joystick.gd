@@ -1,4 +1,5 @@
 extends Control
+const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 ## 가상 조이스틱 (왼손) — 모바일 이동 + 점프
 ##
 ## · 화면 왼쪽-아래 영역을 누르면 그 자리에 조이스틱이 생긴다(동적).
@@ -103,7 +104,7 @@ func _draw() -> void:
 
 ## 상하좌우에 W S A D 키 힌트(컴퓨터 사용자용)
 func _draw_wasd(c: Vector2) -> void:
-	var font := get_theme_default_font()
+	var font := UI_FONT
 	if font == null:
 		return
 	var d := base_radius * 0.60

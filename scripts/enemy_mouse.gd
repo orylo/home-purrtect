@@ -130,7 +130,7 @@ func _draw() -> void:
 func _draw_damage_popups() -> void:
 	if _popups.is_empty():
 		return
-	var font: Font = ThemeDB.fallback_font
+	var font: Font = preload("res://assets/fonts/DoHyeon-Regular.ttf")
 	if font == null:
 		return
 	for p in _popups:

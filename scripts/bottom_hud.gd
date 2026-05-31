@@ -1,4 +1,5 @@
 extends Control
+const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 ## 하단 HUD 레이아웃
 ##   공격: 우하단 코너 1/4 원 (실제 작동 — 입력은 attack_button.gd / 키보드 L)
 ##   스킬1~4: 공격을 둘러싸는 원 (키 U I O P) / 동료: 독립 버튼 / 아이템1~3: 정사각형 (키 1 2 3)
@@ -40,7 +41,7 @@ func _draw() -> void:
 	var w := size.x
 	var h := size.y
 	var m := Layout.CONTROL_EDGE_MARGIN   # 가장자리 공통 마진
-	var font := get_theme_default_font()
+	var font := UI_FONT
 
 	# (조작 띠 블랙 딤 제거 — 배경이 그대로 보이게)
 

@@ -2,6 +2,9 @@ extends CanvasLayer
 ## 전투 HUD — 상단 정보바 + 일시정지/클리어/게임오버 패널
 ##   좌: ♥ 체력 + 숫자 / 우: 웨이브·남은 적 + 일시정지[II]
 
+# 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
+const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+
 @onready var hp_bar: ProgressBar = $HPBar
 @onready var hp_value: Label = $HPBar/HPValue
 @onready var enemy_label: Label = $EnemyLabel
@@ -55,6 +58,7 @@ func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
 
 
 func _style_primary(btn: Button) -> void:
+	btn.add_theme_font_override("font", UI_FONT)
 	var o := Color(0.9882, 0.3137, 0.0)
 	var oh := Color(0.86, 0.27, 0.0)
 	btn.add_theme_stylebox_override("normal", _pill(o, 0.0, o))
@@ -67,6 +71,7 @@ func _style_primary(btn: Button) -> void:
 
 
 func _style_ghost(btn: Button) -> void:
+	btn.add_theme_font_override("font", UI_FONT)
 	btn.add_theme_stylebox_override("normal", _pill(Color(1, 1, 1, 0.0), 2.5, Color(1, 1, 1, 0.9)))
 	btn.add_theme_stylebox_override("hover", _pill(Color(1, 1, 1, 0.14), 2.5, Color(1, 1, 1, 1)))
 	btn.add_theme_stylebox_override("pressed", _pill(Color(1, 1, 1, 0.2), 2.5, Color(1, 1, 1, 1)))
