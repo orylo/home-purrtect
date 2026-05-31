@@ -11,12 +11,10 @@ const ITEM_COUNT: int = 3
 const SQ: float = 76.0
 const SQ_GAP: float = 18.0
 const ITEM_CENTER_RATIO: float = 0.62
-const ITEM_BOTTOM_MARGIN: float = 34.0
 
 # 동료(원) — 아이템과 공격·스킬 무리 사이의 독립 버튼
 const COMP_R: float = 50.0
 const COMP_CENTER_RATIO: float = 0.78
-const COMP_BOTTOM_MARGIN: float = 30.0
 
 # 스킬(원) 4개 — 공격(코너)을 둘러싸는 부채꼴
 const SKILL_R: float = 32.0
@@ -42,14 +40,15 @@ func _draw() -> void:
 	var w := size.x
 	var h := size.y
 	var band_top := Layout.band_top()
+	var m := Layout.CONTROL_EDGE_MARGIN   # 가장자리 공통 마진
 	var font := get_theme_default_font()
 
 	# --- 조작 띠 배경: 50% 블랙 딤 (+ 윗변 얇은 라인) ---
 	draw_rect(Rect2(0.0, band_top, w, h - band_top), Color(0, 0, 0, 0.5), true)
 	draw_line(Vector2(0.0, band_top), Vector2(w, band_top), Color(1, 1, 1, 0.18), 2.0)
 
-	# --- 공격: 우하단 코너 1/4 원 ---
-	var corner := Vector2(w, h)
+	# --- 공격: 코너에서 아래/오른쪽 마진만큼 띄운 1/4 원 ---
+	var corner := Vector2(w - m, h - m)
 	var atk_r := Layout.ATTACK_BUTTON_RADIUS
 	var atk_active := Touch.attack_held or Input.is_action_pressed("attack")
 	_slot_quarter(corner, atk_r, atk_active)
@@ -63,15 +62,15 @@ func _draw() -> void:
 		_slot_circle(c, SKILL_R, Input.is_action_pressed("skill_%d" % (k + 1)))
 		_caption(font, 13, "스킬" + str(k + 1), c)
 
-	# --- 동료: 독립 버튼 ---
-	var comp := Vector2(w * COMP_CENTER_RATIO, h - COMP_BOTTOM_MARGIN - COMP_R)
+	# --- 동료: 독립 버튼 (바닥에서 마진만큼 위) ---
+	var comp := Vector2(w * COMP_CENTER_RATIO, h - m - COMP_R)
 	_slot_circle(comp, COMP_R, false)
 	_caption(font, 16, "동료", comp)
 
-	# --- 아이템 1~3 ---
+	# --- 아이템 1~3 (바닥에서 마진만큼 위) ---
 	var total_w := ITEM_COUNT * SQ + (ITEM_COUNT - 1) * SQ_GAP
 	var start_x := w * ITEM_CENTER_RATIO - total_w * 0.5
-	var sy := h - SQ - ITEM_BOTTOM_MARGIN
+	var sy := h - SQ - m
 	for i in ITEM_COUNT:
 		var r := Rect2(start_x + i * (SQ + SQ_GAP), sy, SQ, SQ)
 		_slot_rect(r, Input.is_action_pressed("item_%d" % (i + 1)))

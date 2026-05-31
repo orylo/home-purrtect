@@ -31,5 +31,6 @@ func _handle(pressed: bool, pos: Vector2, index: int) -> void:
 
 
 func _in_zone(pos: Vector2) -> bool:
-	var corner := Vector2(size.x, size.y)
+	# 그림과 동일하게 코너에서 마진만큼 안쪽을 중심으로 판정
+	var corner := Vector2(size.x - Layout.CONTROL_EDGE_MARGIN, size.y - Layout.CONTROL_EDGE_MARGIN)
 	return pos.distance_to(corner) <= Layout.ATTACK_BUTTON_RADIUS

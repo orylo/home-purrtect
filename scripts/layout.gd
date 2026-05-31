@@ -13,8 +13,11 @@ const REF_W: float = 1920.0
 const REF_H: float = 1080.0
 
 # 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠)
-const CONTROL_BAND_HEIGHT: float = 250.0   # 띠 높이(화면 px 고정)
+const CONTROL_BAND_HEIGHT: float = 264.0   # 띠 높이(화면 px 고정)
 const CONTROL_BAND_GAP: float = 22.0       # 바닥선과 띠 윗변 사이 간격
+
+# 버튼이 화면 가장자리(아래/오른쪽)에서 떨어지는 공통 마진
+const CONTROL_EDGE_MARGIN: float = 34.0
 
 # 공격 버튼(우하단 코너 1/4 원)의 반경 — 그림과 터치 판정이 공유
 const ATTACK_BUTTON_RADIUS: float = 145.0
