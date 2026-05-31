@@ -11,8 +11,8 @@ extends CharacterBody2D
 ## --- 이동 ---
 @export var base_speed: float = 300.0        # 기준 이동 속도(픽셀/초)
 @export var move_multiplier: float = 1.0      # 직업 이동속도 배율 (맨몸 치즈 = 1.0)
-@export var left_margin: float = 40.0         # 화면 왼쪽 여백
-@export var right_limit_ratio: float = 2.0 / 3.0  # 갈 수 있는 오른쪽 한계(화면 너비 비율)
+@export var left_margin: float = 40.0         # 화면 왼쪽 여백(이만큼 띄움)
+@export var right_margin: float = 70.0        # 화면 오른쪽 여백(치즈가 화면 밖으로 안 나가게)
 
 ## --- 점프(회피) ---
 @export var jump_force: float = 700.0         # 점프 세기(클수록 높이 뜀)
@@ -27,6 +27,7 @@ var on_ground: bool = true
 func _ready() -> void:
 	ground_y = position.y
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
+	add_to_group("player")  # 적(쥐)이 치즈를 찾을 수 있도록
 
 
 func _physics_process(delta: float) -> void:
@@ -53,10 +54,10 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 		on_ground = true
 
-	# 화면 왼쪽~2/3 구간 밖으로 못 나가게 가두기
+	# 화면 안에서만 움직이게 가두기 (왼쪽 끝 ~ 오른쪽 끝, 화면 밖으로는 못 나감)
+	# 참고: 왼쪽 2/3는 "주 무대"라는 게임적 의미일 뿐, 이동 자체는 오른쪽 끝까지 가능.
 	var screen_width := get_viewport_rect().size.x
-	var right_limit := screen_width * right_limit_ratio
-	position.x = clampf(position.x, left_margin, right_limit)
+	position.x = clampf(position.x, left_margin, screen_width - right_margin)
 
 	_update_animation(direction)
 

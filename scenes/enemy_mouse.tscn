@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_mouse.gd" id="1_mouse"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/enemies/mouse/mouse_frames.tres" id="2_mframes"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mouse"]
+size = Vector2(70, 80)
+
+[node name="EnemyMouse" type="CharacterBody2D" collision_layer=2 collision_mask=2]
+script = ExtResource("1_mouse")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -52)
+scale = Vector2(0.35, 0.35)
+sprite_frames = ExtResource("2_mframes")
+animation = &"walk"
+autoplay = "walk"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -45)
+shape = SubResource("RectangleShape2D_mouse")
