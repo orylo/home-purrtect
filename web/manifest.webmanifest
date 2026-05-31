@@ -1,0 +1,15 @@
+{
+  "name": "Home Purrtect",
+  "short_name": "Purrtect",
+  "description": "고양이 보안관 치즈가 저택을 지키는 1930년대 카툰풍 횡스크롤 디펜스 게임",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#e2e2df",
+  "theme_color": "#e2e2df",
+  "start_url": "./",
+  "scope": "./",
+  "icons": [
+    { "src": "index.icon.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "index.apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

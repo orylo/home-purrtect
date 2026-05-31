@@ -60,8 +60,10 @@ jobs:
             index.html
           echo "버전 V=$V 적용됨"; ls -la
 
-      - name: Copy OG image into site
-        run: cp web/og-image.jpg build/web/og-image.jpg
+      - name: Copy OG image + PWA manifest into site
+        run: |
+          cp web/og-image.jpg build/web/og-image.jpg
+          cp web/manifest.webmanifest build/web/manifest.webmanifest
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
