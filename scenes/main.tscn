@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/cheese_frames.tres" id="2_frames"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/stage_background.gd" id="6_bg"]
 [ext_resource type="Texture2D" path="res://assets/backgrounds/stage1_wall.jpg" id="7_bgtex"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -44,6 +45,12 @@ enemy_scene = ExtResource("4_mouse")
 [node name="HUD" type="CanvasLayer" parent="."]
 process_mode = 3
 script = ExtResource("8_hud")
+
+[node name="BottomHUD" type="Control" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("9_bottomhud")
 
 [node name="Heart" type="Label" parent="HUD"]
 offset_left = 36.0
