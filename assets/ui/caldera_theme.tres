@@ -1,0 +1,76 @@
+[gd_resource type="Theme" load_steps=8 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Medium.otf" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Bold.otf" id="2_btn"]
+
+[sub_resource type="StyleBoxFlat" id="BtnNormal"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.9686, 0.9647, 0.949, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="StyleBoxFlat" id="BtnHover"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.886, 0.886, 0.875, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="StyleBoxFlat" id="BtnPressed"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.83, 0.83, 0.82, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="StyleBoxFlat" id="BtnDisabled"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.9686, 0.9647, 0.949, 0.5)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[sub_resource type="StyleBoxFlat" id="Card"]
+content_margin_left = 40.0
+content_margin_top = 40.0
+content_margin_right = 40.0
+content_margin_bottom = 40.0
+bg_color = Color(0.9686, 0.9647, 0.949, 1)
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 16
+Button/colors/font_color = Color(0.0275, 0.0235, 0.0275, 1)
+Button/colors/font_hover_color = Color(0.0275, 0.0235, 0.0275, 1)
+Button/colors/font_pressed_color = Color(0.0275, 0.0235, 0.0275, 1)
+Button/colors/font_disabled_color = Color(0.0275, 0.0235, 0.0275, 0.4)
+Button/fonts/font = ExtResource("2_btn")
+Button/font_sizes/font_size = 18
+Button/styles/normal = SubResource("BtnNormal")
+Button/styles/hover = SubResource("BtnHover")
+Button/styles/pressed = SubResource("BtnPressed")
+Button/styles/disabled = SubResource("BtnDisabled")
+Button/styles/focus = SubResource("BtnNormal")
+Label/colors/font_color = Color(0.0275, 0.0235, 0.0275, 1)
+Panel/styles/panel = SubResource("Card")

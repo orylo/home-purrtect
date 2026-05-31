@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -13,6 +13,7 @@
 [ext_resource type="Script" path="res://scripts/attack_button.gd" id="11_attack"]
 [ext_resource type="Script" path="res://scripts/game.gd" id="12_game"]
 [ext_resource type="Script" path="res://scripts/muzzle_flash.gd" id="13_muzzle"]
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Black.otf" id="14_head"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -156,7 +157,8 @@ offset_left = -380.0
 offset_top = 34.0
 offset_right = -150.0
 offset_bottom = 64.0
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
 text = "남은 적: 0"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -168,6 +170,9 @@ offset_left = -110.0
 offset_top = 26.0
 offset_right = -36.0
 offset_bottom = 74.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("PauseBtnSB")
 theme_override_styles/hover = SubResource("PauseBtnSB")
 theme_override_styles/pressed = SubResource("PauseBtnSB")
@@ -209,18 +214,18 @@ anchor_bottom = 1.0
 theme_override_constants/separation = 24
 
 [node name="Title" type="Label" parent="HUD/PausePanel/Center/Box"]
-theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("14_head")
+theme_override_font_sizes/font_size = 56
 text = "일시정지"
 horizontal_alignment = 1
 
 [node name="ResumeButton" type="Button" parent="HUD/PausePanel/Center/Box"]
 custom_minimum_size = Vector2(220, 64)
-theme_override_font_sizes/font_size = 26
 text = "계속하기"
 
 [node name="ToSelectButton" type="Button" parent="HUD/PausePanel/Center/Box"]
 custom_minimum_size = Vector2(220, 64)
-theme_override_font_sizes/font_size = 26
 text = "직업 다시 고르기"
 
 [node name="ClearPanel" type="ColorRect" parent="HUD"]
@@ -237,19 +242,18 @@ anchor_bottom = 1.0
 theme_override_constants/separation = 24
 
 [node name="Title" type="Label" parent="HUD/ClearPanel/Center/Box"]
-theme_override_colors/font_color = Color(1, 0.95, 0.5, 1)
+theme_override_colors/font_color = Color(0.9882, 0.3137, 0, 1)
+theme_override_fonts/font = ExtResource("14_head")
 theme_override_font_sizes/font_size = 56
 text = "스테이지 클리어!"
 horizontal_alignment = 1
 
 [node name="Next" type="Button" parent="HUD/ClearPanel/Center/Box"]
 custom_minimum_size = Vector2(240, 64)
-theme_override_font_sizes/font_size = 26
 text = "다음 스테이지 ▶"
 
 [node name="Restart" type="Button" parent="HUD/ClearPanel/Center/Box"]
 custom_minimum_size = Vector2(240, 64)
-theme_override_font_sizes/font_size = 26
 text = "다시 하기"
 
 [node name="GameOverPanel" type="ColorRect" parent="HUD"]
@@ -267,16 +271,17 @@ theme_override_constants/separation = 18
 
 [node name="Title" type="Label" parent="HUD/GameOverPanel/Center/Box"]
 theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)
+theme_override_fonts/font = ExtResource("14_head")
 theme_override_font_sizes/font_size = 56
 text = "게임 오버"
 horizontal_alignment = 1
 
 [node name="Sub" type="Label" parent="HUD/GameOverPanel/Center/Box"]
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 16
 text = "정신 차려라! 마지막 기회를 주마. — G"
 horizontal_alignment = 1
 
 [node name="Restart" type="Button" parent="HUD/GameOverPanel/Center/Box"]
 custom_minimum_size = Vector2(240, 64)
-theme_override_font_sizes/font_size = 26
 text = "다시 도전"

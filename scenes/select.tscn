@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/select.gd" id="1_select"]
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Black.otf" id="2_head"]
 
 [node name="Select" type="Control"]
 layout_mode = 3
@@ -13,7 +14,7 @@ script = ExtResource("1_select")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.12, 0.14, 0.2, 1)
+color = Color(0.886, 0.886, 0.875, 1)
 
 [node name="Build" type="Label" parent="."]
 anchor_top = 1.0
@@ -22,8 +23,8 @@ offset_left = 16.0
 offset_top = -38.0
 offset_right = 320.0
 offset_bottom = -10.0
-theme_override_colors/font_color = Color(1, 1, 1, 0.5)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.0275, 0.0235, 0.0275, 0.5)
+theme_override_font_sizes/font_size = 14
 text = "build"
 
 [node name="Center" type="CenterContainer" parent="."]
@@ -35,7 +36,8 @@ anchor_bottom = 1.0
 theme_override_constants/separation = 30
 
 [node name="Title" type="Label" parent="Center/Box"]
-theme_override_font_sizes/font_size = 44
+theme_override_fonts/font = ExtResource("2_head")
+theme_override_font_sizes/font_size = 32
 text = "직업을 골라줘 (테스트)"
 horizontal_alignment = 1
 
@@ -53,7 +55,6 @@ stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/base"]
 custom_minimum_size = Vector2(230, 62)
-theme_override_font_sizes/font_size = 26
 text = "맨몸"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/base"]
@@ -71,7 +72,6 @@ stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/sheriff"]
 custom_minimum_size = Vector2(230, 62)
-theme_override_font_sizes/font_size = 26
 text = "보안관"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/sheriff"]
@@ -89,7 +89,6 @@ stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/maid"]
 custom_minimum_size = Vector2(230, 62)
-theme_override_font_sizes/font_size = 26
 text = "메이드"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/maid"]
@@ -107,7 +106,6 @@ stretch_mode = 6
 
 [node name="Btn" type="Button" parent="Center/Box/Row/jazz"]
 custom_minimum_size = Vector2(230, 62)
-theme_override_font_sizes/font_size = 26
 text = "음악가"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/jazz"]

@@ -1,7 +1,30 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/start.gd" id="1_start"]
 [ext_resource type="Texture2D" path="res://assets/ui/title.jpg" id="2_title"]
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Black.otf" id="3_head"]
+
+[sub_resource type="StyleBoxFlat" id="OrangePill"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.9882, 0.3137, 0, 1)
+corner_radius_top_left = 100
+corner_radius_top_right = 100
+corner_radius_bottom_right = 100
+corner_radius_bottom_left = 100
+
+[sub_resource type="StyleBoxFlat" id="OrangePillHover"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.86, 0.27, 0, 1)
+corner_radius_top_left = 100
+corner_radius_top_right = 100
+corner_radius_bottom_right = 100
+corner_radius_bottom_left = 100
 
 [node name="Start" type="Control"]
 layout_mode = 3
@@ -21,10 +44,18 @@ anchor_right = 0.5
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = -230.0
-offset_top = -240.0
+offset_top = -250.0
 offset_right = 230.0
 offset_bottom = -120.0
-theme_override_font_sizes/font_size = 52
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("3_head")
+theme_override_font_sizes/font_size = 56
+theme_override_styles/normal = SubResource("OrangePill")
+theme_override_styles/hover = SubResource("OrangePillHover")
+theme_override_styles/pressed = SubResource("OrangePillHover")
+theme_override_styles/focus = SubResource("OrangePill")
 text = "게임 시작"
 
 [node name="Version" type="Label" parent="."]
