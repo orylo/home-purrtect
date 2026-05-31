@@ -43,6 +43,11 @@ var crit_chance: float = 0.05
 var crit_type: String = "strike"
 var crit_mult: float = 1.5
 
+## 원거리 발사방식(직업에서 _ready에 채움)
+var ranged_mode: String = "straight"   # straight 일자 / lob 포물선던지기
+var ranged_limit_frac: float = 0.0      # 일자 사거리(화면폭 비율, 0=끝까지) — 음악가 0.5
+var ranged_misfire: float = 0.0         # 불발 확률 — 보안관
+
 signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처리)
 
 var health: float
@@ -61,6 +66,25 @@ const JUMP_LAND_TIME := 0.12     # 착지 마무리(빠르게)
 const JUMP_LAND_SPEED := 2.2
 const SIT_HOLD_FRAME := 7        # 앉기: 완전히 숙인 프레임(여기서 홀드)
 
+## --- 원거리 튜닝값(플레이테스트로 조정) ---
+# 음악가(음표): 고화력·단거리·저속 + 위아래 물결 (탄마다 랜덤)
+const JAZZ_SPEED_MAX := 340.0   # 탄환 속도 최대(현재값)
+const JAZZ_SPEED_MIN := 230.0   # 탄환 속도 최소(가끔 더 느리게)
+const JAZZ_WAVE_AMP_MIN := 16.0 # 물결 진폭 최소(px)
+const JAZZ_WAVE_AMP_MAX := 32.0 # 물결 진폭 최대(px)
+const JAZZ_WAVE_LEN_MIN := 110.0 # 물결 주기 최소(px)
+const JAZZ_WAVE_LEN_MAX := 165.0 # 물결 주기 최대(px)
+const JAZZ_FADE_START := 0.6    # 사거리의 이 비율(0~1)부터 투명해지기 시작
+const JAZZ_NOTE_TYPES := 3      # 음표 모양 가짓수(랜덤)
+# rlimit(사거리=화면폭×비율)은 GameState.JOB_STATS에 있음(음악가 0.5)
+# 메이드/맨몸(던지기): 저화력·랜덤 포물선
+const LOB_ANGLE_MIN := 0.0      # 던지는 각도 최소(수평)
+const LOB_ANGLE_MAX := 45.0     # 던지는 각도 최대(위로 45도)
+const LOB_POWER := 900.0        # 던지는 힘(사거리) — 조금 늘림
+const LOB_GRAVITY := 1500.0     # 포물선 중력
+# 보안관(총): 장거리·직선·불발(확률은 JOB_STATS misfire=0.12)
+const SHERIFF_BULLET_SPEED := 840.0
+
 var _fire_timer: float = 0.0
 var _committed_anim: String = "" # 끝까지 재생할 1회성 모션(hit/shoot/melee)
 var _melee_pending: float = -1.0 # 근접 딜 대기 타이머
@@ -73,6 +97,7 @@ var _move_was_active: bool = false   # 직전 프레임에 이동 입력이 있�
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @onready var muzzle_fx: Node = $MuzzleFlash
+var _click_player: AudioStreamPlayer   # 보안관 불발 "철컥" 소리
 
 
 func _ready() -> void:
@@ -87,6 +112,9 @@ func _ready() -> void:
 	crit_chance = st["crit"]
 	crit_type = st["crit_type"]
 	crit_mult = st["crit_mult"]
+	ranged_mode = st.get("rmode", "straight")
+	ranged_limit_frac = st.get("rlimit", 0.0)
+	ranged_misfire = st.get("misfire", 0.0)
 	health = max_health
 	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
 	# 선택한 직업의 스프라이트로 교체
@@ -96,6 +124,30 @@ func _ready() -> void:
 		anim.play("idle")
 	anim.animation_finished.connect(_on_anim_finished)
 	add_to_group("player")
+	# 불발 소리(철컥) — 짧은 클릭음을 코드로 생성
+	_click_player = AudioStreamPlayer.new()
+	_click_player.stream = _make_click_sound()
+	_click_player.volume_db = -4.0
+	add_child(_click_player)
+
+
+## "철컥" 불발 소리 — 짧게 감쇠하는 노이즈 버스트를 즉석에서 생성.
+func _make_click_sound() -> AudioStreamWAV:
+	var rate := 22050
+	var n := int(rate * 0.06)
+	var data := PackedByteArray()
+	data.resize(n * 2)
+	for i in range(n):
+		var tt := float(i) / float(rate)
+		var env := exp(-tt * 70.0)                      # 빠른 감쇠
+		var s := (randf() * 2.0 - 1.0) * env * 0.7      # 노이즈 × 감쇠
+		data.encode_s16(i * 2, int(clampf(s, -1.0, 1.0) * 32767.0))
+	var w := AudioStreamWAV.new()
+	w.format = AudioStreamWAV.FORMAT_16_BITS
+	w.mix_rate = rate
+	w.stereo = false
+	w.data = data
+	return w
 
 
 # 1회성 모션이 끝나면 해제 → 입력 없을 때만 idle로
@@ -233,7 +285,7 @@ func _handle_attack() -> void:
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
 	else:
 		_committed_anim = "shoot"  # 사격 모션(끝까지 재생)
-		_fire_straight()           # 멀거나 적 없으면 일직선 발사
+		_fire_ranged()             # 직업별 원거리(일자/포물선/불발)
 
 
 ## 크리 판정 — 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
@@ -264,19 +316,57 @@ func _melee_attack() -> void:
 				e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
 
 
-## 일직선(오른쪽) 발사 — 적 위치로 각도 조준하지 않고 곧게 나간다.
-func _fire_straight() -> void:
+## 직업별 원거리 발사.
+##   보안관: 일자 끝까지 + 가끔 불발 / 음악가: 일자 짧은 사거리(페이드) /
+##   메이드·맨몸: 손으로 포물선 던지기(랜덤 각도, 위로도 던져짐).
+func _fire_ranged() -> void:
 	if bullet_scene == null:
 		return
+	# 보안관 불발 — 모션은 나가지만 탄이 안 나감. 연기 + "철컥" 소리로 알림.
+	if ranged_misfire > 0.0 and randf() < ranged_misfire:
+		if is_instance_valid(muzzle_fx):
+			muzzle_fx.smoke()
+		if is_instance_valid(_click_player):
+			_click_player.play()
+		return
 	var hit := _roll_attack(ranged_damage)
+	var cfg := {"dmg": hit["dmg"], "kb": hit["kb"], "stun": hit["stun"], "crit": hit["crit"]}
+	var is_lob := ranged_mode == "lob"
+	var is_gun := ranged_mode == "straight" and ranged_limit_frac <= 0.0  # 보안관 총만
+	if is_lob:
+		# 손 던지기: 오른쪽으로, 수평~위 45도 랜덤 각도 → 포물선
+		var ang := deg_to_rad(randf_range(LOB_ANGLE_MIN, LOB_ANGLE_MAX))
+		cfg["mode"] = "lob"
+		cfg["shape"] = "dot"
+		cfg["vx"] = cos(ang) * LOB_POWER
+		cfg["vy"] = -sin(ang) * LOB_POWER
+		cfg["gravity"] = LOB_GRAVITY
+	elif is_gun:
+		# 보안관: 빠른 직선 총알, 끝까지
+		cfg["mode"] = "straight"
+		cfg["dir"] = Vector2.RIGHT
+		cfg["shape"] = "dot"
+		cfg["speed"] = SHERIFF_BULLET_SPEED
+	else:
+		# 음악가: 음표(랜덤 모양) + 느림(랜덤) + 물결(랜덤) + 짧은 사거리(페이드)
+		cfg["mode"] = "straight"
+		cfg["dir"] = Vector2.RIGHT
+		cfg["shape"] = "note"
+		cfg["note_type"] = randi() % JAZZ_NOTE_TYPES
+		cfg["speed"] = randf_range(JAZZ_SPEED_MIN, JAZZ_SPEED_MAX)
+		cfg["max_range"] = get_viewport_rect().size.x * ranged_limit_frac
+		cfg["fade_start"] = JAZZ_FADE_START
+		cfg["wave_amp"] = randf_range(JAZZ_WAVE_AMP_MIN, JAZZ_WAVE_AMP_MAX)
+		cfg["wave_freq"] = TAU / randf_range(JAZZ_WAVE_LEN_MIN, JAZZ_WAVE_LEN_MAX)
 	var bullet := bullet_scene.instantiate()
-	var muzzle := global_position + muzzle_offset
-	if bullet.has_method("setup"):
-		bullet.setup(Vector2.RIGHT, hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
-	bullet.global_position = muzzle
+	bullet.global_position = global_position + muzzle_offset
 	get_parent().add_child(bullet)
-	if is_instance_valid(muzzle_fx):
-		muzzle_fx.flash()   # 총구 화염
+	if bullet.has_method("setup"):
+		bullet.setup(cfg)
+	# 보안관 총 발사: 큰 화염 + 화면 흔들림(불발과 확 차이)
+	if is_gun and is_instance_valid(muzzle_fx):
+		muzzle_fx.flash()
+		Fx.request_shake(5.0)
 
 
 func _nearest_enemy() -> Node2D:
