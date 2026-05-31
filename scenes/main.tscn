@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
 [ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
 [ext_resource type="Script" path="res://scripts/joystick.gd" id="10_joystick"]
+[ext_resource type="Script" path="res://scripts/attack_button.gd" id="11_attack"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -58,6 +59,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("10_joystick")
+
+[node name="AttackButton" type="Control" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("11_attack")
 
 [node name="Heart" type="Label" parent="HUD"]
 offset_left = 36.0

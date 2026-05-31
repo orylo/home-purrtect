@@ -3,6 +3,7 @@ extends Node
 ## 가상 조이스틱/버튼이 여기에 값을 쓰고, 플레이어가 읽어간다.
 
 var move_axis: float = 0.0       # 좌우 이동(-1 왼쪽 ~ +1 오른쪽), 조이스틱이 갱신
+var attack_held: bool = false    # 공격 버튼을 누르고 있는 중인지(연사용)
 var _jump_queued: bool = false
 
 

@@ -24,10 +24,12 @@ extends CharacterBody2D
 ## --- 체력 ---
 @export var max_health: float = 100.0         # 맨몸 치즈 체력(시스템밸런스 §4.1)
 
-## --- 원거리 사격 ---
+## --- 공격(공격 버튼으로 발동, 근접/원거리 자동 전환) ---
 @export var bullet_scene: PackedScene
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
-@export var attack_interval: float = 1.0      # 공격속도 1.0/s → 1초에 1발
+@export var near_damage: float = 12.0         # 맨몸 치즈 근거리공격력(할퀴기) 12
+@export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
+@export var melee_range: float = 130.0        # 이 안이면 근접, 밖이면 원거리
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
 var health: float
@@ -90,8 +92,8 @@ func _physics_process(delta: float) -> void:
 	var screen_width := get_viewport_rect().size.x
 	position.x = clampf(position.x, left_margin, screen_width - right_margin)
 
-	# 원거리 자동 사격
-	_handle_shooting()
+	# 공격(공격 버튼/키를 누르고 있으면 연사, 거리에 따라 근접/원거리)
+	_handle_attack()
 
 	# 피격 시 빨간 플래시(넉백 없음)
 	anim.modulate = Color(1, 0.4, 0.4) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
@@ -117,19 +119,38 @@ func _push_blocking_enemies() -> void:
 			other.receive_push(my_speed - enemy_speed)
 
 
-## --- 사격 ---
-func _handle_shooting() -> void:
-	if _fire_timer > 0.0 or bullet_scene == null:
+## --- 공격 (공격 버튼/키를 누르고 있는 동안 attack_interval마다 발동) ---
+func _handle_attack() -> void:
+	var attacking := Touch.attack_held or Input.is_action_pressed("attack")
+	if not attacking or _fire_timer > 0.0:
 		return
 	var target := _nearest_enemy()
 	if target == null:
 		return
 	_fire_timer = attack_interval
-	_shoot_anim_timer = 0.35   # 이 동안 shoot 모션을 잠깐 우선 표시(걷는 중에도)
-	_fire_at(target)
+	_shoot_anim_timer = 0.35   # 공격 모션 잠깐 표시(근접 모션은 추후 제작)
+	var dist := global_position.distance_to(target.global_position)
+	if dist <= melee_range:
+		_melee_attack()        # 가까우면 근접
+	else:
+		_fire_at(target)       # 멀면 원거리
+
+
+## 근접 공격 — 사정거리 안 적들에게 할퀴기 데미지
+func _melee_attack() -> void:
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		if e.has_method("is_dead") and e.is_dead():
+			continue
+		if global_position.distance_to((e as Node2D).global_position) <= melee_range:
+			if e.has_method("take_damage"):
+				e.take_damage(near_damage)
 
 
 func _fire_at(target: Node2D) -> void:
+	if bullet_scene == null:
+		return
 	var bullet := bullet_scene.instantiate()
 	var muzzle := global_position + muzzle_offset
 	var dir := (target.global_position - muzzle).normalized()

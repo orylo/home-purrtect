@@ -11,6 +11,7 @@ extends Control
 @export var tap_threshold: float = 18.0 # 이만큼 안 움직이고 떼면 '탭(점프)'
 
 var _active: bool = false
+var _touch_index: int = -99   # 멀티터치 구분(공격 버튼과 동시 사용 가능하게)
 var _center: Vector2 = Vector2.ZERO
 var _knob: Vector2 = Vector2.ZERO
 var _moved: float = 0.0
@@ -24,29 +25,31 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
-		_handle_press(event.pressed, event.position)
+		_handle_press(event.pressed, event.position, event.index)
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_handle_press(event.pressed, event.position)
-	elif event is InputEventScreenDrag and _active:
+		_handle_press(event.pressed, event.position, -1)
+	elif event is InputEventScreenDrag and _active and event.index == _touch_index:
 		_handle_drag(event.position)
-	elif event is InputEventMouseMotion and _active:
+	elif event is InputEventMouseMotion and _active and _touch_index == -1:
 		_handle_drag(event.position)
 
 
-func _handle_press(pressed: bool, pos: Vector2) -> void:
+func _handle_press(pressed: bool, pos: Vector2, index: int) -> void:
 	if pressed:
 		# 왼쪽 + 조작 띠 안에서 시작한 터치만 조이스틱으로
 		if not _active and pos.x < size.x * 0.5 and pos.y > Layout.band_top():
 			_active = true
+			_touch_index = index
 			_center = pos
 			_knob = pos
 			_moved = 0.0
 			queue_redraw()
 	else:
-		if _active:
+		if _active and index == _touch_index:
 			if _moved < tap_threshold:
 				Touch.request_jump()   # 거의 안 움직였으면 탭 = 점프
 			_active = false
+			_touch_index = -99
 			Touch.move_axis = 0.0
 			queue_redraw()
 

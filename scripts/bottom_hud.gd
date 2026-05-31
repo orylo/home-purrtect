@@ -1,25 +1,26 @@
 extends Control
-## 하단 HUD 레이아웃 (빈 슬롯 placeholder)
-##   소모품 3칸(오른쪽 엄지 존 근처, 바닥 쪽) / 스킬 4(원) / 동료 1(코너 1/4 원)
+## 하단 HUD 레이아웃
+##   공격: 우하단 코너 1/4 원 (실제 작동 — 입력은 attack_button.gd)
+##   동료: 공격 왼쪽의 원 / 스킬1~4: 동료 위로 부채꼴 원 / 아이템1~3: 왼쪽 정사각형
 ##   (왼손 이동/점프는 가상 조이스틱 — joystick.gd)
 ##
-## ※ 지금은 "자리"만 그린다. 실제 기능은 소모품·스킬·동료 시스템이 생기면 연결.
+## ※ 공격만 실제 동작. 동료·스킬·아이템은 자리(placeholder) — 해당 시스템 생기면 연결.
 
-# 소모품(정사각형) 3칸 — 오른쪽 엄지 존 근처, 바닥 쪽
-const CONSUMABLE_COUNT: int = 3
+# 아이템(소모품) 3칸
+const ITEM_COUNT: int = 3
 const SQ: float = 76.0
 const SQ_GAP: float = 18.0
-const CONSUMABLE_CENTER_RATIO: float = 0.66   # 가로 위치(화면 너비 비율)
-const CONSUMABLE_BOTTOM_MARGIN: float = 38.0
+const ITEM_CENTER_RATIO: float = 0.62   # 가로 위치(화면 너비 비율)
+const ITEM_BOTTOM_MARGIN: float = 34.0
 
-# 동료 — 우하단 코너 1/4 원
-const PIE_RADIUS: float = 160.0
+# 동료(원)
+const COMP_R: float = 52.0
+const COMP_X_GAP: float = 16.0          # 공격 1/4원과의 간격
+const COMP_BOTTOM_MARGIN: float = 26.0
 
-# 스킬 — 원 4개(부채꼴)
-const SKILL_R: float = 34.0
-const SKILL_RING: float = 142.0        # 호 반경
-const SKILL_CENTER_X_OFF: float = 80.0 # 오른쪽 끝에서 호 중심까지
-const SKILL_CENTER_Y_OFF: float = 50.0 # 아래 끝에서 호 중심까지
+# 스킬(원) 4개 — 동료 위로 부채꼴
+const SKILL_R: float = 36.0
+const SKILL_RING: float = 128.0
 
 
 func _ready() -> void:
@@ -38,27 +39,33 @@ func _draw() -> void:
 	draw_rect(Rect2(0.0, band_top, w, h - band_top), Color(0, 0, 0, 0.5), true)
 	draw_line(Vector2(0.0, band_top), Vector2(w, band_top), Color(1, 1, 1, 0.18), 2.0)
 
-	# --- 소모품 3칸 (오른쪽 엄지 존 근처, 바닥 쪽) ---
-	var total_w := CONSUMABLE_COUNT * SQ + (CONSUMABLE_COUNT - 1) * SQ_GAP
-	var start_x := w * CONSUMABLE_CENTER_RATIO - total_w * 0.5
-	var sy := h - SQ - CONSUMABLE_BOTTOM_MARGIN
-	for i in CONSUMABLE_COUNT:
-		_slot_rect(Rect2(start_x + i * (SQ + SQ_GAP), sy, SQ, SQ))
-	_caption(font, 18, "소모품", Vector2(start_x + total_w * 0.5, sy - 14.0))
-
-	# --- 동료: 우하단 코너 1/4 원 ---
+	# --- 공격: 우하단 코너 1/4 원 ---
 	var corner := Vector2(w, h)
-	_slot_quarter(corner, PIE_RADIUS)
-	_caption(font, 15, "동료", corner + Vector2(-PIE_RADIUS * 0.5, -PIE_RADIUS * 0.42))
+	var atk_r := Layout.ATTACK_BUTTON_RADIUS
+	_slot_quarter(corner, atk_r)
+	_caption(font, 22, "공격", corner + Vector2(-atk_r * 0.5, -atk_r * 0.42))
 
-	# --- 스킬 4개: 호(정상단 → 사이 2 → 정좌측) ---
-	var p := Vector2(w - SKILL_CENTER_X_OFF, h - SKILL_CENTER_Y_OFF)
-	var angles := [270.0, 240.0, 210.0, 180.0]
+	# --- 동료: 공격 왼쪽의 원 ---
+	var comp := Vector2(w - atk_r - COMP_X_GAP - COMP_R, h - COMP_BOTTOM_MARGIN - COMP_R)
+	_slot_circle(comp, COMP_R)
+	_caption(font, 16, "동료", comp)
+
+	# --- 스킬 1~4: 동료 위로 부채꼴(좌하 → 우상) ---
+	var angles := [200.0, 235.0, 270.0, 305.0]
 	for k in angles.size():
 		var a := deg_to_rad(angles[k])
-		var c := p + Vector2(SKILL_RING * cos(a), SKILL_RING * sin(a))
+		var c := comp + Vector2(SKILL_RING * cos(a), SKILL_RING * sin(a))
 		_slot_circle(c, SKILL_R)
-		_caption(font, 15, str(k + 1), c)
+		_caption(font, 13, "스킬" + str(k + 1), c)
+
+	# --- 아이템 1~3: 왼쪽 정사각형 ---
+	var total_w := ITEM_COUNT * SQ + (ITEM_COUNT - 1) * SQ_GAP
+	var start_x := w * ITEM_CENTER_RATIO - total_w * 0.5
+	var sy := h - SQ - ITEM_BOTTOM_MARGIN
+	for i in ITEM_COUNT:
+		var r := Rect2(start_x + i * (SQ + SQ_GAP), sy, SQ, SQ)
+		_slot_rect(r)
+		_caption(font, 14, "아이템" + str(i + 1), r.get_center())
 
 
 func _slot_rect(r: Rect2) -> void:
@@ -79,13 +86,13 @@ func _slot_quarter(corner: Vector2, r: float) -> void:
 	for i in range(steps + 1):
 		var a := deg_to_rad(180.0 + 90.0 * float(i) / float(steps))  # 좌 → 상
 		pts.append(corner + Vector2(cos(a), sin(a)) * r)
-	draw_colored_polygon(pts, Color(0, 0, 0, 0.38))
-	draw_arc(corner, r, deg_to_rad(180.0), deg_to_rad(270.0), 40, Color(1, 1, 1, 0.7), 3.0)
-	draw_line(corner, corner + Vector2(-r, 0.0), Color(1, 1, 1, 0.7), 3.0)
-	draw_line(corner, corner + Vector2(0.0, -r), Color(1, 1, 1, 0.7), 3.0)
+	draw_colored_polygon(pts, Color(0.1, 0.25, 0.6, 0.55))
+	draw_arc(corner, r, deg_to_rad(180.0), deg_to_rad(270.0), 40, Color(1, 1, 1, 0.85), 3.0)
+	draw_line(corner, corner + Vector2(-r, 0.0), Color(1, 1, 1, 0.85), 3.0)
+	draw_line(corner, corner + Vector2(0.0, -r), Color(1, 1, 1, 0.85), 3.0)
 
 
 func _caption(font: Font, fs: int, text: String, center: Vector2) -> void:
 	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	draw_string(font, center + Vector2(-tw * 0.5, fs * 0.35), text,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.9))
+			HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.92))
