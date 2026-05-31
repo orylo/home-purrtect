@@ -4,7 +4,15 @@
       "mcp__godot__list_projects",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git -c user.name=orylo -c user.email=orylo0424@gmail.com commit -q -m '초기 상태: Godot 프로젝트 시작 *)"
+      "Bash(git -c user.name=orylo -c user.email=orylo0424@gmail.com commit -q -m '초기 상태: Godot 프로젝트 시작 *)",
+      "mcp__godot__get_godot_version",
+      "mcp__godot__get_project_info",
+      "mcp__godot__run_project",
+      "mcp__godot__get_debug_output",
+      "Bash(ls /Applications | grep -i godot 2>/dev/null; echo \"---\"; find /Applications -maxdepth 3 -iname \"Godot*\" -type f 2>/dev/null | head; echo \"---which---\"; which godot 2>/dev/null; echo \"---common paths---\"; ls -d /Applications/Godot.app/Contents/MacOS/* 2>/dev/null)",
+      "Bash(timeout 25 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --quit-after 60)",
+      "Bash(echo \"=== 종료코드: $? ===\")",
+      "Bash(git -c user.name=orylo -c user.email=orylo0424@gmail.com commit -q -m 'Phase 0~1: 가로 모드 설정 + 치즈 좌우 이동 *)"
     ]
   }
 }
