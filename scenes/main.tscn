@@ -158,7 +158,7 @@ offset_top = 34.0
 offset_right = -150.0
 offset_bottom = 64.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "남은 적: 0"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -196,7 +196,7 @@ offset_bottom = 86.0
 theme_override_colors/font_color = Color(1, 1, 1, 0.82)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
 theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 22
 text = "적이 가까우면 근접 · 멀면 원거리 자동 전환"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -278,7 +278,7 @@ horizontal_alignment = 1
 
 [node name="Sub" type="Label" parent="HUD/GameOverPanel/Center/Box"]
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "정신 차려라! 마지막 기회를 주마. — G"
 horizontal_alignment = 1
 

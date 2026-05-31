@@ -35,7 +35,6 @@ window/handheld/orientation="sensor_landscape"
 [gui]
 
 theme/custom_theme="res://assets/ui/caldera_theme.tres"
-theme/custom_font="res://assets/fonts/Pretendard-Regular.otf"
 
 [rendering]
 

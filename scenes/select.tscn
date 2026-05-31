@@ -24,7 +24,7 @@ offset_top = -38.0
 offset_right = 320.0
 offset_bottom = -10.0
 theme_override_colors/font_color = Color(0.0275, 0.0235, 0.0275, 0.5)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 22
 text = "build"
 
 [node name="Center" type="CenterContainer" parent="."]
@@ -36,8 +36,9 @@ anchor_bottom = 1.0
 theme_override_constants/separation = 30
 
 [node name="Title" type="Label" parent="Center/Box"]
+theme_override_colors/font_color = Color(0.0275, 0.0235, 0.0275, 1)
 theme_override_fonts/font = ExtResource("2_head")
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 56
 text = "직업을 골라줘 (테스트)"
 horizontal_alignment = 1
 
@@ -58,7 +59,7 @@ custom_minimum_size = Vector2(230, 62)
 text = "맨몸"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/base"]
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 26
 text = ""
 horizontal_alignment = 1
 
@@ -75,7 +76,7 @@ custom_minimum_size = Vector2(230, 62)
 text = "보안관"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/sheriff"]
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 26
 text = ""
 horizontal_alignment = 1
 
@@ -92,7 +93,7 @@ custom_minimum_size = Vector2(230, 62)
 text = "메이드"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/maid"]
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 26
 text = ""
 horizontal_alignment = 1
 
@@ -109,6 +110,6 @@ custom_minimum_size = Vector2(230, 62)
 text = "음악가"
 
 [node name="Rank" type="Label" parent="Center/Box/Row/jazz"]
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 26
 text = ""
 horizontal_alignment = 1
