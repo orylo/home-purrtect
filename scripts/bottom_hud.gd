@@ -13,10 +13,10 @@ const CONSUMABLE_COUNT: int = 5
 const SQ: float = 62.0
 const SQ_GAP: float = 14.0
 
-# 오른손 — 스킬/동료(원). 작은 원을 키우고, 겹침 방지를 위해 링 반경도 넓힘.
-const R_BIG: float = 46.0     # 동료 호출(큰 원)
-const R_SMALL: float = 28.0   # 스킬(작은 원) 4개
-const RING_D: float = 122.0   # 큰 원 중심에서 작은 원 중심까지 거리
+# 오른손 — 스킬/동료(원). 5개(스킬4 + 동료1) 모두 같은 크기.
+const R_BIG: float = 34.0     # 동료 호출(원) — 다른 원과 동일 크기
+const R_SMALL: float = 34.0   # 스킬(원) 4개
+const RING_D: float = 138.0   # 큰 원 중심에서 작은 원 중심까지 거리(겹침 방지)
 
 
 func _ready() -> void:

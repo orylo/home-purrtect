@@ -13,7 +13,7 @@ const REF_W: float = 1920.0
 const REF_H: float = 1080.0
 
 # 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠)
-const CONTROL_BAND_HEIGHT: float = 220.0   # 띠 높이(화면 px 고정)
+const CONTROL_BAND_HEIGHT: float = 230.0   # 띠 높이(화면 px 고정)
 const CONTROL_BAND_GAP: float = 22.0       # 바닥선과 띠 윗변 사이 간격
 
 
