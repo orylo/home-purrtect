@@ -41,6 +41,7 @@ var _dead: bool = false
 var _fire_timer: float = 0.0
 var _shoot_anim_timer: float = 0.0
 var _hurt_flash_timer: float = 0.0
+var _hurt_anim_timer: float = 0.0
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
 @onready var muzzle_fx: Node = $MuzzleFlash
@@ -59,6 +60,8 @@ func _physics_process(delta: float) -> void:
 		_shoot_anim_timer -= delta
 	if _hurt_flash_timer > 0.0:
 		_hurt_flash_timer -= delta
+	if _hurt_anim_timer > 0.0:
+		_hurt_anim_timer -= delta
 
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
@@ -187,6 +190,7 @@ func take_damage(amount: float) -> void:
 		return
 	health -= amount
 	_hurt_flash_timer = 0.15
+	_hurt_anim_timer = 0.45   # 피격(hit) 모션 잠깐 재생
 	if health <= 0.0:
 		health = 0.0
 		_dead = true
@@ -194,10 +198,12 @@ func take_damage(amount: float) -> void:
 
 
 func _update_animation(direction: float) -> void:
-	# 우선순위: 사격(쏘는 순간 잠깐) > 점프 > 걷기/뒷걸음 > 정지
-	# → 걷거나 점프 중에 쏴도 "탕!(사격 포즈)"가 잠깐 보인다.
+	# 우선순위: 피격(hit) > 사격 > 점프 > 걷기/뒷걸음 > 정지
+	# → 맞으면 잠깐 hit 모션이 우선 보인다.
 	var next := "idle"
-	if _shoot_anim_timer > 0.0:
+	if _hurt_anim_timer > 0.0:
+		next = "hit"
+	elif _shoot_anim_timer > 0.0:
 		next = "shoot"
 	elif not on_ground:
 		next = "jump"
