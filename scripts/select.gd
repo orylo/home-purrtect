@@ -17,16 +17,48 @@ var _hover := ""     # 현재 호버 중인 직업
 var _t := 0.0
 var _frame := 0
 var _test_unlocked := false   # 0키 치트로 전 직업 해금했는지
+var _pill_normal: StyleBoxFlat
+var _pill_hover: StyleBoxFlat
+var _head_font: Font
+
+
+## 직업 선택 버튼용 오렌지 알약 스타일(메인 컬러 CTA)
+func _make_pill(c: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = c
+	sb.set_corner_radius_all(100)
+	sb.content_margin_left = 28.0
+	sb.content_margin_right = 28.0
+	sb.content_margin_top = 16.0
+	sb.content_margin_bottom = 16.0
+	return sb
+
+
+## 직업 버튼 = 주요 액션 → Digital Orange + 흰 글씨 + 크게(Black 40)
+func _style_primary(btn: Button) -> void:
+	btn.add_theme_stylebox_override("normal", _pill_normal)
+	btn.add_theme_stylebox_override("hover", _pill_hover)
+	btn.add_theme_stylebox_override("pressed", _pill_hover)
+	btn.add_theme_stylebox_override("focus", _pill_normal)
+	btn.add_theme_color_override("font_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	if _head_font:
+		btn.add_theme_font_override("font", _head_font)
+	btn.add_theme_font_size_override("font_size", 40)
 
 
 func _ready() -> void:
 	$Build.text = GameState.BUILD + " ver."
+	_head_font = load("res://assets/fonts/Pretendard-Black.otf")
+	_pill_normal = _make_pill(Color(0.9882, 0.3137, 0.0))   # Digital Orange
+	_pill_hover = _make_pill(Color(0.86, 0.27, 0.0))
 	# 스테이지 표시 + 해금 안내
 	var title: Label = $Center/Box/Title
 	if GameState.jobs_unlocked:
 		title.text = "스테이지 %s — 직업 선택" % GameState.stage_label()
 	else:
-		title.text = "스테이지 %s — 맨몸 치즈로 시작!\n(클리어하면 직업 해금)" % GameState.stage_label()
+		title.text = "스테이지 %s — 길냥이로 시작!\n(클리어하면 직업 해금)" % GameState.stage_label()
 
 	for job in JOBS:
 		var box: Control = $Center/Box/Row.get_node(job)
@@ -50,6 +82,7 @@ func _ready() -> void:
 			btn.text = GameState.job_title(job) + " (잠김)"
 		btn.pressed.connect(_pick.bind(job))
 		if unlocked:
+			_style_primary(btn)   # 메인 컬러 + 크게(등급 라벨보다 위계 ↑)
 			btn.mouse_entered.connect(_on_hover.bind(job))
 			btn.mouse_exited.connect(_on_unhover.bind(job))
 
@@ -68,6 +101,7 @@ func _input(event: InputEvent) -> void:
 			btn.disabled = false
 			box.modulate = Color(1, 1, 1, 1.0)
 			btn.text = GameState.job_title(job)
+			_style_primary(btn)   # 치트 해금된 직업도 메인 컬러로
 			if not was_unlocked:   # 원래 잠겨있던 직업만 호버 연결(중복 방지)
 				btn.mouse_entered.connect(_on_hover.bind(job))
 				btn.mouse_exited.connect(_on_unhover.bind(job))
