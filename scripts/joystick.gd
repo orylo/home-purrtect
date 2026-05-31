@@ -6,8 +6,8 @@ extends Control
 ## · 거의 안 움직이고 떼면 = 탭 = 점프(Touch.request_jump).
 ## 키보드(←→/스페이스)도 그대로 쓸 수 있다.
 
-@export var base_radius: float = 90.0   # 베이스(바깥 링) 크기
-@export var knob_radius: float = 46.0   # 노브(손잡이) 크기
+@export var base_radius: float = 70.0   # 베이스(바깥 링) 크기
+@export var knob_radius: float = 38.0   # 노브(손잡이) 크기
 @export var tap_threshold: float = 18.0 # 이만큼 안 움직이고 떼면 '탭(점프)'
 
 var _active: bool = false
