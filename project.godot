@@ -20,6 +20,7 @@ run/main_scene="res://scenes/main.tscn"
 
 Layout="*res://scripts/layout.gd"
 Touch="*res://scripts/touch.gd"
+Fx="*res://scripts/fx.gd"
 
 [display]
 

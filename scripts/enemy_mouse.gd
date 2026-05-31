@@ -14,6 +14,8 @@ extends CharacterBody2D
 @export var damage: float = 5.0         # 치즈에게 주는 공격 데미지 (쥐 DMG 5)
 @export var attack_interval: float = 1.0  # 공격 간격(쥐 1.0s)
 
+const POP := preload("res://scenes/pop_effect.tscn")
+
 var health: float
 var dead: bool = false
 var _phase_timer: float = 0.0
@@ -118,6 +120,7 @@ func take_damage(amount: float) -> void:
 		_hit = true
 		_flash = 0.12       # 흰 번쩍
 		_knockback = 70.0   # 오른쪽으로 살짝 움찔
+		Fx.request_shake(3.0)
 		anim.play("hit")
 
 
@@ -135,3 +138,9 @@ func _die() -> void:
 	anim.modulate = Color(1, 1, 1)  # 번쩍 중 죽어도 유령은 정상 색
 	$CollisionShape2D.set_deferred("disabled", true)  # 죽으면 충돌 끔
 	anim.play("ghost")
+	# 처치 "펑!" + 화면 흔들림 + 히트스톱
+	var pop := POP.instantiate()
+	get_parent().add_child(pop)
+	pop.global_position = global_position + Vector2(0, -45)
+	Fx.request_shake(7.0)
+	Fx.request_hitstop(0.05)

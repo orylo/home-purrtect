@@ -37,5 +37,10 @@ func _on_body_entered(body: Node) -> void:
 
 
 func _draw() -> void:
+	# 진행 반대 방향으로 옅어지는 꼬리(잔상)
+	var dir := _velocity.normalized()
+	for i in range(1, 4):
+		var p := -dir * (i * 7.0)
+		draw_circle(p, radius * (1.0 - i * 0.22), Color(1, 1, 1, 0.32 - i * 0.07))
 	draw_circle(Vector2.ZERO, radius, Color(1, 1, 1, 1))
 	draw_arc(Vector2.ZERO, radius, 0.0, TAU, 16, Color(0.1, 0.1, 0.1, 1), 1.5, true)

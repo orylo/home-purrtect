@@ -43,6 +43,7 @@ var _shoot_anim_timer: float = 0.0
 var _hurt_flash_timer: float = 0.0
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var muzzle_fx: Node = $MuzzleFlash
 
 
 func _ready() -> void:
@@ -98,8 +99,8 @@ func _physics_process(delta: float) -> void:
 	# 공격(공격 버튼/키를 누르고 있으면 연사, 거리에 따라 근접/원거리)
 	_handle_attack()
 
-	# 피격 시 빨간 플래시(넉백 없음)
-	anim.modulate = Color(1, 0.4, 0.4) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
+	# 피격 시 흰 번쩍(몹과 통일)
+	anim.modulate = Color(1.9, 1.9, 1.9) if _hurt_flash_timer > 0.0 else Color(1, 1, 1)
 
 	_update_animation(direction)
 
@@ -161,6 +162,8 @@ func _fire_at(target: Node2D) -> void:
 		bullet.setup(dir, ranged_damage)
 	bullet.global_position = muzzle
 	get_parent().add_child(bullet)
+	if is_instance_valid(muzzle_fx):
+		muzzle_fx.flash()   # 총구 화염
 
 
 func _nearest_enemy() -> Node2D:
