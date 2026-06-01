@@ -23,6 +23,33 @@ const CONTROL_EDGE_MARGIN: float = 34.0
 # 공격 버튼(우하단 코너 1/4 원)의 반경 — 그림과 터치 판정이 공유
 const ATTACK_BUTTON_RADIUS: float = 145.0
 
+# === 하단 우측 버튼 클러스터 (그림=bottom_hud / 입력=attack_button 공유) ===
+# 액션 행(아래): [동료] [근접공격] [원거리공격] — 원거리가 맨 오른쪽
+const ACT_R: float = 62.0          # 동료/근접/원거리 버튼 반지름
+const ACT_GAP: float = 30.0        # 버튼 사이 간격
+# 스킬 행(위): 스킬1~4 작은 원, 우측 정렬
+const SKILL_BTN_R: float = 40.0
+const SKILL_BTN_GAP: float = 16.0
+
+## 원거리공격 버튼 중심(우하단 기준)
+func ranged_btn_center(s: Vector2) -> Vector2:
+	return Vector2(s.x - CONTROL_EDGE_MARGIN - ACT_R, s.y - CONTROL_EDGE_MARGIN - ACT_R)
+
+## 근접공격 버튼 중심(원거리 왼쪽)
+func melee_btn_center(s: Vector2) -> Vector2:
+	return ranged_btn_center(s) - Vector2(2.0 * ACT_R + ACT_GAP, 0.0)
+
+## 동료 버튼 중심(근접 왼쪽)
+func companion_btn_center(s: Vector2) -> Vector2:
+	return ranged_btn_center(s) - Vector2(2.0 * (2.0 * ACT_R + ACT_GAP), 0.0)
+
+## 스킬 i(0~3) 버튼 중심 — 액션 행 위, 우측 정렬
+func skill_btn_center(s: Vector2, i: int) -> Vector2:
+	var rightmost := s.x - CONTROL_EDGE_MARGIN - SKILL_BTN_R
+	var x := rightmost - float(3 - i) * (2.0 * SKILL_BTN_R + SKILL_BTN_GAP)
+	var y := s.y - CONTROL_EDGE_MARGIN - 2.0 * ACT_R - 24.0 - SKILL_BTN_R
+	return Vector2(x, y)
+
 
 func _vis() -> Vector2:
 	return get_viewport().get_visible_rect().size

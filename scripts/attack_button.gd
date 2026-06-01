@@ -1,9 +1,10 @@
 extends Control
-## 공격 버튼 입력 — 우하단 코너 1/4 원 영역.
-## 누르고 있는 동안 Touch.attack_held = true (연사). 그림은 bottom_hud가 그린다.
+## 근접/원거리 공격 버튼 입력 — 우하단 두 원형 버튼(좌=근접, 우=원거리).
+## 누르고 있는 동안 Touch.melee_held / Touch.ranged_held = true (연사).
+## 그림은 bottom_hud가 그린다. 좌표는 Layout이 공유.
 
-var _active: bool = false
-var _touch_index: int = -99   # 멀티터치 구분(어느 손가락이 공격인지)
+var _melee_idx: int = -99     # 근접 버튼을 누른 손가락 index
+var _ranged_idx: int = -99    # 원거리 버튼을 누른 손가락 index
 
 
 func _ready() -> void:
@@ -19,18 +20,20 @@ func _input(event: InputEvent) -> void:
 
 func _handle(pressed: bool, pos: Vector2, index: int) -> void:
 	if pressed:
-		if not _active and _in_zone(pos):
-			_active = true
-			_touch_index = index
-			Touch.attack_held = true
+		if _melee_idx == -99 and _in(pos, Layout.melee_btn_center(size)):
+			_melee_idx = index
+			Touch.melee_held = true
+		elif _ranged_idx == -99 and _in(pos, Layout.ranged_btn_center(size)):
+			_ranged_idx = index
+			Touch.ranged_held = true
 	else:
-		if _active and index == _touch_index:
-			_active = false
-			_touch_index = -99
-			Touch.attack_held = false
+		if index == _melee_idx:
+			_melee_idx = -99
+			Touch.melee_held = false
+		elif index == _ranged_idx:
+			_ranged_idx = -99
+			Touch.ranged_held = false
 
 
-func _in_zone(pos: Vector2) -> bool:
-	# 그림과 동일하게 코너에서 마진만큼 안쪽을 중심으로 판정
-	var corner := Vector2(size.x - Layout.CONTROL_EDGE_MARGIN, size.y - Layout.CONTROL_EDGE_MARGIN)
-	return pos.distance_to(corner) <= Layout.ATTACK_BUTTON_RADIUS
+func _in(pos: Vector2, center: Vector2) -> bool:
+	return pos.distance_to(center) <= Layout.ACT_R

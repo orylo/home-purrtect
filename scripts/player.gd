@@ -365,16 +365,19 @@ func _push_blocking_enemies() -> void:
 			other.receive_push(my_speed - enemy_speed)
 
 
-## --- 공격 (공격 버튼/키를 누르고 있는 동안 attack_interval마다 발동) ---
+## --- 공격 (근접/원거리 버튼 분리. 누르는 동안 attack_interval마다 발동) ---
+##   근접 버튼(터치 / 키 K) → 근접 / 원거리 버튼(터치 / 키 L) → 원거리. 둘 다면 근접 우선.
 func _handle_attack() -> void:
 	if _sit_phase != "":
 		return   # 앉은 중엔 공격 안 함
-	var attacking := Touch.attack_held or Input.is_action_pressed("attack")
-	if not attacking or _fire_timer > 0.0:
+	if _fire_timer > 0.0:
 		return
-	var target := _nearest_enemy(true)   # 지상에선 공중 적 제외(근접 대상 판단)
+	var want_melee := Touch.melee_held or Input.is_key_pressed(KEY_K)
+	var want_ranged := Touch.ranged_held or Input.is_action_pressed("attack")   # L = 원거리
+	if not (want_melee or want_ranged):
+		return
 	_fire_timer = attack_interval
-	if target != null and global_position.distance_to(target.global_position) <= melee_range:
+	if want_melee:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
 	else:
