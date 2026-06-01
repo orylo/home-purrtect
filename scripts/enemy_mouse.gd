@@ -289,6 +289,11 @@ func is_air() -> bool:
 func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
+	# 공중 적은 치즈가 점프(공중) 중일 때만 맞는다 — 지상 공격(근접·포물선·총)은 통과.
+	if _air:
+		var p := get_tree().get_first_node_in_group("player")
+		if is_instance_valid(p) and p.get("on_ground") == true:
+			return
 	if GameState.cheats.get("enemy_oneshot", false):
 		amount = 999999.0
 	else:

@@ -18,7 +18,7 @@ extends CharacterBody2D
 @export var right_margin: float = 70.0
 
 ## --- 점프(회피) ---
-@export var jump_force: float = 1000.0   # 공중 적을 점프해서 쏠 수 있게 상향(700→1000)
+@export var jump_force: float = 820.0   # 점프 정점이 공중 적 높이에 맞도록(정점 muzzle≈297px=공중 히트박스 중심)
 @export var gravity: float = 1800.0
 
 ## --- 체력 ---
