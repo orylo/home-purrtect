@@ -201,7 +201,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.82)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 22
-text = "적이 가까우면 근접 / 멀면 원거리 자동 전환"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 

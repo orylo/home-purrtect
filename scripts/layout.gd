@@ -52,13 +52,6 @@ func bottom_row(s: Vector2) -> Dictionary:
 	cx -= GROUP_GAP - SKILL_GAP
 	skills_rev.reverse()                             # 스킬1~4 (왼→오)
 
-	var consum_rev: Array = []                       # 소모품 4칸 (오른쪽부터)
-	for i in 4:
-		consum_rev.append(Vector2(cx - CONSUM_SQ * 0.5, row_y))
-		cx -= CONSUM_SQ + CONSUM_GAP
-	cx -= GROUP_GAP - CONSUM_GAP
-	consum_rev.reverse()
-
 	var companion := Vector2(cx - ACT_R, row_y)
 	cx -= 2.0 * ACT_R + GROUP_GAP
 
@@ -70,8 +63,7 @@ func bottom_row(s: Vector2) -> Dictionary:
 
 	return {
 		"ranged": ranged, "melee": melee, "companion": companion,
-		"skills": skills_rev, "consum": consum_rev, "items": items_rev,
-		"row_y": row_y,
+		"skills": skills_rev, "items": items_rev, "row_y": row_y,
 	}
 
 
