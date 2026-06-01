@@ -52,6 +52,10 @@ var _popups: Array = []
 
 func _ready() -> void:
 	add_to_group("enemies")
+	# 충돌 레이어를 코드로 명시(.tscn 헤더값은 Godot이 무시함):
+	#   layer 2 = 적 / mask 4 = 플레이어(관문)만. 적끼리(layer 2)는 안 막혀 통과(겹침 허용).
+	collision_layer = 2
+	collision_mask = 4
 	if not def.is_empty():
 		_apply_def()
 	max_health *= GameState.difficulty

@@ -137,6 +137,10 @@ func _ready() -> void:
 		anim.play("idle")
 	anim.animation_finished.connect(_on_anim_finished)
 	add_to_group("player")
+	# 충돌 레이어를 코드로 명시(.tscn 헤더값은 Godot이 무시함):
+	#   layer 4 = 플레이어 / mask 2 = 적만(몸으로 밀기·관문). 적은 mask 4로 플레이어에 막힘.
+	collision_layer = 4
+	collision_mask = 2
 	# 불발 소리(철컥) — 짧은 클릭음을 코드로 생성
 	_click_player = AudioStreamPlayer.new()
 	_click_player.stream = _make_click_sound()
