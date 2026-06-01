@@ -30,7 +30,8 @@ func _ready() -> void:
 	resume_button.pressed.connect(_on_resume_pressed)
 	to_select_button.pressed.connect(_on_to_select_pressed)
 	clear_next.pressed.connect(_on_clear_next)
-	clear_restart.pressed.connect(_on_restart)
+	clear_restart.text = "홈으로"                  # 클리어 패널: 재시작 버튼을 홈으로 전환
+	clear_restart.pressed.connect(_on_clear_home)
 	gameover_restart.pressed.connect(_on_restart)
 	stage_label.text = GameState.stage_label()   # 상단 스테이지 표시(1-1, 1-2…)
 	pause_panel.visible = false
@@ -165,20 +166,31 @@ func _on_resume_pressed() -> void:
 
 func _on_to_select_pressed() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/select.tscn")
+	if GameState.mode == "dev":
+		get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/home.tscn")   # 전투 포기 → 홈
 
 
-## 클리어 → 다음 스테이지(직업 해금) → 직업 선택 화면
+## [다음 ▶] — 클리어 → 다음 스테이지로 바로 이어서(같은 직업, 마찰 없는 연속)
 func _on_clear_next() -> void:
 	get_tree().paused = false
+	GameState.advance_stage()
+	if GameState.mode != "dev" and GameState.AUTOSAVE:
+		GameState.save_game()                                      # (출시 빌드) 진행 저장
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+## [홈으로] — 클리어 후 허브로 (개발자 모드는 개발자 메뉴로)
+func _on_clear_home() -> void:
+	get_tree().paused = false
+	GameState.advance_stage()
+	if GameState.mode != "dev" and GameState.AUTOSAVE:
+		GameState.save_game()
 	if GameState.mode == "dev":
-		GameState.advance_stage()                                      # 개발자: 다음 스테이지로 이어서(설정 유지)
-		get_tree().change_scene_to_file("res://scenes/main.tscn")
+		get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")
 	else:
-		GameState.advance_stage()
-		if GameState.AUTOSAVE:
-			GameState.save_game()                                      # (출시 빌드) 진행 저장
-		get_tree().change_scene_to_file("res://scenes/select.tscn")
+		get_tree().change_scene_to_file("res://scenes/home.tscn")
 
 
 func _on_restart() -> void:

@@ -159,4 +159,5 @@ func _set_rank_label(rank: Label, job: String) -> void:
 
 func _pick(job: String) -> void:
 	GameState.selected_job = job
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	# 전투 준비(직업 선택) 완료 → 홈으로 복귀. (개발자 모드는 select 안 거침)
+	get_tree().change_scene_to_file("res://scenes/home.tscn")
