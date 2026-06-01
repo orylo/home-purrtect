@@ -26,6 +26,9 @@ var _delay_timer: float = 0.0
 
 
 func _ready() -> void:
+	if GameState.sandbox:
+		_state = "idle"     # 테스트 스테이지: 자동 웨이브 없음(디버그 패널로 직접 스폰)
+		return
 	_waves = Enemies.waves_for(GameState.stage_minor)
 	_delay_timer = start_delay
 	_state = "delay"

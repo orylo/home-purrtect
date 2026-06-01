@@ -136,6 +136,15 @@ func _ready() -> void:
 	start_btn.pressed.connect(_on_start)
 	box.add_child(start_btn)
 
+	# 테스트 스테이지(샌드박스) — 자동 웨이브 없이 직접 적 스폰해 상성 테스트
+	var test_btn := Button.new()
+	test_btn.text = "테스트 스테이지 (직접 스폰)"
+	_font(test_btn, 24)
+	test_btn.pressed.connect(_on_test)
+	box.add_child(test_btn)
+
+	box.add_child(_dim("↑ 적 안 나옴. 게임 중 🐞로 직접 스폰", 16))
+
 	var back_btn := Button.new()
 	back_btn.text = "뒤로"
 	_font(back_btn, 22)
@@ -166,13 +175,24 @@ func _refresh_preview() -> void:
 
 
 func _on_start() -> void:
+	_apply_settings()
+	GameState.sandbox = false
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _on_test() -> void:
+	_apply_settings()
+	GameState.sandbox = true   # 자동 웨이브 없음 — 🐞로 직접 스폰
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _apply_settings() -> void:
 	GameState.mode = "dev"
 	GameState.selected_job = _job
 	GameState.job_level[_job] = _lv
 	GameState.stage_minor = _stage
 	GameState.difficulty = _diff
 	GameState.cheats = {"godmode": _godmode, "enemy_oneshot": _oneshot, "enemy_count_mult": _count_mult}
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
 # --- helpers ---

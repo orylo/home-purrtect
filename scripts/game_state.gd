@@ -19,6 +19,7 @@ func is_dev() -> bool:
 
 ## --- 이번 판 런 설정 (게임 본체가 이것만 읽어 실행) ---
 var mode: String = "player"        # "player" | "dev"
+var sandbox: bool = false           # 테스트 스테이지(자동 웨이브 없음 — 디버그로 직접 스폰)
 var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3)
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)

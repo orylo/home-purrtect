@@ -36,6 +36,7 @@ func _on_start() -> void:
 	GameState.load_game()    # 진행 이어하기
 	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 	GameState.difficulty = 1.0
+	GameState.sandbox = false   # 플레이어 모드는 항상 일반 스테이지
 	get_tree().change_scene_to_file("res://scenes/select.tscn")
 
 
