@@ -139,7 +139,8 @@ func _on_clear_next() -> void:
 		get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")   # 개발자: 메뉴 복귀
 	else:
 		GameState.advance_stage()
-		GameState.save_game()                                          # 플레이어: 다음 + 저장
+		if GameState.AUTOSAVE:
+			GameState.save_game()                                      # (출시 빌드) 진행 저장
 		get_tree().change_scene_to_file("res://scenes/select.tscn")
 
 

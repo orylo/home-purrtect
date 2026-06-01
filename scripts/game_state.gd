@@ -17,6 +17,9 @@ const DEV := true
 func is_dev() -> bool:
 	return DEV
 
+## 진행 자동 저장/이어하기 — 개발 중엔 false(매번 1-1부터 순서대로 테스트). 출시 땐 true.
+const AUTOSAVE := false
+
 ## --- 이번 판 런 설정 (게임 본체가 이것만 읽어 실행) ---
 var mode: String = "player"        # "player" | "dev"
 var sandbox: bool = false           # 테스트 스테이지(자동 웨이브 없음 — 디버그로 직접 스폰)

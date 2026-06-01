@@ -33,8 +33,9 @@ func _layout_title() -> void:
 
 func _on_start() -> void:
 	GameState.mode = "player"
-	GameState.reset_progress()   # 깨끗한 기본값(개발자 세션 잔여 해금 방지)
-	GameState.load_game()        # 세이브 있으면 진행·해금 이어받기
+	GameState.reset_progress()   # 항상 1-1부터(개발자 세션 잔여 해금 방지)
+	if GameState.AUTOSAVE:
+		GameState.load_game()    # (출시 빌드) 세이브 있으면 진행·해금 이어받기
 	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 	GameState.difficulty = 1.0
 	GameState.sandbox = false   # 플레이어 모드는 항상 일반 스테이지
