@@ -191,6 +191,7 @@ func save_game() -> void:
 		"stage_major": stage_major, "stage_minor": stage_minor,
 		"unlocked_jobs": unlocked_jobs, "coins": coins,
 		"cleared_stages": cleared_stages,
+		"selected_job": selected_job,   # 마지막 출격 세팅(로드맵 3단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -223,6 +224,9 @@ func load_game() -> void:
 				if not unlocked_jobs.has(js):
 					unlocked_jobs.append(js)
 		_check_stage_unlocks()   # 도달 스테이지 기준으로 일관성 보강
+		# 마지막 출격 직업 복원(해금 안 된 값이면 맨몸으로)
+		var sj := String(data.get("selected_job", "base"))
+		selected_job = sj if unlocked_jobs.has(sj) else "base"
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
