@@ -23,6 +23,7 @@ var def: Dictionary = {}
 var _kind := "melee"
 var _air := false
 var _high := false    # 박쥐: 머리 높이 수평 음파(서면 맞고 앉으면 회피)
+var _big := false     # 보스: 큰 덩치 → 히트박스 확대 + 밀기 불가
 var _status := ""
 var _use_sprite := true
 var _color := Color(0.6, 0.6, 0.62)
@@ -88,6 +89,7 @@ func _apply_def() -> void:
 	_kind = def.get("kind", "melee")
 	_air = def.get("air", false)
 	_high = def.get("high", false)
+	_big = def.get("big", false)
 	_status = def.get("status", "")
 	_use_sprite = def.get("sprite", true)
 	_color = def.get("color", Color(0.6, 0.6, 0.62))
@@ -98,6 +100,12 @@ func _apply_def() -> void:
 	_ename = def.get("name", "적")
 	if _use_sprite and _color.v < 0.45:
 		_base_modulate = _color   # 검은쥐 = 쥐 스프라이트 어둡게
+	# 보스: 큰 덩치에 맞춰 히트박스(탄환 명중)를 몸 중심으로 확대
+	if _big:
+		var hb_shape := RectangleShape2D.new()
+		hb_shape.size = Vector2(_body_r * 1.7, _body_r * 2.2)
+		$Hitbox/CollisionShape2D.shape = hb_shape
+		$Hitbox.position.y = -(_body_r + 12.0)   # placeholder 몸 중심
 
 
 func _physics_process(delta: float) -> void:
@@ -297,7 +305,7 @@ func get_advance_speed() -> float:
 
 
 func receive_push(amount: float) -> void:
-	if dead or _air:    # 공중 적은 밀기 대상 아님
+	if dead or _air or _big:    # 공중 적·보스는 밀기 대상 아님
 		return
 	_push_vx = max(_push_vx, amount)
 
