@@ -15,6 +15,8 @@ var _count_mult := 1.0
 var _godmode := false
 var _oneshot := false
 var _lv_buttons: Array = []
+var _title_lbl: Label   # 미리보기: 직업명(Lv별)
+var _rank_lbl: Label    # 미리보기: 등급 라벨(색)
 
 
 func _ready() -> void:
@@ -32,12 +34,20 @@ func _ready() -> void:
 
 	box.add_child(_title("개발자 모드", 48))
 
+	# 미리보기: 직업명(크게) + 등급 라벨(아래 색으로) — 기획 §0 표기 구조
+	_title_lbl = _title("", 36)
+	_rank_lbl = _title("", 22)
+	box.add_child(_title_lbl)
+	box.add_child(_rank_lbl)
+
 	# 직업
 	var job_opt := OptionButton.new()
 	_font(job_opt, 26)
 	for j in JOBS:
 		job_opt.add_item(j[1])
-	job_opt.item_selected.connect(func(i): _job = JOBS[i][0])
+	job_opt.item_selected.connect(func(i):
+		_job = JOBS[i][0]
+		_refresh_preview())
 	box.add_child(_row("직업", job_opt))
 
 	# 등급 Lv (1~5 토글 버튼)
@@ -132,11 +142,27 @@ func _ready() -> void:
 	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/start.tscn"))
 	box.add_child(back_btn)
 
+	_refresh_preview()   # 초기 미리보기(길냥이)
+
 
 func _on_lv(i: int) -> void:
 	_lv = i
 	for k in range(_lv_buttons.size()):
 		_lv_buttons[k].button_pressed = (k == i - 1)
+	_refresh_preview()
+
+
+## 직업명(Lv별) + 등급 라벨(색) 미리보기 갱신 — 기획 §0 표기
+func _refresh_preview() -> void:
+	var names: Array = GameState.JOB_TITLES.get(_job, ["?"])
+	_title_lbl.text = names[clampi(_lv - 1, 0, names.size() - 1)]
+	if _job == "base":
+		_rank_lbl.visible = false   # 맨몸(길냥이)은 등급 없음
+	else:
+		_rank_lbl.visible = true
+		var idx := clampi(_lv - 1, 0, 4)
+		_rank_lbl.text = GameState.RANK_LABELS[idx]   # 「」괄호는 DoHyeon에 없어 색으로만 구분
+		_rank_lbl.add_theme_color_override("font_color", GameState.rank_colors[idx])
 
 
 func _on_start() -> void:
