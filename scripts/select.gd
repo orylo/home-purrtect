@@ -93,6 +93,8 @@ func _ready() -> void:
 
 ## [테스트 치트] 숫자 0 키 → 잠긴 직업까지 전부 선택 가능
 func _input(event: InputEvent) -> void:
+	if not GameState.is_dev():   # 0키 치트는 개발 빌드에서만
+		return
 	if _test_unlocked:
 		return
 	if event is InputEventKey and event.pressed and not event.echo \

@@ -135,8 +135,12 @@ func _on_to_select_pressed() -> void:
 ## 클리어 → 다음 스테이지(직업 해금) → 직업 선택 화면
 func _on_clear_next() -> void:
 	get_tree().paused = false
-	GameState.advance_stage()
-	get_tree().change_scene_to_file("res://scenes/select.tscn")
+	if GameState.mode == "dev":
+		get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")   # 개발자: 메뉴 복귀
+	else:
+		GameState.advance_stage()
+		GameState.save_game()                                          # 플레이어: 다음 + 저장
+		get_tree().change_scene_to_file("res://scenes/select.tscn")
 
 
 func _on_restart() -> void:
