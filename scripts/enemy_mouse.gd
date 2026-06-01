@@ -22,6 +22,7 @@ const AIR_HEIGHT := 230.0   # 공중 적이 떠 있는 높이(px)
 var def: Dictionary = {}
 var _kind := "melee"
 var _air := false
+var _high := false    # 박쥐: 머리 높이 수평 음파(서면 맞고 앉으면 회피)
 var _status := ""
 var _use_sprite := true
 var _color := Color(0.6, 0.6, 0.62)
@@ -86,6 +87,7 @@ func _apply_def() -> void:
 	move_speed = 120.0 * float(def.get("spd", 1.0))
 	_kind = def.get("kind", "melee")
 	_air = def.get("air", false)
+	_high = def.get("high", false)
 	_status = def.get("status", "")
 	_use_sprite = def.get("sprite", true)
 	_color = def.get("color", Color(0.6, 0.6, 0.62))
@@ -190,9 +192,20 @@ func _fire_projectile() -> void:
 	if player == null:
 		return
 	_lunge = 0.16
+	var b := ENEMY_BULLET.instantiate()
+
+	# 박쥐: 머리 높이 수평 음파 — 치즈가 서 있으면 맞고, 앉으면(숙이면) 회피
+	if _high:
+		var head_y := -180.0
+		b.global_position = Vector2(global_position.x - 10.0, Layout.ground_y() + head_y)
+		b.hit_y_offset = head_y
+		b.dodge_by_crouch = true
+		get_parent().add_child(b)
+		b.setup(Vector2(-460.0, 0.0), damage, _status, _bcolor, 0.0)   # 수평 직선
+		return
+
 	var oy := -AIR_HEIGHT if _air else -90.0
 	var origin := global_position + Vector2(-10, oy)
-	var b := ENEMY_BULLET.instantiate()
 	b.global_position = origin
 	get_parent().add_child(b)
 	var target := (player as Node2D).global_position + Vector2(0, -90)   # 치즈 몸통 겨냥
