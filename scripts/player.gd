@@ -111,9 +111,10 @@ func _ready() -> void:
 	position.y = Layout.ground_y()   # 어떤 기기에서도 바닥에 서도록
 	# 선택 직업 스탯 적용(시스템밸런스 §4)
 	var st: Dictionary = GameState.job_stats()
-	max_health = st["hp"]
-	ranged_damage = st["ranged"]
-	near_damage = st["near"]
+	var lvm := GameState.level_mult()          # 등급(Lv) 배율 — hp/원/근에 곱함
+	max_health = st["hp"] * lvm
+	ranged_damage = st["ranged"] * lvm
+	near_damage = st["near"] * lvm
 	attack_interval = 1.0 / float(st["atk_spd"])
 	move_multiplier = st["move"]
 	crit_chance = st["crit"]
@@ -481,6 +482,8 @@ func _nearest_enemy() -> Node2D:
 ## 적의 공격에서 호출 — 데미지를 받는다(넉백 없음).
 func take_damage(amount: float) -> void:
 	if _dead:
+		return
+	if GameState.cheats.get("godmode", false):   # 개발자 치트: 무적
 		return
 	if amount >= 1.0:
 		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})   # 받은 데미지 숫자

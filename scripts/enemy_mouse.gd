@@ -35,6 +35,8 @@ const DMG_POP_DUR := 0.8      # 데미지 숫자 지속(상승+페이드) 시간
 
 func _ready() -> void:
 	add_to_group("enemies")
+	max_health *= GameState.difficulty     # 난이도 배율 M (시스템밸런스 §3)
+	damage *= GameState.difficulty
 	health = max_health
 	anim.flip_h = false  # 쥐는 그림 자체가 왼쪽을 봄(진행 방향) — 뒤집지 않음
 	# 개체마다 속도·리듬을 살짝 다르게 + 시작 박자를 흩어 로봇처럼 안 보이게
@@ -174,6 +176,8 @@ func is_dead() -> bool:
 func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
+	if GameState.cheats.get("enemy_oneshot", false):   # 개발자 치트: 적 즉사
+		amount = 999999.0
 	# 닳은 HP 숫자를 머리 위로 띄움
 	if amount >= 1.0:
 		_popups.append({"amount": int(round(amount)), "t": 0.0, "crit": crit})

@@ -12,6 +12,23 @@ func _ready() -> void:
 	if f:
 		ThemeDB.fallback_font = f
 
+## --- 개발 게이트 ---  출시 빌드 만들 때 false 또는 OS.has_feature("dev")로 교체
+const DEV := true
+func is_dev() -> bool:
+	return DEV
+
+## --- 이번 판 런 설정 (게임 본체가 이것만 읽어 실행) ---
+var mode: String = "player"        # "player" | "dev"
+var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3)
+var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
+var coins: int = 0                 # 재화(상점 시스템 때 사용)
+
+## --- 등급(Lv) 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
+const LV_MULT := [1.0, 1.5, 2.2, 3.2, 4.5]
+func level_mult(job: String = "") -> float:
+	var j := job if job != "" else selected_job
+	return LV_MULT[clampi(int(job_level.get(j, 1)) - 1, 0, 4)]
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -120,3 +137,39 @@ func job_frames_path() -> String:
 ## 선택 직업의 스탯
 func job_stats() -> Dictionary:
 	return JOB_STATS.get(selected_job, JOB_STATS["base"])
+
+
+# ============================================================
+#  진행 저장 (플레이어 모드 전용) — user://save.json
+# ============================================================
+const SAVE_PATH := "user://save.json"
+
+func save_game() -> void:
+	var data := {
+		"stage_major": stage_major, "stage_minor": stage_minor,
+		"jobs_unlocked": jobs_unlocked, "coins": coins,
+	}
+	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if f:
+		f.store_string(JSON.stringify(data))
+		f.close()
+
+func load_game() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var data = JSON.parse_string(f.get_as_text())
+	f.close()
+	if typeof(data) == TYPE_DICTIONARY:
+		stage_major = int(data.get("stage_major", 1))
+		stage_minor = int(data.get("stage_minor", 1))
+		jobs_unlocked = bool(data.get("jobs_unlocked", false))
+		coins = int(data.get("coins", 0))
+
+func reset_save() -> void:
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(SAVE_PATH)
+	reset_progress()
+	coins = 0

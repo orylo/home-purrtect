@@ -58,7 +58,8 @@ func _process(delta: float) -> void:
 
 func _start_next_wave() -> void:
 	_wave_index += 1
-	_to_spawn = int(_waves[_wave_index]["count"])
+	var base_count := int(_waves[_wave_index]["count"])
+	_to_spawn = int(ceil(base_count * GameState.cheats.get("enemy_count_mult", 1.0)))   # 치트: 적 수 배율
 	_spawn_timer = 0.0
 	_state = "spawning"
 	wave_started.emit(_wave_index + 1, _waves.size())
