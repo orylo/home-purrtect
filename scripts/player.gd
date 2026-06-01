@@ -97,6 +97,9 @@ var _jump_prep_timer: float = 0.0
 var _jump_land_timer: float = 0.0
 var _sit_phase: String = ""      # ""/down/up
 var _hurt_flash_timer: float = 0.0
+var _poison_timer: float = 0.0   # 독(지속 데미지) 남은 시간
+var _poison_tick: float = 0.0    # 다음 독 틱까지
+var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
 var _hurt_popups: Array = []     # 치즈가 받은 데미지 숫자(머리 위로 상승+페이드)
 const HURT_POP_DUR := 0.8
 # 눕기 그림자 크기는 현재 sit 스프라이트 프레임에 직접 맞춘다(_draw 참고)
@@ -186,6 +189,16 @@ func _physics_process(delta: float) -> void:
 			_ranged_pending = -1.0
 			_fire_ranged()
 
+	# 상태이상: 독(0.5초마다 지속 데미지) / 둔화(타이머만, 감속은 velocity에서)
+	if _poison_timer > 0.0:
+		_poison_timer -= delta
+		_poison_tick -= delta
+		if _poison_tick <= 0.0:
+			_poison_tick = 0.5
+			_poison_damage(2.0)
+	if _slow_timer > 0.0:
+		_slow_timer -= delta
+
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
 		direction = Touch.move_axis   # 키보드 입력 없으면 가상 조이스틱 사용
@@ -224,7 +237,8 @@ func _physics_process(delta: float) -> void:
 	if on_ground and (_committed_anim == "shoot" or _committed_anim == "melee"):
 		direction = 0.0
 
-	velocity.x = direction * base_speed * move_multiplier
+	var slow_factor := 0.5 if _slow_timer > 0.0 else 1.0   # 둔화 시 절반 속도
+	velocity.x = direction * base_speed * move_multiplier * slow_factor
 
 	# --- 점프 상태머신: 준비(땅) → 도약 → 체공(느리게) → 착지(빠르게) ---
 	var want_jump := Input.is_action_just_pressed("jump")
@@ -497,6 +511,30 @@ func take_damage(amount: float) -> void:
 		health = 0.0
 		_dead = true
 		died.emit()   # 게임오버 — game.gd가 연출 처리
+
+
+## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)
+func apply_status(st: String) -> void:
+	if _dead or GameState.cheats.get("godmode", false):
+		return
+	match st:
+		"poison":
+			_poison_timer = 3.0
+			_poison_tick = 0.5
+		"slow":
+			_slow_timer = 2.5
+
+
+## 독 지속 데미지 — 피격 모션 없이 체력만 깎음(틱마다 호출)
+func _poison_damage(amount: float) -> void:
+	if _dead:
+		return
+	_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})
+	health -= amount
+	if health <= 0.0:
+		health = 0.0
+		_dead = true
+		died.emit()
 
 
 func _update_animation(direction: float) -> void:

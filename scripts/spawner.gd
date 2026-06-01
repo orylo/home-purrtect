@@ -13,12 +13,10 @@ signal stage_cleared
 @export var inter_wave_delay: float = 2.0     # 웨이브 사이 쉬는 시간(초)
 @export var start_delay: float = 1.5          # 첫 웨이브까지 대기(초)
 
-## 웨이브 구성: 각 웨이브의 적 수와 등장 간격 (점점 많아짐 — 시스템밸런스 점증)
-var _waves: Array = [
-	{"count": 3, "interval": 2.0},
-	{"count": 4, "interval": 1.6},
-	{"count": 5, "interval": 1.3},
-]
+## 웨이브 구성: 현재 스테이지(GameState.stage_minor)의 §6-B 데이터를 Enemies에서 로드.
+## 각 웨이브 = [[적id, 수], ...]
+var _waves: Array = []
+var _queue: Array = []         # 이번 웨이브에 남은 적 id 목록(섞어서 순서대로 등장)
 
 var _state: String = "delay"   # delay → spawning → cleared
 var _wave_index: int = -1
@@ -28,6 +26,7 @@ var _delay_timer: float = 0.0
 
 
 func _ready() -> void:
+	_waves = Enemies.waves_for(GameState.stage_minor)
 	_delay_timer = start_delay
 	_state = "delay"
 
@@ -42,12 +41,10 @@ func _process(delta: float) -> void:
 			if _to_spawn > 0:
 				_spawn_timer -= delta
 				if _spawn_timer <= 0.0:
-					# 등장 간격도 ±20% 흩어 단조롭지 않게
-					_spawn_timer = float(_waves[_wave_index]["interval"]) * randf_range(0.8, 1.2)
+					_spawn_timer = _wave_interval() * randf_range(0.8, 1.2)
 					_spawn_one()
 					_to_spawn -= 1
 			elif _alive_count() == 0:
-				# 이 웨이브의 적을 다 잡음
 				if _wave_index + 1 < _waves.size():
 					_state = "delay"
 					_delay_timer = inter_wave_delay
@@ -56,10 +53,22 @@ func _process(delta: float) -> void:
 					stage_cleared.emit()
 
 
+## 후반 웨이브일수록 등장 간격 짧게(점증)
+func _wave_interval() -> float:
+	return clampf(1.8 - 0.18 * _wave_index, 0.9, 1.8)
+
+
 func _start_next_wave() -> void:
 	_wave_index += 1
-	var base_count := int(_waves[_wave_index]["count"])
-	_to_spawn = int(ceil(base_count * GameState.cheats.get("enemy_count_mult", 1.0)))   # 치트: 적 수 배율
+	var mult: float = GameState.cheats.get("enemy_count_mult", 1.0)   # 치트: 적 수 배율
+	_queue.clear()
+	for entry in _waves[_wave_index]:        # entry = [id, count]
+		var id := String(entry[0])
+		var c := int(ceil(int(entry[1]) * mult))
+		for i in c:
+			_queue.append(id)
+	_queue.shuffle()                          # 종류 섞어서 등장
+	_to_spawn = _queue.size()
 	_spawn_timer = 0.0
 	_state = "spawning"
 	wave_started.emit(_wave_index + 1, _waves.size())
@@ -77,9 +86,11 @@ func _alive_count() -> int:
 
 
 func _spawn_one() -> void:
-	if enemy_scene == null:
+	if enemy_scene == null or _queue.is_empty():
 		return
+	var id: String = _queue.pop_back()
 	var enemy := enemy_scene.instantiate()
+	enemy.def = Enemies.def_of(id)            # 종류별 스탯·외형·행동 주입(_ready에서 적용)
 	var screen_width := get_viewport_rect().size.x
 	enemy.position = Vector2(screen_width + spawn_offscreen, Layout.ground_y())
 	get_parent().add_child(enemy)
