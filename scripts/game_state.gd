@@ -58,6 +58,30 @@ func do_levelup(job: String = "") -> bool:
 		save_game()
 	return true
 
+## --- 소모품 (상점 구매·보유, 시스템밸런스 §5.4) ---
+## 전투 중 실제 사용은 다음 조각(소모품 탭·HUD). 지금은 "사서 보유"까지.
+const CONSUMABLES := {
+	"bandage":     {"name": "낡은 붕대", "price": 40, "desc": "체력 30 회복"},
+	"anchovy":     {"name": "말린 멸치", "price": 50, "desc": "8초 공격 +50%"},
+	"firecracker": {"name": "폭죽",      "price": 80, "desc": "광역 60 데미지"},
+}
+var inventory := {"bandage": 0, "anchovy": 0, "firecracker": 0}
+
+func consumable_price(id: String) -> int:
+	return int(CONSUMABLES.get(id, {}).get("price", 0))
+
+func can_buy_consumable(id: String) -> bool:
+	return CONSUMABLES.has(id) and coins >= consumable_price(id)
+
+func buy_consumable(id: String) -> bool:
+	if not can_buy_consumable(id):
+		return false
+	coins -= consumable_price(id)
+	inventory[id] = int(inventory.get(id, 0)) + 1
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -123,6 +147,9 @@ func reset_progress() -> void:
 	unlocked_jobs = ["base"]
 	cleared_stages = []
 	selected_job = "base"
+	coins = 0
+	job_level = {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
+	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -218,6 +245,7 @@ func save_game() -> void:
 		"cleared_stages": cleared_stages,
 		"selected_job": selected_job,   # 마지막 출격 세팅(로드맵 3단계)
 		"job_level": job_level,         # 직업별 Lv(상점 레벨업, 로드맵 4단계)
+		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -258,6 +286,11 @@ func load_game() -> void:
 		if typeof(jl) == TYPE_DICTIONARY:
 			for k in job_level.keys():
 				job_level[k] = clampi(int(jl.get(k, 1)), 1, 5)
+		# 소모품 보유 복원
+		var inv = data.get("inventory", {})
+		if typeof(inv) == TYPE_DICTIONARY:
+			for k in inventory.keys():
+				inventory[k] = maxi(0, int(inv.get(k, 0)))
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

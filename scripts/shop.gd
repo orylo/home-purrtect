@@ -10,10 +10,14 @@ const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)
 const GOLD := Color(1.0, 0.82, 0.2)
 
+const ITEM_ORDER := ["bandage", "anchovy", "firecracker"]
+
 var _coin_lbl: Label
 var _job_lbl: Label
 var _lv_lbl: Label
 var _buy_btn: Button
+var _inv_lbls := {}    # 소모품 id -> 보유 수 Label
+var _item_btns := {}   # 소모품 id -> 구매 Button
 var _toast: Label
 var _toast_t := 0.0
 
@@ -53,8 +57,8 @@ func _build() -> void:
 	sb.set_border_width_all(3)
 	sb.border_color = Color(1, 1, 1, 0.25)
 	card.add_theme_stylebox_override("panel", sb)
-	card.position = Vector2(vp.x * 0.5 - 380, vp.y * 0.30)
-	card.size = Vector2(760, 300)
+	card.position = Vector2(vp.x * 0.5 - 380, vp.y * 0.16)
+	card.size = Vector2(760, 280)
 	add_child(card)
 
 	var head := _text("직업 레벨업", 32, ORANGE)
@@ -68,16 +72,24 @@ func _build() -> void:
 	card.add_child(_lv_lbl)
 
 	_buy_btn = Button.new()
-	_buy_btn.position = Vector2(36, 198)
-	_buy_btn.custom_minimum_size = Vector2(688, 72)
-	_buy_btn.size = Vector2(688, 72)
-	_style_btn(_buy_btn, ORANGE, 32)
+	_buy_btn.position = Vector2(36, 188)
+	_buy_btn.custom_minimum_size = Vector2(688, 64)
+	_buy_btn.size = Vector2(688, 64)
+	_style_btn(_buy_btn, ORANGE, 30)
 	_buy_btn.pressed.connect(_on_buy_levelup)
 	card.add_child(_buy_btn)
 
-	# 다음 조각 안내(자리만)
-	var soon := _text("소모품 구매 · 전리품 매입 · 직업 제작 — 다음 조각에서", 24, Color(1, 1, 1, 0.7))
-	soon.position = Vector2(vp.x * 0.5 - 380, vp.y * 0.30 + 320)
+	# 소모품 구매 섹션
+	var sec := _text("소모품 구매", 30, ORANGE)
+	sec.position = Vector2(vp.x * 0.5 - 390, vp.y * 0.16 + 300)
+	add_child(sec)
+	var iy := vp.y * 0.16 + 348
+	for i in range(ITEM_ORDER.size()):
+		_item_card(ITEM_ORDER[i], Vector2(vp.x * 0.5 - 390 + i * 270, iy))
+
+	# 전리품 매입·직업 제작은 다음 조각(자리 안내만)
+	var soon := _text("전리품 매입 · 직업 제작 — 다음 조각에서", 22, Color(1, 1, 1, 0.7))
+	soon.position = Vector2(vp.x * 0.5 - 390, iy + 210)
 	add_child(soon)
 
 	# 하단: 홈
@@ -112,6 +124,57 @@ func _refresh() -> void:
 				lv, lv + 1, GameState.level_mult(job), next_mult]
 		_buy_btn.text = "레벨업  —  %s 코인" % _commafy(cost)
 		_buy_btn.disabled = not GameState.can_levelup(job)
+
+	# 소모품 카드 갱신
+	for id in _inv_lbls.keys():
+		var price: int = GameState.consumable_price(id)
+		_inv_lbls[id].text = "보유 %d" % int(GameState.inventory.get(id, 0))
+		_item_btns[id].text = "구매 (%d)" % price
+		_item_btns[id].disabled = not GameState.can_buy_consumable(id)
+
+
+## 소모품 카드 1개 (이름·효과·가격·보유·구매버튼)
+func _item_card(id: String, pos: Vector2) -> void:
+	var def: Dictionary = GameState.CONSUMABLES.get(id, {})
+	var card := Panel.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.10, 0.10, 0.14, 0.92)
+	sb.set_corner_radius_all(16)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(1, 1, 1, 0.22)
+	card.add_theme_stylebox_override("panel", sb)
+	card.position = pos
+	card.size = Vector2(240, 188)
+	add_child(card)
+
+	var nm := _text(String(def.get("name", id)), 26, Color(1, 1, 1))
+	nm.position = Vector2(16, 12)
+	card.add_child(nm)
+	var ds := _text(String(def.get("desc", "")), 20, Color(0.8, 0.85, 0.9))
+	ds.position = Vector2(16, 50)
+	card.add_child(ds)
+	var inv := _text("", 22, GOLD)
+	inv.position = Vector2(16, 86)
+	card.add_child(inv)
+	_inv_lbls[id] = inv
+
+	var b := Button.new()
+	b.position = Vector2(16, 124)
+	b.custom_minimum_size = Vector2(208, 52)
+	b.size = Vector2(208, 52)
+	_style_btn(b, ORANGE, 26)
+	b.pressed.connect(_on_buy_consumable.bind(id))
+	card.add_child(b)
+	_item_btns[id] = b
+
+
+func _on_buy_consumable(id: String) -> void:
+	if not GameState.can_buy_consumable(id):
+		_toast_msg("코인 부족 (%s 코인)" % _commafy(GameState.consumable_price(id)))
+		return
+	if GameState.buy_consumable(id):
+		_toast_msg("%s 구매!" % String(GameState.CONSUMABLES[id]["name"]))
+		_refresh()
 
 
 func _on_buy_levelup() -> void:
