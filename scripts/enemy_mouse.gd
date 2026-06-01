@@ -301,11 +301,9 @@ func is_air() -> bool:
 func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
-	# 공중 적은 치즈가 점프(공중) 중일 때만 맞는다 — 지상 공격(근접·포물선·총)은 통과.
-	if _air:
-		var p := get_tree().get_first_node_in_group("player")
-		if is_instance_valid(p) and p.get("on_ground") == true:
-			return
+	# 공중 적도 "실제로 닿은" 공격이면 데미지 적용:
+	#   · 투사체(포물선/총알) = 닿으면 명중(지상에서 던진 포물선이 호로 닿아도 OK)
+	#   · 근접 = 닿지 못함(player._melee_attack에서 지상이면 공중 적 제외 → 점프해야 타격)
 	if GameState.cheats.get("enemy_oneshot", false):
 		amount = 999999.0
 	else:
