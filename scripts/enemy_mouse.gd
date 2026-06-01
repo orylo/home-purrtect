@@ -90,7 +90,7 @@ func _apply_def() -> void:
 	_use_sprite = def.get("sprite", true)
 	_color = def.get("color", Color(0.6, 0.6, 0.62))
 	_bcolor = def.get("bcolor", Color(0.7, 0.7, 0.7))
-	_body_r = float(def.get("radius", 44)) * 1.2   # 캐릭터 전체 120% 확대(placeholder 몸·그림자)
+	_body_r = float(def.get("radius", 44)) * 1.25   # 치즈(원본 100%)와 균형 맞춘 적 크기(원본 ×1.25)
 	_atk_range = float(def.get("range", 0))
 	_armor = float(def.get("armor", 0))
 	_ename = def.get("name", "적")

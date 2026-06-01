@@ -7,14 +7,14 @@
 size = Vector2(74, 600)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
-size = Vector2(98.4, 162)
+size = Vector2(102.5, 168.75)
 
 [node name="EnemyMouse" type="CharacterBody2D" collision_layer=2 collision_mask=4]
 script = ExtResource("1_mouse")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-position = Vector2(0, -78.6)
-scale = Vector2(0.624, 0.624)
+position = Vector2(0, -81.875)
+scale = Vector2(0.65, 0.65)
 sprite_frames = ExtResource("2_mframes")
 animation = &"walk"
 autoplay = "walk"
@@ -26,5 +26,5 @@ shape = SubResource("RectangleShape2D_mouse")
 [node name="Hitbox" type="Area2D" parent="." collision_layer=16 collision_mask=0]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(0, -80.4)
+position = Vector2(0, -83.75)
 shape = SubResource("RectangleShape2D_hitbox")
