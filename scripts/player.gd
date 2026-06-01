@@ -31,7 +31,7 @@ extends CharacterBody2D
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
 @export var melee_range: float = 340.0        # 이 안이면 근접, 밖이면 원거리(2배로 넓힘)
 const MELEE_MAX_TARGETS := 3                  # 한 번에 때리는 최대 적 수(가까운 순)
-@export var melee_hit_delay: float = 0.25     # 근접: 공격 시작 후 이만큼 뒤에 딜(펀치 맞는 순간)
+@export var melee_hit_delay: float = 0.10     # 근접: 공격 시작 후 이만큼 뒤에 딜(빠른 모션에 맞춰 단축)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
 ## --- 넉백/스턴 세기(평타는 약, 크리는 강) ---
@@ -60,7 +60,7 @@ var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
-const ATTACK_ANIM_SPEED := 1.4
+const ATTACK_ANIM_SPEED := 3.5   # 공격 즉시감: 모션 2.5배 빠르게(딜레이도 같은 비율로 줄여 싱크 유지)
 const HIT_ANIM_SPEED := 2.4
 const JUMP_PREP_TIME := 0.13     # 도약 전 준비(땅에서)
 const JUMP_PREP_SPEED := 3.2     # 준비 빠르게
