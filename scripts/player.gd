@@ -410,8 +410,8 @@ func _melee_attack() -> void:
 			continue
 		if e.has_method("is_dead") and e.is_dead():
 			continue
-		# 지상 근접은 공중 적을 못 때림 — 점프(공중) 상태에서만 타격
-		if on_ground and e.has_method("is_air") and e.is_air():
+		# 공중 적은 근접으로 못 잡음 — 원거리(총·음표·포물선)로만 처리(높이 맞춰서)
+		if e.has_method("is_air") and e.is_air():
 			continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d <= melee_range:
@@ -489,7 +489,7 @@ func _fire_ranged() -> void:
 		Fx.request_shake(5.0)
 
 
-func _nearest_enemy(exclude_air_grounded: bool = false) -> Node2D:
+func _nearest_enemy(exclude_air: bool = false) -> Node2D:
 	var nearest: Node2D = null
 	var best := INF
 	for e in get_tree().get_nodes_in_group("enemies"):
@@ -497,8 +497,8 @@ func _nearest_enemy(exclude_air_grounded: bool = false) -> Node2D:
 			continue
 		if e.has_method("is_dead") and e.is_dead():
 			continue
-		# 지상에선 공중 적을 근접 대상에서 제외(점프해야 닿음) → 대신 원거리로 처리됨
-		if exclude_air_grounded and on_ground and e.has_method("is_air") and e.is_air():
+		# 근접/원거리 결정 시 공중 적 제외 → 항상 원거리로 처리(쏴서 잡음)
+		if exclude_air and e.has_method("is_air") and e.is_air():
 			continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d < best:
