@@ -23,36 +23,39 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# 좌측 절반은 조이스틱(점프) 영역이라, 패널을 화면 오른쪽 절반으로 띄움(터치 충돌 방지)
-	var px := get_viewport().get_visible_rect().size.x * 0.5 + 30.0
-
 	var btn := Button.new()
 	btn.text = "🐞"
-	btn.position = Vector2(px, 96)
+	btn.position = Vector2(10, 100)      # 원위치(좌상단)
 	_font(btn, 24)
 	btn.pressed.connect(func(): _panel.visible = not _panel.visible)
 	add_child(btn)
 
+	# 2칼럼: 세로로 덜 길게(아래 HUD까지 안 내려오게)
 	_panel = PanelContainer.new()
-	_panel.position = Vector2(px, 146)
+	_panel.position = Vector2(10, 150)
 	_panel.visible = false
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(250, 560)
-	_panel.add_child(scroll)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	scroll.add_child(box)
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 16)
+	_panel.add_child(cols)
 	add_child(_panel)
 
-	# --- 치트 ---
-	_sec(box, "치트")
-	_btn(box, "코인 +1000", func(): GameState.coins += 1000)
-	_btn(box, "무적 토글", func(): GameState.cheats["godmode"] = not GameState.cheats.get("godmode", false))
-	_btn(box, "적 즉사 토글", func(): GameState.cheats["enemy_oneshot"] = not GameState.cheats.get("enemy_oneshot", false))
-	_btn(box, "적 전멸", _kill_all)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 5)
+	left.custom_minimum_size = Vector2(210, 0)
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 5)
+	right.custom_minimum_size = Vector2(210, 0)
+	cols.add_child(left)
+	cols.add_child(right)
 
-	# --- 스테이지 이동(진행 중에도) ---
-	_sec(box, "스테이지 이동")
+	# === 왼쪽 칼럼: 치트 + 스테이지 이동 ===
+	_sec(left, "치트")
+	_btn(left, "코인 +1000", func(): GameState.coins += 1000)
+	_btn(left, "무적 토글", func(): GameState.cheats["godmode"] = not GameState.cheats.get("godmode", false))
+	_btn(left, "적 즉사 토글", func(): GameState.cheats["enemy_oneshot"] = not GameState.cheats.get("enemy_oneshot", false))
+	_btn(left, "적 전멸", _kill_all)
+
+	_sec(left, "스테이지 이동")
 	var srow := HBoxContainer.new()
 	var spin := SpinBox.new()
 	spin.min_value = 1
@@ -68,14 +71,14 @@ func _build_ui() -> void:
 		GameState.stage_minor = int(spin.value)
 		get_tree().reload_current_scene())
 	srow.add_child(go)
-	box.add_child(srow)
-	_btn(box, "다음 스테이지 ▶", func():
+	left.add_child(srow)
+	_btn(left, "다음 스테이지 ▶", func():
 		GameState.sandbox = false
 		GameState.advance_stage()
 		get_tree().reload_current_scene())
 
-	# --- 직업 변경(현재 판 재시작) ---
-	_sec(box, "직업 변경(재시작)")
+	# === 오른쪽 칼럼: 직업 변경 + 적 스폰 ===
+	_sec(right, "직업 변경(재시작)")
 	var jgrid := GridContainer.new()
 	jgrid.columns = 2
 	for j in [["base", "맨몸"], ["sheriff", "보안관"], ["maid", "메이드"], ["jazz", "음악가"]]:
@@ -87,10 +90,9 @@ func _build_ui() -> void:
 			GameState.selected_job = jid
 			get_tree().reload_current_scene())
 		jgrid.add_child(jb)
-	box.add_child(jgrid)
+	right.add_child(jgrid)
 
-	# --- 적 스폰(현재 판에 바로) ---
-	_sec(box, "적 스폰")
+	_sec(right, "적 스폰")
 	var egrid := GridContainer.new()
 	egrid.columns = 2
 	for id in SPAWN_ORDER:
@@ -100,7 +102,7 @@ func _build_ui() -> void:
 		var eid: String = id
 		eb.pressed.connect(func(): _spawn(eid))
 		egrid.add_child(eb)
-	box.add_child(egrid)
+	right.add_child(egrid)
 
 
 ## 적 한 마리를 화면 오른쪽 밖에서 등장(스포너와 동일 위치)
