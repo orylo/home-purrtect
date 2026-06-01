@@ -3,7 +3,7 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.18"
+const BUILD := "0.19"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -34,10 +34,29 @@ func level_mult(job: String = "") -> float:
 var selected_job: String = "base"
 
 ## --- 스테이지 진행 ---
-## 1막 = 1-1, 1-2, ... / 첫 판(1-1)은 맨몸만, 클리어하면 1-2부터 직업 해금.
 var stage_major: int = 1
 var stage_minor: int = 1
-var jobs_unlocked: bool = false   # false = 맨몸만(1-1), true = 4직업 선택 가능(1-2~)
+
+## 해금된 직업(플레이어 모드). 항상 맨몸 포함. 해금 타임라인(§6-A):
+##   1-3 클리어(→1-4) = 보안관 / 1-7 클리어(→1-8) = 메이드·음악가.
+##   (본 게임에선 1-7 상점 구매지만 상점 전이라 클리어로 해금 — 상점 붙으면 구매로 교체.)
+## 개발자 모드는 이 값과 무관(개발자 메뉴에서 4종 자유 선택).
+var unlocked_jobs: Array = ["base"]
+
+
+func is_job_unlocked(job: String) -> bool:
+	return unlocked_jobs.has(job)
+
+
+## 도달한(현재) 스테이지 기준으로 해금 직업 보강 — idempotent(세이브 로드 후에도 안전)
+func _check_stage_unlocks() -> void:
+	if stage_minor >= 4 and not unlocked_jobs.has("sheriff"):
+		unlocked_jobs.append("sheriff")        # 1-3 클리어 → 보안관
+	if stage_minor >= 8:                          # 1-7 클리어 → 메이드·음악가
+		if not unlocked_jobs.has("maid"):
+			unlocked_jobs.append("maid")
+		if not unlocked_jobs.has("jazz"):
+			unlocked_jobs.append("jazz")
 
 
 ## "1-1" 같은 표시용 문자열
@@ -45,17 +64,17 @@ func stage_label() -> String:
 	return "%d-%d" % [stage_major, stage_minor]
 
 
-## 다음 스테이지로(클리어 시) — 직업 해금
+## 다음 스테이지로(클리어 시) — 도달 스테이지에 맞춰 직업 해금
 func advance_stage() -> void:
 	stage_minor += 1
-	jobs_unlocked = true
+	_check_stage_unlocks()
 
 
 ## 처음부터(필요 시) — 1-1, 맨몸만
 func reset_progress() -> void:
 	stage_major = 1
 	stage_minor = 1
-	jobs_unlocked = false
+	unlocked_jobs = ["base"]
 	selected_job = "base"
 
 ## 직업별 기본 스탯 + 크리티컬
@@ -148,7 +167,7 @@ const SAVE_PATH := "user://save.json"
 func save_game() -> void:
 	var data := {
 		"stage_major": stage_major, "stage_minor": stage_minor,
-		"jobs_unlocked": jobs_unlocked, "coins": coins,
+		"unlocked_jobs": unlocked_jobs, "coins": coins,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -166,8 +185,16 @@ func load_game() -> void:
 	if typeof(data) == TYPE_DICTIONARY:
 		stage_major = int(data.get("stage_major", 1))
 		stage_minor = int(data.get("stage_minor", 1))
-		jobs_unlocked = bool(data.get("jobs_unlocked", false))
 		coins = int(data.get("coins", 0))
+		# 해금 직업 복원(옛 세이브엔 없을 수 있음 → 맨몸만으로 시작 후 스테이지로 보강)
+		unlocked_jobs = ["base"]
+		var uj = data.get("unlocked_jobs", [])
+		if typeof(uj) == TYPE_ARRAY:
+			for j in uj:
+				var js := String(j)
+				if not unlocked_jobs.has(js):
+					unlocked_jobs.append(js)
+		_check_stage_unlocks()   # 도달 스테이지 기준으로 일관성 보강
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

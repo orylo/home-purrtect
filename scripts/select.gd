@@ -59,7 +59,7 @@ func _ready() -> void:
 	_pill_disabled = _make_pill(Color(0.80, 0.52, 0.40))    # 잠김(흐린 오렌지)
 	# 스테이지 표시 + 해금 안내
 	var title: Label = $Center/Box/Title
-	if GameState.jobs_unlocked:
+	if GameState.unlocked_jobs.size() > 1:
 		title.text = "스테이지 %s - 직업 선택" % GameState.stage_label()
 	else:
 		title.text = "스테이지 %s - 길냥이로 시작!\n(클리어하면 직업 해금)" % GameState.stage_label()
@@ -78,8 +78,8 @@ func _ready() -> void:
 		# 등급 라벨(직업명 아래, 색으로). 맨몸은 없음.
 		var rank: Label = box.get_node("Rank")
 		_set_rank_label(rank, job)
-		# 1-1은 맨몸만, 1-2부터 전 직업 해금. 잠긴 직업은 반투명 + 비활성.
-		var unlocked: bool = (job == "base") or GameState.jobs_unlocked
+		# 해금 타임라인(§6-A): 맨몸 항상 / 보안관 1-3 / 메이드·음악가 1-7. 잠긴 직업은 반투명+비활성.
+		var unlocked: bool = GameState.is_job_unlocked(job)
 		btn.disabled = not unlocked
 		box.modulate = Color(1, 1, 1, 1.0) if unlocked else Color(1, 1, 1, 0.35)
 		if not unlocked:
@@ -101,7 +101,7 @@ func _input(event: InputEvent) -> void:
 			and (event.keycode == KEY_0 or event.keycode == KEY_KP_0):
 		_test_unlocked = true
 		for job in JOBS:
-			var was_unlocked: bool = (job == "base") or GameState.jobs_unlocked
+			var was_unlocked: bool = GameState.is_job_unlocked(job)   # 해금 전 상태(호버 연결용)
 			var box: Control = $Center/Box/Row.get_node(job)
 			var btn: Button = box.get_node("Btn")
 			btn.disabled = false
@@ -111,6 +111,7 @@ func _input(event: InputEvent) -> void:
 			if not was_unlocked:   # 원래 잠겨있던 직업만 호버 연결(중복 방지)
 				btn.mouse_entered.connect(_on_hover.bind(job))
 				btn.mouse_exited.connect(_on_unhover.bind(job))
+		GameState.unlocked_jobs = ["base", "sheriff", "maid", "jazz"]   # 실제로도 전부 해금
 		$Center/Box/Title.text = "스테이지 %s - [테스트] 전 직업 해금" % GameState.stage_label()
 
 
