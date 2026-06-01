@@ -45,6 +45,8 @@ var _flash_crit: bool = false
 var _knockback: float = 0.0
 var _stun_timer: float = 0.0
 var _lunge: float = 0.0        # 근접 찌르기 모션 타이머
+var _dive: float = 0.0         # 참새 급강하(공격 때 내려갔다 올라옴) 타이머
+const DIVE_DUR := 0.5
 var _popups: Array = []
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -114,6 +116,8 @@ func _physics_process(delta: float) -> void:
 		_stun_timer -= delta
 	if _lunge > 0.0:
 		_lunge -= delta
+	if _dive > 0.0:
+		_dive -= delta
 	# placeholder 적: hit 애니가 없어 타이머로 피격 경직 해제(안 그러면 영영 멈춤)
 	if _hit and not _use_sprite:
 		_hit_timer -= delta
@@ -135,8 +139,10 @@ func _physics_process(delta: float) -> void:
 		if _push_vx > 0.0:
 			base_vx = _push_vx
 		elif _walking and not _hit:
-			if ranged and _atk_range > 0.0 and dist <= _atk_range:
-				base_vx = 0.0      # 사거리 안 → 멈춰서 발사
+			# 지상 원거리(투척쥐·거미)만 사거리에서 멈춰 발사(다가오지 않음).
+			# 공중 원거리(박쥐·벌)는 멈추지 않고 계속 비행하며 발사(§3.1 "비행(멈춤 없음)").
+			if ranged and not _air and _atk_range > 0.0 and dist <= _atk_range:
+				base_vx = 0.0
 			else:
 				base_vx = -move_speed
 	_knockback = move_toward(_knockback, 0.0, 420.0 * delta)
@@ -155,6 +161,8 @@ func _physics_process(delta: float) -> void:
 		elif _is_touching_player():
 			_attack_timer = attack_interval
 			_lunge = 0.16
+			if _kind == "dive":
+				_dive = DIVE_DUR     # 참새: 공격 때 급강하(내려갔다 올라옴)
 			var player := get_tree().get_first_node_in_group("player")
 			if player and player.has_method("take_damage"):
 				player.take_damage(damage)
@@ -219,7 +227,11 @@ func _draw() -> void:
 
 	# placeholder 몸 (스프라이트 안 쓰는 적)
 	if not _use_sprite:
-		var cy := -_body_r - 12.0 - (AIR_HEIGHT if _air else 0.0)
+		# 참새 급강하: 공격 중엔 sin 곡선으로 바닥까지 내려갔다 올라옴
+		var dive_lift := 0.0
+		if _dive > 0.0:
+			dive_lift = sin((1.0 - _dive / DIVE_DUR) * PI) * AIR_HEIGHT
+		var cy := -_body_r - 12.0 - (AIR_HEIGHT if _air else 0.0) + dive_lift
 		var lunge_off := Vector2(-(_lunge / 0.16) * 18.0, 0.0)
 		var bc := _color.lightened(0.6) if _flash > 0.0 else _color
 		draw_set_transform(Vector2(0, cy) + lunge_off, 0.0, Vector2(1.0, 1.15))
