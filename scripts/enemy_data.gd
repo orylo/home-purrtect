@@ -27,27 +27,28 @@ const ENEMY_DEFS := {
 }
 
 
-## 스테이지별 웨이브 — 각 웨이브 = [[적id, 수], ...] (시스템밸런스 §6-B)
-## "혼합"은 가용 적으로 근사. 1-10/1-20은 보스(웨이브 없음).
+## 스테이지별 웨이브 — 각 웨이브 = [[적id, 수], ...] (시스템밸런스 §6-B, 2026-06-02 개정)
+## 새 적 등장 앞당김 + 거의 모든 웨이브 2종 이상 혼합 + 첫 등장은 ×1. 1-10/1-20은 보스(웨이브 없음).
+## "롤러쥐"=gray_roller, "투척쥐"=gray_thrower (검은 계열은 black_*로 명시).
 const STAGE_WAVES := {
 	1:  [[["gray",3]], [["gray",4]]],
-	2:  [[["gray",4]], [["gray",5]]],
-	3:  [[["gray",4]], [["gray",5]], [["gray",6]]],
-	4:  [[["gray",3]], [["gray_roller",2]], [["gray",4]]],
-	5:  [[["gray_roller",3]], [["gray",4]], [["gray_roller",3]]],
-	6:  [[["gray",4]], [["gray_thrower",2]], [["gray_roller",3]]],
-	7:  [[["gray_thrower",2]], [["bat",2]], [["gray",4],["gray_roller",2]]],
-	8:  [[["bat",2]], [["gray_thrower",3]], [["bat",2],["gray",3]]],
-	9:  [[["gray",3],["gray_roller",2],["gray_thrower",1]], [["bat",3]], [["gray_thrower",3],["gray_roller",3]]],
-	11: [[["black",2]], [["gray",4]], [["black",3]]],
-	12: [[["black",2],["spider",1]], [["gray_roller",3]], [["black",3]]],
-	13: [[["black_roller",2]], [["spider",2],["gray",3]], [["black",3]]],
-	14: [[["bee",2]], [["black_thrower",2]], [["bat",2],["bee",2]]],
-	15: [[["bee",2],["spider",1]], [["black",3]], [["sparrow",2],["black_roller",2]]],
-	16: [[["sparrow",2],["bat",2]], [["black_thrower",3]], [["bee",3],["spider",2]]],
-	17: [[["black",2],["black_roller",2],["black_thrower",1]], [["sparrow",2],["bee",2]], [["spider",2],["black_thrower",3]], [["black",4]]],
-	18: [[["black",3],["black_roller",3]], [["bee",3],["spider",2]], [["sparrow",3],["bat",3]], [["black",3],["black_roller",2],["black_thrower",1]]],
-	19: [[["black",3],["black_roller",2],["black_thrower",1]], [["bat",2],["sparrow",2],["bee",2]], [["spider",3],["black_thrower",4]], [["black",6]]],
+	2:  [[["gray",4]], [["gray",3],["gray_roller",1]], [["gray",3],["gray_roller",2]]],
+	3:  [[["gray",3],["gray_roller",2]], [["gray",4],["gray_thrower",1]], [["gray",3],["gray_roller",2],["gray_thrower",1]]],
+	4:  [[["gray",3],["gray_roller",2]], [["gray",3],["gray_thrower",2]], [["gray",4],["gray_roller",2],["gray_thrower",1]]],
+	5:  [[["gray",4],["gray_roller",2]], [["gray",3],["gray_thrower",2],["bat",1]], [["gray",3],["gray_roller",2],["bat",2]]],
+	6:  [[["gray",3],["gray_roller",2],["bat",1]], [["gray",4],["gray_thrower",2]], [["gray",3],["gray_roller",3],["bat",2]]],
+	7:  [[["gray",4],["gray_thrower",2],["bat",1]], [["gray_roller",3],["bat",2]], [["gray",4],["gray_thrower",2],["bat",2]]],
+	8:  [[["gray",3],["gray_roller",2],["bat",2]], [["gray_thrower",3],["bat",2]], [["gray",4],["gray_roller",3],["gray_thrower",2],["bat",2]]],
+	9:  [[["gray",4],["gray_roller",2],["gray_thrower",2]], [["bat",3],["gray",3]], [["gray_roller",3],["gray_thrower",3],["bat",2]], [["gray",4],["gray_roller",2],["bat",2]]],
+	11: [[["gray",4],["black",1]], [["gray",3],["gray_roller",2],["black",2]], [["gray",3],["black",3],["bat",2]]],
+	12: [[["gray",3],["black",2],["spider",1]], [["gray_roller",3],["black",2]], [["gray",3],["black",3],["spider",2]]],
+	13: [[["black",2],["black_roller",1],["spider",1]], [["gray",3],["gray_roller",2],["spider",2]], [["black",3],["black_roller",2],["bat",2]]],
+	14: [[["gray",3],["black",2],["bee",1]], [["black_thrower",2],["bat",2]], [["black",3],["spider",2],["bee",2]]],
+	15: [[["black",2],["bee",2],["spider",1]], [["gray",3],["black_roller",2],["sparrow",1]], [["black",3],["sparrow",2],["bat",2]]],
+	16: [[["black",3],["sparrow",2],["bat",2]], [["black_thrower",3],["bee",2]], [["black",3],["spider",2],["bee",2],["sparrow",2]]],
+	17: [[["black",3],["black_roller",2],["spider",1]], [["sparrow",2],["bee",2],["bat",2]], [["black_thrower",3],["spider",2],["bee",2]], [["black",4],["gray_roller",2]]],
+	18: [[["black",3],["black_roller",3],["spider",2]], [["bee",3],["spider",2],["bat",2]], [["sparrow",3],["bat",3],["bee",2]], [["black",4],["black_thrower",2],["gray_roller",2]]],
+	19: [[["black",4],["gray_roller",2],["spider",2]], [["black_thrower",3],["bee",3],["sparrow",2]], [["bat",3],["bee",2],["spider",3]], [["black",4],["black_roller",3],["gray_thrower",2]]],
 }
 
 
