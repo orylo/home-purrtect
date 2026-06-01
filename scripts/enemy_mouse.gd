@@ -37,6 +37,7 @@ var dead: bool = false
 var _phase_timer: float = 0.0
 var _walking: bool = true
 var _hit: bool = false
+var _hit_timer: float = 0.0    # placeholder 적의 피격 경직 회복 타이머(hit 애니가 없으므로)
 var _attack_timer: float = 0.0
 var _push_vx: float = 0.0
 var _flash: float = 0.0
@@ -109,6 +110,11 @@ func _physics_process(delta: float) -> void:
 		_stun_timer -= delta
 	if _lunge > 0.0:
 		_lunge -= delta
+	# placeholder 적: hit 애니가 없어 타이머로 피격 경직 해제(안 그러면 영영 멈춤)
+	if _hit and not _use_sprite:
+		_hit_timer -= delta
+		if _hit_timer <= 0.0:
+			_hit = false
 
 	if not stunned:
 		_phase_timer -= delta
@@ -285,6 +291,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		_die()
 	else:
 		_hit = true
+		_hit_timer = 0.22        # placeholder 회복 시간(sprite는 hit 애니 종료로 해제)
 		_flash = 0.12
 		_flash_crit = crit
 		_knockback = maxf(_knockback, knockback)
