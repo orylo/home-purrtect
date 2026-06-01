@@ -20,10 +20,11 @@ func _input(event: InputEvent) -> void:
 
 func _handle(pressed: bool, pos: Vector2, index: int) -> void:
 	if pressed:
-		if _melee_idx == -99 and _in(pos, Layout.melee_btn_center(size)):
+		var row := Layout.bottom_row(size)
+		if _melee_idx == -99 and _in(pos, row["melee"]):
 			_melee_idx = index
 			Touch.melee_held = true
-		elif _ranged_idx == -99 and _in(pos, Layout.ranged_btn_center(size)):
+		elif _ranged_idx == -99 and _in(pos, row["ranged"]):
 			_ranged_idx = index
 			Touch.ranged_held = true
 	else:

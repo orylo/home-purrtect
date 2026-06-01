@@ -23,32 +23,56 @@ const CONTROL_EDGE_MARGIN: float = 34.0
 # 공격 버튼(우하단 코너 1/4 원)의 반경 — 그림과 터치 판정이 공유
 const ATTACK_BUTTON_RADIUS: float = 145.0
 
-# === 하단 우측 버튼 클러스터 (그림=bottom_hud / 입력=attack_button 공유) ===
-# 액션 행(아래): [동료] [근접공격] [원거리공격] — 원거리가 맨 오른쪽
-const ACT_R: float = 62.0          # 동료/근접/원거리 버튼 반지름
-const ACT_GAP: float = 30.0        # 버튼 사이 간격
-# 스킬 행(위): 스킬1~4 작은 원, 우측 정렬
-const SKILL_BTN_R: float = 40.0
-const SKILL_BTN_GAP: float = 16.0
+# === 하단 단일 행 버튼 배치 (그림=bottom_hud / 입력=attack_button 공유) ===
+# 왼→오: 아이템1~3 / 동료 / 소모품4칸 / 스킬1~4 / 근접공격 / 원거리공격 (오른쪽 정렬)
+const ACT_R: float = 58.0          # 동료/근접/원거리 버튼 반지름
+const SKILL_BTN_R: float = 38.0    # 스킬 원 반지름
+const CONSUM_SQ: float = 60.0      # 소모품 빈칸 한 변
+const ITEM_SQ: float = 66.0        # 아이템 칸 한 변
+const GROUP_GAP: float = 28.0      # 그룹 사이 간격
+const SKILL_GAP: float = 14.0
+const CONSUM_GAP: float = 12.0
+const ITEM_GAP: float = 14.0
 
-## 원거리공격 버튼 중심(우하단 기준)
-func ranged_btn_center(s: Vector2) -> Vector2:
-	return Vector2(s.x - CONTROL_EDGE_MARGIN - ACT_R, s.y - CONTROL_EDGE_MARGIN - ACT_R)
+## 하단 행 전체 좌표를 한 번에 계산(오른쪽 끝에서 왼쪽으로). 그림·입력 공유.
+##   반환: ranged/melee/companion(Vector2) · skills/consum/items([Vector2]) · row_y(float)
+func bottom_row(s: Vector2) -> Dictionary:
+	var row_y := s.y - CONTROL_EDGE_MARGIN - ACT_R   # 큰 버튼 중심 y(행 기준선)
+	var cx := s.x - CONTROL_EDGE_MARGIN              # 커서: 다음 요소의 오른쪽 가장자리
 
-## 근접공격 버튼 중심(원거리 왼쪽)
-func melee_btn_center(s: Vector2) -> Vector2:
-	return ranged_btn_center(s) - Vector2(2.0 * ACT_R + ACT_GAP, 0.0)
+	var ranged := Vector2(cx - ACT_R, row_y)
+	cx -= 2.0 * ACT_R + GROUP_GAP
+	var melee := Vector2(cx - ACT_R, row_y)
+	cx -= 2.0 * ACT_R + GROUP_GAP
 
-## 동료 버튼 중심(근접 왼쪽)
-func companion_btn_center(s: Vector2) -> Vector2:
-	return ranged_btn_center(s) - Vector2(2.0 * (2.0 * ACT_R + ACT_GAP), 0.0)
+	var skills_rev: Array = []                       # 스킬4,3,2,1 (오른쪽부터)
+	for k in 4:
+		skills_rev.append(Vector2(cx - SKILL_BTN_R, row_y))
+		cx -= 2.0 * SKILL_BTN_R + SKILL_GAP
+	cx -= GROUP_GAP - SKILL_GAP
+	skills_rev.reverse()                             # 스킬1~4 (왼→오)
 
-## 스킬 i(0~3) 버튼 중심 — 액션 행 위, 우측 정렬
-func skill_btn_center(s: Vector2, i: int) -> Vector2:
-	var rightmost := s.x - CONTROL_EDGE_MARGIN - SKILL_BTN_R
-	var x := rightmost - float(3 - i) * (2.0 * SKILL_BTN_R + SKILL_BTN_GAP)
-	var y := s.y - CONTROL_EDGE_MARGIN - 2.0 * ACT_R - 24.0 - SKILL_BTN_R
-	return Vector2(x, y)
+	var consum_rev: Array = []                       # 소모품 4칸 (오른쪽부터)
+	for i in 4:
+		consum_rev.append(Vector2(cx - CONSUM_SQ * 0.5, row_y))
+		cx -= CONSUM_SQ + CONSUM_GAP
+	cx -= GROUP_GAP - CONSUM_GAP
+	consum_rev.reverse()
+
+	var companion := Vector2(cx - ACT_R, row_y)
+	cx -= 2.0 * ACT_R + GROUP_GAP
+
+	var items_rev: Array = []                        # 아이템3,2,1 (오른쪽부터)
+	for i in 3:
+		items_rev.append(Vector2(cx - ITEM_SQ * 0.5, row_y))
+		cx -= ITEM_SQ + ITEM_GAP
+	items_rev.reverse()
+
+	return {
+		"ranged": ranged, "melee": melee, "companion": companion,
+		"skills": skills_rev, "consum": consum_rev, "items": items_rev,
+		"row_y": row_y,
+	}
 
 
 func _vis() -> Vector2:
