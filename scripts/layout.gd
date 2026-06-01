@@ -15,7 +15,7 @@ const REF_H: float = 1080.0
 # 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠)
 const CONTROL_BAND_HEIGHT: float = 264.0   # 띠 높이(화면 px 고정)
 const CONTROL_BAND_GAP: float = 22.0       # 바닥선과 띠 윗변 사이 간격
-const GROUND_DROP: float = 80.0            # 바닥선(캐릭터가 서는 선)을 이만큼 아래로 내림
+const GROUND_DROP: float = 130.0           # 바닥선(캐릭터가 서는 선)을 이만큼 아래로 내림 (80→130, 50px 더)
 
 # 버튼이 화면 가장자리(아래/오른쪽)에서 떨어지는 공통 마진
 const CONTROL_EDGE_MARGIN: float = 34.0
