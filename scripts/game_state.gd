@@ -46,9 +46,27 @@ var stage_minor: int = 1
 ## 개발자 모드는 이 값과 무관(개발자 메뉴에서 4종 자유 선택).
 var unlocked_jobs: Array = ["base"]
 
+## 첫 클리어한 스테이지(파밍 재클리어 시 보너스 중복 방지)
+var cleared_stages: Array = []
+
 
 func is_job_unlocked(job: String) -> bool:
 	return unlocked_jobs.has(job)
+
+
+## 스테이지 클리어 보상 — 첫 클리어면 보너스 코인 지급(파밍은 0). 지급액 반환(연출용).
+##   첫 클리어 = 20 + 5×스테이지번호 (§5.1) + 보스 보너스(1-10 +100 / 1-20 +200)
+func award_stage_clear() -> int:
+	if cleared_stages.has(stage_minor):
+		return 0
+	cleared_stages.append(stage_minor)
+	var bonus := 20 + 5 * stage_minor
+	if stage_minor == 10:
+		bonus += 100
+	elif stage_minor == 20:
+		bonus += 200
+	coins += bonus
+	return bonus
 
 
 ## 도달한(현재) 스테이지 기준으로 해금 직업 보강 — idempotent(세이브 로드 후에도 안전)
@@ -78,6 +96,7 @@ func reset_progress() -> void:
 	stage_major = 1
 	stage_minor = 1
 	unlocked_jobs = ["base"]
+	cleared_stages = []
 	selected_job = "base"
 
 ## 직업별 기본 스탯 + 크리티컬
@@ -171,6 +190,7 @@ func save_game() -> void:
 	var data := {
 		"stage_major": stage_major, "stage_minor": stage_minor,
 		"unlocked_jobs": unlocked_jobs, "coins": coins,
+		"cleared_stages": cleared_stages,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -189,6 +209,11 @@ func load_game() -> void:
 		stage_major = int(data.get("stage_major", 1))
 		stage_minor = int(data.get("stage_minor", 1))
 		coins = int(data.get("coins", 0))
+		cleared_stages = []
+		var cs = data.get("cleared_stages", [])
+		if typeof(cs) == TYPE_ARRAY:
+			for s in cs:
+				cleared_stages.append(int(s))
 		# 해금 직업 복원(옛 세이브엔 없을 수 있음 → 맨몸만으로 시작 후 스테이지로 보강)
 		unlocked_jobs = ["base"]
 		var uj = data.get("unlocked_jobs", [])

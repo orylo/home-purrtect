@@ -14,6 +14,7 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 @onready var to_select_button: Button = $PausePanel/Center/Box/ToSelectButton
 @onready var stage_label: Label = $StageLabel
 @onready var clear_panel: ColorRect = $ClearPanel
+@onready var clear_title: Label = $ClearPanel/Center/Box/Title
 @onready var clear_next: Button = $ClearPanel/Center/Box/Next
 @onready var clear_restart: Button = $ClearPanel/Center/Box/Restart
 @onready var gameover_panel: ColorRect = $GameOverPanel
@@ -21,6 +22,7 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 
 var _wave_cur: int = 0
 var _wave_total: int = 0
+var coin_label: Label   # 상단 코인 표시(💰)
 
 
 func _ready() -> void:
@@ -40,6 +42,32 @@ func _ready() -> void:
 	_style_primary(clear_next)
 	_style_ghost(clear_restart)
 	_style_primary(gameover_restart)
+	_build_coin_label()
+
+
+## 상단 코인 표시 — DoHyeon에 동전 이모지가 없어 금색 "코인 N"으로(숫자는 항상 렌더)
+func _build_coin_label() -> void:
+	coin_label = Label.new()
+	coin_label.add_theme_font_override("font", UI_FONT)
+	coin_label.add_theme_font_size_override("font_size", 26)
+	coin_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.2))
+	coin_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
+	coin_label.add_theme_constant_override("outline_size", 4)
+	coin_label.position = Vector2(44, 62)   # HP바 아래 좌상단
+	add_child(coin_label)
+
+
+## 숫자 천 단위 콤마 (1240 → 1,240)
+func _commafy(n: int) -> String:
+	var s := str(n)
+	var out := ""
+	var c := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out
+		c += 1
+		if c % 3 == 0 and i > 0:
+			out = "," + out
+	return out
 
 
 ## 알약(pill) 스타일 박스 — bw>0이면 테두리(고스트)
@@ -82,6 +110,9 @@ func _style_ghost(btn: Button) -> void:
 
 
 func _process(_delta: float) -> void:
+	if coin_label:
+		coin_label.text = "코인 " + _commafy(GameState.coins)
+
 	# 치즈 체력
 	var player := get_tree().get_first_node_in_group("player")
 	if player:
@@ -109,7 +140,12 @@ func set_wave(current: int, total: int) -> void:
 	_wave_total = total
 
 
-func show_clear() -> void:
+func show_clear(bonus: int = 0) -> void:
+	var msg := "스테이지 클리어!"
+	if bonus > 0:
+		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
+	msg += "\n보유 코인 %s" % _commafy(GameState.coins)
+	clear_title.text = msg
 	clear_panel.visible = true
 
 

@@ -29,6 +29,14 @@ const ENEMY_DEFS := {
 	"boss_snake":   {"name": "큰 뱀", "hp": 1900, "dmg": 20, "armor": 0, "spd": 0.55, "atkint": 1.4, "kind": "melee", "air": false, "sprite": false, "big": true, "color": Color(0.25, 0.42, 0.22), "radius": 150, "range": 0, "status": "", "bcolor": Color(0.4,0.6,0.3)},
 }
 
+## 적별 처치 코인 (시스템밸런스 §3.1 "코인" 칸). 보스는 처치 코인 + 클리어 보너스 별도(§5.1).
+const ENEMY_COIN := {
+	"gray": 2, "gray_roller": 2, "gray_thrower": 3,
+	"black": 5, "black_roller": 5, "black_thrower": 6,
+	"bat": 3, "sparrow": 3, "bee": 4, "spider": 4,
+	"boss_fungus": 50, "boss_snake": 80,
+}
+
 
 ## 스테이지별 웨이브 — 각 웨이브 = [[적id, 수], ...] (시스템밸런스 §6-B, 2026-06-02 개정)
 ## 새 적 등장 앞당김 + 거의 모든 웨이브 2종 이상 혼합 + 첫 등장은 ×1. 1-10/1-20은 보스(웨이브 없음).
@@ -63,4 +71,6 @@ func waves_for(stage: int) -> Array:
 
 
 func def_of(id: String) -> Dictionary:
-	return ENEMY_DEFS.get(id, ENEMY_DEFS["gray"])
+	var d: Dictionary = ENEMY_DEFS.get(id, ENEMY_DEFS["gray"]).duplicate()
+	d["coin"] = ENEMY_COIN.get(id, 2)   # 처치 코인 주입(원본 const는 안 건드림)
+	return d

@@ -29,6 +29,7 @@ var _use_sprite := true
 var _color := Color(0.6, 0.6, 0.62)
 var _bcolor := Color(0.7, 0.7, 0.7)
 var _body_r := 44.0
+var _coin := 0        # 처치 시 지급 코인
 var _atk_range := 0.0
 var _armor := 0.0
 var _ename := "회색쥐"
@@ -96,6 +97,7 @@ func _apply_def() -> void:
 	_bcolor = def.get("bcolor", Color(0.7, 0.7, 0.7))
 	_body_r = float(def.get("radius", 44)) * 1.25   # 치즈(원본 100%)와 균형 맞춘 적 크기(원본 ×1.25)
 	_atk_range = float(def.get("range", 0))
+	_coin = int(def.get("coin", 0))
 	_armor = float(def.get("armor", 0))
 	_ename = def.get("name", "적")
 	if _use_sprite and _color.v < 0.45:
@@ -357,6 +359,7 @@ func _on_anim_finished() -> void:
 
 func _die() -> void:
 	dead = true
+	GameState.coins += _coin   # 처치 코인 지급(§3.1)
 	velocity = Vector2.ZERO
 	$CollisionShape2D.set_deferred("disabled", true)
 	$Hitbox.set_deferred("monitorable", false)

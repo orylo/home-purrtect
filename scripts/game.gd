@@ -25,8 +25,9 @@ func _process(delta: float) -> void:
 
 
 func _on_stage_cleared() -> void:
+	var bonus := GameState.award_stage_clear()   # 첫 클리어 보너스 코인(파밍은 0)
 	get_tree().paused = true
-	hud.show_clear()
+	hud.show_clear(bonus)
 
 
 func _on_player_died() -> void:
