@@ -136,7 +136,8 @@ func _on_to_select_pressed() -> void:
 func _on_clear_next() -> void:
 	get_tree().paused = false
 	if GameState.mode == "dev":
-		get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")   # 개발자: 메뉴 복귀
+		GameState.advance_stage()                                      # 개발자: 다음 스테이지로 이어서(설정 유지)
+		get_tree().change_scene_to_file("res://scenes/main.tscn")
 	else:
 		GameState.advance_stage()
 		if GameState.AUTOSAVE:

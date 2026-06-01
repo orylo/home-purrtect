@@ -15,23 +15,26 @@ var _panel: PanelContainer
 
 
 func _ready() -> void:
-	if not GameState.is_dev():
-		queue_free()      # 출시 빌드: 아예 없음
+	if not GameState.is_dev() or GameState.mode != "dev":
+		queue_free()      # 개발자 모드(dev)에서만 표시 — 플레이어 모드/출시 빌드엔 안 뜸
 		return
 	layer = 100
 	_build_ui()
 
 
 func _build_ui() -> void:
+	# 좌측 절반은 조이스틱(점프) 영역이라, 패널을 화면 오른쪽 절반으로 띄움(터치 충돌 방지)
+	var px := get_viewport().get_visible_rect().size.x * 0.5 + 30.0
+
 	var btn := Button.new()
 	btn.text = "🐞"
-	btn.position = Vector2(10, 100)
+	btn.position = Vector2(px, 96)
 	_font(btn, 24)
 	btn.pressed.connect(func(): _panel.visible = not _panel.visible)
 	add_child(btn)
 
 	_panel = PanelContainer.new()
-	_panel.position = Vector2(10, 150)
+	_panel.position = Vector2(px, 146)
 	_panel.visible = false
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(250, 560)

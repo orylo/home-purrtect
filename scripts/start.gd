@@ -10,10 +10,15 @@ func _ready() -> void:
 	$StartButton.pressed.connect(_on_start)
 	get_viewport().size_changed.connect(_layout_title)
 	_layout_title()
-	# 개발자 모드 버튼은 DEV 빌드에서만 보임
+	# 개발자 모드 진입 = 우하단 작은 흰 동그라미(나만 인지). 호버 효과 없음. DEV 빌드만.
 	$DevButton.visible = GameState.is_dev()
 	if GameState.is_dev():
 		$DevButton.pressed.connect(_on_dev)
+		var circle := StyleBoxFlat.new()
+		circle.bg_color = Color(1, 1, 1, 0.5)   # 흰색 반투명
+		circle.set_corner_radius_all(40)
+		for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+			$DevButton.add_theme_stylebox_override(st, circle)   # 모든 상태 동일 → 호버 변화 없음
 
 
 func _layout_title() -> void:
