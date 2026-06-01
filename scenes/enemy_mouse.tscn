@@ -9,7 +9,7 @@ size = Vector2(74, 600)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
 size = Vector2(82, 135)
 
-[node name="EnemyMouse" type="CharacterBody2D" collision_layer=2 collision_mask=6]
+[node name="EnemyMouse" type="CharacterBody2D" collision_layer=2 collision_mask=4]
 script = ExtResource("1_mouse")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]

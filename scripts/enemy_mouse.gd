@@ -177,10 +177,16 @@ func _fire_projectile() -> void:
 	var b := ENEMY_BULLET.instantiate()
 	b.global_position = origin
 	get_parent().add_child(b)
+	var target := (player as Node2D).global_position + Vector2(0, -90)   # 치즈 몸통 겨냥
 	if _kind == "lob":
-		b.setup(Vector2(-360.0, -360.0), damage, _status, _bcolor, 1300.0)   # 포물선
+		# 탄도 계산: 비행시간 t 동안 정확히 치즈에 도달하는 포물선(중력 g)
+		var g := 1300.0
+		var to := target - origin
+		var t := clampf(absf(to.x) / 420.0, 0.55, 1.4)   # 거리 멀수록 길게(과하지 않게 clamp)
+		var vx := to.x / t
+		var vy := (to.y - 0.5 * g * t * t) / t
+		b.setup(Vector2(vx, vy), damage, _status, _bcolor, g)
 	else:
-		var target := (player as Node2D).global_position + Vector2(0, -90)
 		var dir := (target - origin).normalized()
 		b.setup(dir * 520.0, damage, _status, _bcolor, 0.0)                   # 직선
 
