@@ -53,9 +53,9 @@ func _build() -> void:
 	if GameState.stage_minor >= 6:   # 1-5 클리어 후
 		_btn("펄", Vector2(vp.x * 0.20, vp.y * 0.40), Vector2(110, 60), Color(0.5, 0.35, 0.5), 24,
 				func(): _toast_msg("펄(축복·호감도) — 준비중 (로드맵 6단계)"))
-	if GameState.stage_minor >= 8:   # 1-7 클리어 후
-		_btn("맥스 상점", Vector2(vp.x * 0.13, vp.y * 0.62), Vector2(170, 60), Color(0.25, 0.3, 0.4), 24,
-				func(): _toast_msg("상점(맥스) — 준비중 (로드맵 4단계)"))
+	# 맥스 상점 — 로드맵 4단계(레벨업 구매 작동). ※기획상 1-7 해금이나, 지금은 테스트 위해 상시 노출.
+	_btn("맥스 상점", Vector2(vp.x * 0.13, vp.y * 0.62), Vector2(190, 60), Color(0.25, 0.3, 0.4), 24,
+			func(): get_tree().change_scene_to_file("res://scenes/shop.tscn"))
 
 	# 하단 좌: 전투 준비
 	_btn("전투 준비", Vector2(40, vp.y - 112), Vector2(230, 80), DARK, 30,

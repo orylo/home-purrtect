@@ -33,6 +33,31 @@ func level_mult(job: String = "") -> float:
 	var j := job if job != "" else selected_job
 	return LV_MULT[clampi(int(job_level.get(j, 1)) - 1, 0, 4)]
 
+## --- 레벨업 구매 (상점, 시스템밸런스 §5.2-C) ---
+## 다음 Lv 도달 비용: Lv1→2=1,000 / 2→3=2,500 / 3→4=5,000 / 4→5=10,000
+const LEVELUP_COST := [1000, 2500, 5000, 10000]   # index = 현재 Lv-1
+func levelup_cost(job: String = "") -> int:
+	var j := job if job != "" else selected_job
+	var lv := int(job_level.get(j, 1))
+	if lv >= 5:
+		return 0   # 최고 레벨
+	return LEVELUP_COST[lv - 1]
+
+func can_levelup(job: String = "") -> bool:
+	var j := job if job != "" else selected_job
+	var c := levelup_cost(j)
+	return c > 0 and coins >= c
+
+func do_levelup(job: String = "") -> bool:
+	var j := job if job != "" else selected_job
+	if not can_levelup(j):
+		return false
+	coins -= levelup_cost(j)
+	job_level[j] = int(job_level.get(j, 1)) + 1
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -192,6 +217,7 @@ func save_game() -> void:
 		"unlocked_jobs": unlocked_jobs, "coins": coins,
 		"cleared_stages": cleared_stages,
 		"selected_job": selected_job,   # 마지막 출격 세팅(로드맵 3단계)
+		"job_level": job_level,         # 직업별 Lv(상점 레벨업, 로드맵 4단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -227,6 +253,11 @@ func load_game() -> void:
 		# 마지막 출격 직업 복원(해금 안 된 값이면 맨몸으로)
 		var sj := String(data.get("selected_job", "base"))
 		selected_job = sj if unlocked_jobs.has(sj) else "base"
+		# 직업별 Lv 복원(상점 레벨업)
+		var jl = data.get("job_level", {})
+		if typeof(jl) == TYPE_DICTIONARY:
+			for k in job_level.keys():
+				job_level[k] = clampi(int(jl.get(k, 1)), 1, 5)
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
