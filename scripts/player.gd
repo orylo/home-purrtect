@@ -60,7 +60,8 @@ var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
-const ATTACK_ANIM_SPEED := 3.5   # 공격 즉시감: 모션 2.5배 빠르게(딜레이도 같은 비율로 줄여 싱크 유지)
+const ATTACK_PREP_SPEED := 3.5     # 준비동작(발사/타격 전)은 빠르게 → 누르는 즉시 공격되는 느낌
+const ATTACK_RECOVER_SPEED := 1.5  # 발사/타격 후 마무리는 자연스럽게 → 방정맞아 보이지 않게
 const HIT_ANIM_SPEED := 2.4
 const JUMP_PREP_TIME := 0.13     # 도약 전 준비(땅에서)
 const JUMP_PREP_SPEED := 3.2     # 준비 빠르게
@@ -91,6 +92,7 @@ const SHERIFF_BULLET_SPEED := 840.0
 
 var _fire_timer: float = 0.0
 var _committed_anim: String = "" # 끝까지 재생할 1회성 모션(hit/shoot/melee)
+var _attack_fired: bool = false  # 이번 공격에서 발사/타격이 이미 일어났는지(준비→마무리 속도 전환)
 var _melee_pending: float = -1.0 # 근접 딜 대기 타이머
 var _ranged_pending: float = -1.0 # 원거리 발사 대기 타이머(모션 타이밍)
 var _jump_state: String = ""     # ""/prep/air/land
@@ -187,12 +189,14 @@ func _physics_process(delta: float) -> void:
 		if _melee_pending <= 0.0:
 			_melee_pending = -1.0
 			_melee_attack()
+			_attack_fired = true     # 타격 끝 → 마무리는 천천히
 	# 원거리: 모션 시작 후 약간 뒤(손이 던지는/총 쏘는 순간)에 실제 발사
 	if _ranged_pending >= 0.0:
 		_ranged_pending -= delta
 		if _ranged_pending <= 0.0:
 			_ranged_pending = -1.0
 			_fire_ranged()
+			_attack_fired = true     # 발사 끝 → 마무리는 천천히
 
 	# 상태이상: 독(0.5초마다 지속 데미지) / 둔화(타이머만, 감속은 velocity에서)
 	if _poison_timer > 0.0:
@@ -377,6 +381,7 @@ func _handle_attack() -> void:
 	if not (want_melee or want_ranged):
 		return
 	_fire_timer = attack_interval
+	_attack_fired = false              # 새 공격 시작 → 준비동작 빠른 속도부터
 	if want_melee:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
@@ -386,6 +391,7 @@ func _handle_attack() -> void:
 			_ranged_pending = ranged_fire_delay  # 모션 타이밍 맞춰 늦게 발사
 		else:
 			_fire_ranged()                       # 음악가 등은 즉시 발사
+			_attack_fired = true                 # 즉시 발사 직업 → 마무리는 천천히
 
 
 ## 크리 판정 — 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
@@ -581,7 +587,7 @@ func _update_animation(direction: float) -> void:
 	# 모션별 재생 배속
 	var ss := 1.0
 	if next == "shoot" or next == "melee":
-		ss = ATTACK_ANIM_SPEED
+		ss = ATTACK_RECOVER_SPEED if _attack_fired else ATTACK_PREP_SPEED   # 준비=빠름 / 발사후=자연스럽게
 	elif next == "hit":
 		ss = HIT_ANIM_SPEED
 	elif next == "jump":
