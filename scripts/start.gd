@@ -10,6 +10,10 @@ func _ready() -> void:
 	$StartButton.pressed.connect(_on_start)
 	get_viewport().size_changed.connect(_layout_title)
 	_layout_title()
+	# 개발자 모드 버튼은 DEV 빌드에서만 보임
+	$DevButton.visible = GameState.is_dev()
+	if GameState.is_dev():
+		$DevButton.pressed.connect(_on_dev)
 
 
 func _layout_title() -> void:
@@ -28,4 +32,13 @@ func _layout_title() -> void:
 
 
 func _on_start() -> void:
+	GameState.mode = "player"
+	GameState.load_game()    # 진행 이어하기
+	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
+	GameState.difficulty = 1.0
 	get_tree().change_scene_to_file("res://scenes/select.tscn")
+
+
+func _on_dev() -> void:
+	GameState.mode = "dev"
+	get_tree().change_scene_to_file("res://scenes/dev_menu.tscn")

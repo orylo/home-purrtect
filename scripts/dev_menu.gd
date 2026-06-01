@@ -1,0 +1,192 @@
+extends Control
+## 개발자 테스트 메뉴 (DEV 전용) — 직업/등급/스테이지/난이도/치트 세팅 후 게임 진입.
+## UI는 코드로 구성. 스킬·아이템은 빈 슬롯(시스템 생기면 연결).
+
+const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const JOBS := [["base", "맨몸"], ["sheriff", "보안관"], ["maid", "메이드"], ["jazz", "음악가"]]
+const INK := Color(0.0275, 0.0235, 0.0275)
+const ORANGE := Color(0.9882, 0.3137, 0.0)
+
+var _job := "base"
+var _lv := 1
+var _stage := 1
+var _diff := 1.0
+var _count_mult := 1.0
+var _godmode := false
+var _oneshot := false
+var _lv_buttons: Array = []
+
+
+func _ready() -> void:
+	var bg := ColorRect.new()
+	bg.color = Color(0.886, 0.886, 0.875)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 16)
+	center.add_child(box)
+
+	box.add_child(_title("개발자 모드", 48))
+
+	# 직업
+	var job_opt := OptionButton.new()
+	_font(job_opt, 26)
+	for j in JOBS:
+		job_opt.add_item(j[1])
+	job_opt.item_selected.connect(func(i): _job = JOBS[i][0])
+	box.add_child(_row("직업", job_opt))
+
+	# 등급 Lv (1~5 토글 버튼)
+	var lv_box := HBoxContainer.new()
+	for i in range(1, 6):
+		var b := Button.new()
+		b.text = "Lv%d" % i
+		_font(b, 24)
+		b.toggle_mode = true
+		b.pressed.connect(_on_lv.bind(i))
+		_lv_buttons.append(b)
+		lv_box.add_child(b)
+	_lv_buttons[0].button_pressed = true
+	box.add_child(_row("등급", lv_box))
+
+	# 스테이지 번호
+	var stage_spin := SpinBox.new()
+	stage_spin.min_value = 1
+	stage_spin.max_value = 20
+	stage_spin.value = 1
+	_font(stage_spin, 24)
+	stage_spin.value_changed.connect(func(v): _stage = int(v))
+	box.add_child(_row("스테이지(1-N)", stage_spin))
+
+	# 난이도 M
+	var diff_lbl := _label("1.0", 22)
+	var diff := HSlider.new()
+	diff.min_value = 0.5
+	diff.max_value = 3.0
+	diff.step = 0.1
+	diff.value = 1.0
+	diff.custom_minimum_size = Vector2(220, 0)
+	diff.value_changed.connect(func(v):
+		_diff = v
+		diff_lbl.text = "%.1f" % v)
+	var diff_row := HBoxContainer.new()
+	diff_row.add_child(diff)
+	diff_row.add_child(diff_lbl)
+	box.add_child(_row("난이도 M", diff_row))
+
+	# 적 수 배율
+	var cnt_lbl := _label("1.0", 22)
+	var cnt := HSlider.new()
+	cnt.min_value = 1.0
+	cnt.max_value = 5.0
+	cnt.step = 0.5
+	cnt.value = 1.0
+	cnt.custom_minimum_size = Vector2(220, 0)
+	cnt.value_changed.connect(func(v):
+		_count_mult = v
+		cnt_lbl.text = "%.1f" % v)
+	var cnt_row := HBoxContainer.new()
+	cnt_row.add_child(cnt)
+	cnt_row.add_child(cnt_lbl)
+	box.add_child(_row("적 수 배율", cnt_row))
+
+	# 치트
+	var god := CheckBox.new()
+	god.text = "무적"
+	_font(god, 24)
+	god.toggled.connect(func(p): _godmode = p)
+	var one := CheckBox.new()
+	one.text = "적 즉사"
+	_font(one, 24)
+	one.toggled.connect(func(p): _oneshot = p)
+	var cheat_row := HBoxContainer.new()
+	cheat_row.add_theme_constant_override("separation", 24)
+	cheat_row.add_child(god)
+	cheat_row.add_child(one)
+	box.add_child(cheat_row)
+
+	# 스킬·아이템 빈 슬롯 (시스템 생기면 연결)
+	box.add_child(_dim("스킬: (시스템 준비중)", 18))
+	box.add_child(_dim("아이템: (시스템 준비중)", 18))
+
+	# 시작 / 뒤로
+	var start_btn := Button.new()
+	start_btn.text = "이 설정으로 시작"
+	_font(start_btn, 30)
+	start_btn.add_theme_color_override("font_color", Color(1, 1, 1))
+	start_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
+	start_btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	start_btn.add_theme_stylebox_override("normal", _pill(ORANGE))
+	start_btn.add_theme_stylebox_override("hover", _pill(Color(0.86, 0.27, 0.0)))
+	start_btn.add_theme_stylebox_override("pressed", _pill(Color(0.86, 0.27, 0.0)))
+	start_btn.pressed.connect(_on_start)
+	box.add_child(start_btn)
+
+	var back_btn := Button.new()
+	back_btn.text = "뒤로"
+	_font(back_btn, 22)
+	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/start.tscn"))
+	box.add_child(back_btn)
+
+
+func _on_lv(i: int) -> void:
+	_lv = i
+	for k in range(_lv_buttons.size()):
+		_lv_buttons[k].button_pressed = (k == i - 1)
+
+
+func _on_start() -> void:
+	GameState.mode = "dev"
+	GameState.selected_job = _job
+	GameState.job_level[_job] = _lv
+	GameState.stage_minor = _stage
+	GameState.difficulty = _diff
+	GameState.cheats = {"godmode": _godmode, "enemy_oneshot": _oneshot, "enemy_count_mult": _count_mult}
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+# --- helpers ---
+func _font(c: Control, fs: int) -> void:
+	c.add_theme_font_override("font", FONT)
+	c.add_theme_font_size_override("font_size", fs)
+
+func _label(text: String, fs: int) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_override("font", FONT)
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", INK)
+	return l
+
+func _dim(text: String, fs: int) -> Label:
+	var l := _label(text, fs)
+	l.add_theme_color_override("font_color", Color(0.45, 0.45, 0.45))
+	return l
+
+func _title(text: String, fs: int) -> Label:
+	var l := _label(text, fs)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return l
+
+func _row(label: String, control: Control) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 14)
+	var l := _label(label, 22)
+	l.custom_minimum_size = Vector2(200, 0)
+	h.add_child(l)
+	h.add_child(control)
+	return h
+
+func _pill(c: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = c
+	sb.set_corner_radius_all(100)
+	sb.content_margin_left = 28.0
+	sb.content_margin_right = 28.0
+	sb.content_margin_top = 14.0
+	sb.content_margin_bottom = 14.0
+	return sb
