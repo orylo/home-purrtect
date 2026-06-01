@@ -14,16 +14,16 @@ const ENEMY_DEFS := {
 	# --- 회색 1티어(지상) ---
 	"gray":         {"name": "회색쥐", "hp": 20, "dmg": 5, "armor": 0, "spd": 0.9, "atkint": 1.0, "kind": "melee", "air": false, "sprite": true,  "color": Color(0.6, 0.6, 0.62), "radius": 44, "range": 0,   "status": "", "bcolor": Color(0.7,0.7,0.7)},
 	"gray_roller":  {"name": "회색롤러쥐", "hp": 15, "dmg": 5, "armor": 0, "spd": 1.6, "atkint": 0.9, "kind": "melee", "air": false, "sprite": false, "color": Color(0.55, 0.6, 0.7), "radius": 38, "range": 0,   "status": "", "bcolor": Color(0.7,0.7,0.7)},
-	"gray_thrower": {"name": "회색투척쥐", "hp": 25, "dmg": 6, "armor": 0, "spd": 0.6, "atkint": 1.4, "kind": "lob",   "air": false, "sprite": false, "color": Color(0.55, 0.48, 0.4), "radius": 52, "range": 560, "status": "", "bcolor": Color(0.5,0.45,0.4)},
+	"gray_thrower": {"name": "회색투척쥐", "hp": 25, "dmg": 6, "armor": 0, "spd": 0.6, "atkint": 1.4, "kind": "lob",   "air": false, "sprite": false, "color": Color(0.55, 0.48, 0.4), "radius": 52, "range": 820, "status": "", "bcolor": Color(0.5,0.45,0.4)},
 	# --- 검은 2티어(지상, 강화판) ---
 	"black":        {"name": "검은쥐", "hp": 45, "dmg": 9, "armor": 2, "spd": 1.0, "atkint": 0.9, "kind": "melee", "air": false, "sprite": true,  "color": Color(0.2, 0.2, 0.22), "radius": 50, "range": 0,   "status": "", "bcolor": Color(0.3,0.3,0.3)},
 	"black_roller": {"name": "검은롤러쥐", "hp": 30, "dmg": 8, "armor": 1, "spd": 1.8, "atkint": 0.8, "kind": "melee", "air": false, "sprite": false, "color": Color(0.22, 0.26, 0.34), "radius": 42, "range": 0,   "status": "", "bcolor": Color(0.3,0.3,0.3)},
-	"black_thrower":{"name": "검은투척쥐", "hp": 45, "dmg": 11, "armor": 1, "spd": 0.7, "atkint": 1.1, "kind": "lob",  "air": false, "sprite": false, "color": Color(0.28, 0.24, 0.2), "radius": 56, "range": 560, "status": "", "bcolor": Color(0.3,0.27,0.2)},
+	"black_thrower":{"name": "검은투척쥐", "hp": 45, "dmg": 11, "armor": 1, "spd": 0.7, "atkint": 1.1, "kind": "lob",  "air": false, "sprite": false, "color": Color(0.28, 0.24, 0.2), "radius": 56, "range": 820, "status": "", "bcolor": Color(0.3,0.27,0.2)},
 	# --- 비-쥐 4종 ---
-	"bat":          {"name": "박쥐", "hp": 15, "dmg": 4, "armor": 0, "spd": 1.3, "atkint": 1.0, "kind": "lob",   "air": true,  "sprite": false, "color": Color(0.42, 0.3, 0.5), "radius": 36, "range": 520, "status": "", "bcolor": Color(0.6,0.4,0.8)},
+	"bat":          {"name": "박쥐", "hp": 15, "dmg": 4, "armor": 0, "spd": 1.3, "atkint": 1.0, "kind": "lob",   "air": true,  "sprite": false, "color": Color(0.42, 0.3, 0.5), "radius": 36, "range": 760, "status": "", "bcolor": Color(0.6,0.4,0.8)},
 	"sparrow":      {"name": "참새", "hp": 20, "dmg": 6, "armor": 0, "spd": 1.2, "atkint": 1.3, "kind": "dive",  "air": true,  "sprite": false, "color": Color(0.7, 0.55, 0.35), "radius": 40, "range": 0,   "status": "", "bcolor": Color(0.7,0.55,0.35)},
-	"bee":          {"name": "벌", "hp": 12, "dmg": 4, "armor": 0, "spd": 1.4, "atkint": 1.1, "kind": "shoot", "air": true,  "sprite": false, "color": Color(0.95, 0.78, 0.1), "radius": 28, "range": 600, "status": "poison", "bcolor": Color(0.95,0.8,0.1)},
-	"spider":       {"name": "거미", "hp": 30, "dmg": 5, "armor": 0, "spd": 0.7, "atkint": 1.4, "kind": "shoot", "air": false, "sprite": false, "color": Color(0.25, 0.2, 0.28), "radius": 48, "range": 540, "status": "slow", "bcolor": Color(0.7,0.7,0.75)},
+	"bee":          {"name": "벌", "hp": 12, "dmg": 4, "armor": 0, "spd": 1.4, "atkint": 1.1, "kind": "shoot", "air": true,  "sprite": false, "color": Color(0.95, 0.78, 0.1), "radius": 28, "range": 820, "status": "poison", "bcolor": Color(0.95,0.8,0.1)},
+	"spider":       {"name": "거미", "hp": 30, "dmg": 5, "armor": 0, "spd": 0.7, "atkint": 1.4, "kind": "shoot", "air": false, "sprite": false, "color": Color(0.25, 0.2, 0.28), "radius": 48, "range": 720, "status": "slow", "bcolor": Color(0.7,0.7,0.75)},
 }
 
 

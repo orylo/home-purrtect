@@ -18,7 +18,7 @@ extends CharacterBody2D
 @export var right_margin: float = 70.0
 
 ## --- 점프(회피) ---
-@export var jump_force: float = 700.0
+@export var jump_force: float = 1000.0   # 공중 적을 점프해서 쏠 수 있게 상향(700→1000)
 @export var gravity: float = 1800.0
 
 ## --- 체력 ---
@@ -447,13 +447,16 @@ func _fire_ranged() -> void:
 	var is_lob := ranged_mode == "lob"
 	var is_gun := ranged_mode == "straight" and ranged_limit_frac <= 0.0  # 보안관 총만
 	if is_lob:
-		# 손 던지기: 오른쪽으로, 수평~위 45도 랜덤 각도 → 포물선
-		var ang := deg_to_rad(randf_range(LOB_ANGLE_MIN, LOB_ANGLE_MAX))
+		# 손 던지기: 항상 같은 45도 포물선 → 수평 사거리 ≈ 화면 절반(일정해서 조준 가능).
+		#   45도 사거리 R = v²/g, v²=2u² → R=2u²/g. R=화면½ 로 u 역산.
+		var screen_w := get_viewport_rect().size.x
+		var g := LOB_GRAVITY
+		var u := sqrt(screen_w * 0.22 * g)   # 45도 성분(vx=vy=u). 머즐 높이 보정해 착지 ≈ 화면 절반
 		cfg["mode"] = "lob"
 		cfg["shape"] = ranged_shape   # 맨몸=돌(stone) / 메이드=접시(plate)
-		cfg["vx"] = cos(ang) * LOB_POWER
-		cfg["vy"] = -sin(ang) * LOB_POWER
-		cfg["gravity"] = LOB_GRAVITY
+		cfg["vx"] = u
+		cfg["vy"] = -u
+		cfg["gravity"] = g
 	elif is_gun:
 		# 보안관: 빠른 직선 총알, 끝까지
 		cfg["mode"] = "straight"
