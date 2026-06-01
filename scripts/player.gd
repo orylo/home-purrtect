@@ -68,6 +68,7 @@ const JUMP_AIR_SPEED := 0.42     # 체공 느리게
 const JUMP_LAND_TIME := 0.12     # 착지 마무리(빠르게)
 const JUMP_LAND_SPEED := 2.2
 const SIT_HOLD_FRAME := 7        # 앉기: 완전히 숙인 프레임(여기서 홀드)
+const SIT_SPEED := 2.8           # 앉기/일어나기 재생 배속(회피 반응 빠르게)
 
 ## --- 원거리 튜닝값(플레이테스트로 조정) ---
 # 음악가(음표): 고화력·단거리·저속 + 위아래 물결 (탄마다 랜덤)
@@ -371,7 +372,7 @@ func _handle_attack() -> void:
 	var attacking := Touch.attack_held or Input.is_action_pressed("attack")
 	if not attacking or _fire_timer > 0.0:
 		return
-	var target := _nearest_enemy()
+	var target := _nearest_enemy(true)   # 지상에선 공중 적 제외(근접 대상 판단)
 	_fire_timer = attack_interval
 	if target != null and global_position.distance_to(target.global_position) <= melee_range:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
@@ -408,6 +409,9 @@ func _melee_attack() -> void:
 		if not is_instance_valid(e):
 			continue
 		if e.has_method("is_dead") and e.is_dead():
+			continue
+		# 지상 근접은 공중 적을 못 때림 — 점프(공중) 상태에서만 타격
+		if on_ground and e.has_method("is_air") and e.is_air():
 			continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d <= melee_range:
@@ -485,13 +489,16 @@ func _fire_ranged() -> void:
 		Fx.request_shake(5.0)
 
 
-func _nearest_enemy() -> Node2D:
+func _nearest_enemy(exclude_air_grounded: bool = false) -> Node2D:
 	var nearest: Node2D = null
 	var best := INF
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
 			continue
 		if e.has_method("is_dead") and e.is_dead():
+			continue
+		# 지상에선 공중 적을 근접 대상에서 제외(점프해야 닿음) → 대신 원거리로 처리됨
+		if exclude_air_grounded and on_ground and e.has_method("is_air") and e.is_air():
 			continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d < best:
@@ -579,6 +586,8 @@ func _update_animation(direction: float) -> void:
 			"prep": ss = JUMP_PREP_SPEED
 			"air":  ss = JUMP_AIR_SPEED
 			"land": ss = JUMP_LAND_SPEED
+	elif next == "sit":
+		ss = SIT_SPEED      # 앉기/일어나기 빠르게(회피용)
 	anim.speed_scale = ss
 
 	# 앉기: 누르고 있는 동안 완전히 숙인 프레임에서 정지(떼면 일어남 재생)

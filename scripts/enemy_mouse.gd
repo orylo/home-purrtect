@@ -281,6 +281,11 @@ func is_dead() -> bool:
 	return dead
 
 
+## 공중 적인지 — 치즈가 지상 근접으로 못 때리고, 점프해야 닿음
+func is_air() -> bool:
+	return _air
+
+
 func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
 	if dead:
 		return
