@@ -139,12 +139,7 @@ func _ready() -> void:
 	var start_btn := Button.new()
 	start_btn.text = "이 설정으로 시작"
 	_font(start_btn, 30)
-	start_btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	start_btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	start_btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	start_btn.add_theme_stylebox_override("normal", _pill(ORANGE))
-	start_btn.add_theme_stylebox_override("hover", _pill(Color(0.86, 0.27, 0.0)))
-	start_btn.add_theme_stylebox_override("pressed", _pill(Color(0.86, 0.27, 0.0)))
+	Style.style_button(start_btn, "cta", 30)   # 빨강 CTA(design.md)
 	start_btn.pressed.connect(_on_start)
 	box.add_child(start_btn)
 

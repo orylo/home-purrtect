@@ -67,9 +67,9 @@ func _make_pill(c: Color, bw: float = 0.0, bc: Color = Color(1, 1, 1, 1)) -> Sty
 func _ready() -> void:
 	$Build.text = GameState.BUILD + " ver."
 	_head_font = load("res://assets/fonts/Pretendard-Regular.ttf")
-	_pill_normal = _make_pill(ORANGE)
-	_pill_selected = _make_pill(ORANGE, 5.0, Color(1, 1, 1, 1))   # 선택 = 흰 굵은 테두리
-	_pill_disabled = _make_pill(Color(0.80, 0.52, 0.40))         # 잠김(흐린 오렌지)
+	_pill_normal = _make_pill(Style.PAPER, 3.0, Style.INK)            # 미선택 = 크림
+	_pill_selected = _make_pill(Style.CHEESE, 5.0, Style.INK)        # 선택 = 골든 + 굵은 잉크
+	_pill_disabled = _make_pill(Style.PAPER_DEEP, 3.0, Style.INK)    # 잠김 = 진한 크림
 
 	$Center/Box/Title.text = "전투 준비"
 
@@ -125,14 +125,8 @@ func _build_tabbar() -> void:
 	bar.size = Vector2(640, 60)
 	add_child(bar)
 	for t in TABS:
-		var b := Button.new()
-		b.text = t["name"]
+		var b := Style.button(t["name"], "paper", Style.FS_BODY)
 		b.custom_minimum_size = Vector2(150, 56)
-		b.add_theme_font_override("font", _head_font)
-		b.add_theme_font_size_override("font_size", 30)
-		b.add_theme_color_override("font_color", Color(1, 1, 1))
-		b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-		b.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
 		b.pressed.connect(_set_tab.bind(t["id"]))
 		bar.add_child(b)
 		_tab_btns[t["id"]] = b
@@ -141,8 +135,8 @@ func _build_tabbar() -> void:
 ## 하단 [← 홈] / [출격 ▶]
 func _build_bottom_bar() -> void:
 	var vp := get_viewport_rect().size
-	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(180, 80), DARK, 30, _on_home)
-	_solid_btn("출격 ▶", Vector2(vp.x - 300, vp.y - 112), Vector2(260, 80), ORANGE, 36, _on_launch)
+	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(180, 80), Style.PAPER, 30, _on_home)
+	_solid_btn("출격 ▶", Vector2(vp.x - 300, vp.y - 112), Vector2(260, 80), Style.RED, 36, _on_launch)
 
 
 ## 비-직업 탭 안내 라벨(가운데, 기본 숨김)
@@ -248,20 +242,9 @@ func _skill_label(txt: String, fs: int, alpha: float = 1.0) -> Label:
 	return l
 
 func _skill_button(txt: String, w: float, bg: Color, fn: Callable) -> Button:
-	var b := Button.new()
-	b.text = txt
+	# bg가 ORANGE(장착중 강조)면 골든, 그 외 크림
+	var b := Style.button(txt, "cheese" if bg == ORANGE else "paper", Style.FS_BODY)
 	b.custom_minimum_size = Vector2(w, 78)
-	b.add_theme_font_override("font", _head_font)
-	b.add_theme_font_size_override("font_size", 23)
-	b.add_theme_color_override("font_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.6))
-	var sb := StyleBoxFlat.new(); sb.bg_color = bg; sb.set_corner_radius_all(14)
-	var sbd := StyleBoxFlat.new(); sbd.bg_color = Color(0.7, 0.7, 0.68); sbd.set_corner_radius_all(14)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(st, sb)
-	b.add_theme_stylebox_override("disabled", sbd)
 	if fn.is_valid():
 		b.pressed.connect(fn)
 	return b
@@ -393,16 +376,7 @@ func _equip_ally(cid: String) -> void:
 func _set_tab(tab: String) -> void:
 	_tab = tab
 	for id in _tab_btns:
-		var b: Button = _tab_btns[id]
-		var on: bool = (id == tab)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = ORANGE if on else Color(0.7, 0.7, 0.7, 0.5)
-		sb.set_corner_radius_all(14)
-		if on:
-			sb.set_border_width_all(3)
-			sb.border_color = Color(1, 1, 1, 0.9)
-		for st in ["normal", "hover", "pressed", "focus"]:
-			b.add_theme_stylebox_override(st, sb)
+		Style.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Style.FS_BODY)
 	var is_job := (tab == "job")
 	var is_item := (tab == "item")
 	var is_skill := (tab == "skill")
@@ -499,10 +473,8 @@ func _style_job_btn(job: String) -> void:
 		sb = _pill_normal
 	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(st, sb)
-	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_disabled_color", Color(1, 1, 1))
+	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
+		btn.add_theme_color_override(cn, Style.INK)   # 크림/골든 알약 위 = 잉크 글자
 	if _head_font:
 		btn.add_theme_font_override("font", _head_font)
 	btn.add_theme_font_size_override("font_size", 36)
@@ -533,25 +505,12 @@ func _set_lock_label(rank: Label, job: String) -> void:
 	rank.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.6))
 
 
-## 단색 알약 버튼(하단바용)
+## 하단바 버튼 — bg가 RED면 CTA, 그 외 크림(design.md)
 func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
-	var b := Button.new()
-	b.text = label
+	var b := Style.button(label, "cta" if bg == Style.RED else "paper", fs)
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz
-	b.add_theme_font_override("font", _head_font)
-	b.add_theme_font_size_override("font_size", fs)
-	b.add_theme_color_override("font_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(18)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(1, 1, 1, 0.5)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(st, sb)
 	b.pressed.connect(fn)
 	add_child(b)
 

@@ -68,12 +68,7 @@ func _build() -> void:
 
 	# 콘텐츠 패널(공통 배경) + 각 탭 컨테이너
 	var frame := Panel.new()
-	var fsb := StyleBoxFlat.new()
-	fsb.bg_color = Color(0.08, 0.08, 0.11, 0.92)
-	fsb.set_corner_radius_all(20)
-	fsb.set_border_width_all(3)
-	fsb.border_color = Color(1, 1, 1, 0.22)
-	frame.add_theme_stylebox_override("panel", fsb)
+	frame.add_theme_stylebox_override("panel", Style.panel_box(Style.PAPER, 5, 16))
 	frame.position = _content_rect.position - Vector2(20, 20)
 	frame.size = _content_rect.size + Vector2(40, 40)
 	add_child(frame)
@@ -85,10 +80,10 @@ func _build() -> void:
 	_build_sell_pane()
 	_build_craft_pane()
 
-	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(200, 80), DARK, 30,
+	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(200, 80), Style.PAPER, 30,
 			func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 
-	_toast = _text("", 30, Color(1, 1, 1))
+	_toast = _text("", 30, Style.INK)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast.size = Vector2(vp.x, 50)
 	_toast.position = Vector2(0, vp.y - 170)
@@ -108,10 +103,8 @@ func _build_tabbar(vp: Vector2) -> void:
 	bar.position = Vector2(vp.x * 0.5 - total * 0.5, 100)
 	add_child(bar)
 	for t in TABS:
-		var b := Button.new()
-		b.text = t["name"]
+		var b := Style.button(t["name"], "paper", Style.FS_BODY)
 		b.custom_minimum_size = Vector2(bw, 56)
-		_font(b, 26)
 		b.pressed.connect(_set_tab.bind(t["id"]))
 		bar.add_child(b)
 		_tab_btns[t["id"]] = b
@@ -394,14 +387,7 @@ func _rebuild_craft() -> void:
 func _set_tab(tab: String) -> void:
 	_tab = tab
 	for id in _tab_btns:
-		var on: bool = (id == tab)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = ORANGE if on else Color(0.6, 0.6, 0.62, 0.6)
-		sb.set_corner_radius_all(14)
-		if on:
-			sb.set_border_width_all(3); sb.border_color = Color(1, 1, 1, 0.9)
-		for st in ["normal", "hover", "pressed", "focus"]:
-			_tab_btns[id].add_theme_stylebox_override(st, sb)
+		Style.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Style.FS_BODY)
 	for id in _panes:
 		_panes[id].visible = (id == tab)
 	if tab == "sell":
@@ -492,58 +478,38 @@ func _toast_msg(msg: String) -> void:
 	_toast_t = 1.8
 
 
-# --- helpers ---
+# --- helpers (design.md 토큰 라우팅) ---
+## 크림 패널 위라 밝은색(흰계열)→잉크, ORANGE→빨강, GOLD→머스타드로 리맵
+func _ink(col: Color) -> Color:
+	if col == ORANGE:
+		return Style.RED
+	if col == GOLD:
+		return Style.CHEESE_DEEP
+	if col.v > 0.78 and col.s < 0.25:
+		return Style.INK
+	return col
+
 func _text(s: String, fs: int, col: Color) -> Label:
-	var l := Label.new()
-	l.text = s
-	l.add_theme_font_override("font", FONT)
-	l.add_theme_font_size_override("font_size", fs)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
-	l.add_theme_constant_override("outline_size", 4)
-	return l
+	var kind := "title" if fs >= 30 else ("caption" if fs <= 18 else "body")
+	return Style.label(s, kind, _ink(col))
 
+## 버튼 폰트/기본 스타일(크림) — 호출부 호환용 래퍼
 func _font(b: Button, fs: int) -> void:
-	b.add_theme_font_override("font", FONT)
-	b.add_theme_font_size_override("font_size", fs)
-	b.add_theme_color_override("font_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.55))
+	Style.style_button(b, "paper", fs)
 
+## bg로 버튼 종류 추론 후 Style 재적용
 func _btn_colors(b: Button, bg: Color) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(14)
-	var sbd := StyleBoxFlat.new()
-	sbd.bg_color = Color(0.4, 0.4, 0.42)
-	sbd.set_corner_radius_all(14)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(st, sb)
-	b.add_theme_stylebox_override("disabled", sbd)
+	var fs := int(b.get_theme_font_size("font_size"))
+	Style.style_button(b, "cta" if bg == ORANGE else "paper", fs if fs > 0 else Style.FS_BODY)
 
 func _card_sb() -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.13, 0.13, 0.17, 0.95)
-	sb.set_corner_radius_all(14)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(1, 1, 1, 0.18)
-	return sb
+	return Style.card_box(Style.PAPER, 3, 10)
 
 func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
-	var b := Button.new()
-	b.text = label
+	var b := Style.button(label, "cta" if bg == ORANGE else "paper", fs)
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz
-	_font(b, fs)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(18)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(1, 1, 1, 0.5)
-	for st in ["normal", "hover", "pressed", "focus"]:
-		b.add_theme_stylebox_override(st, sb)
 	b.pressed.connect(fn)
 	add_child(b)
 

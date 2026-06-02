@@ -17,10 +17,11 @@ const SKILL_SHORT := {
 	"discord": "불협", "lullaby": "자장", "encore": "앵콜",
 }
 
-const FILL := Color(0, 0, 0, 0.40)        # 평소(검정 반투명)
-const FILL_ON := Color(1, 1, 1, 0.45)     # 눌림(밝게)
-const LINE := Color(1, 1, 1, 0.78)
-const TXT := Color(1, 1, 1, 0.96)
+# design.md 토큰(크림 칩 + 잉크 외곽 + 골든 눌림). const라 Style 직접참조 불가 → 동일 hex 리터럴.
+const FILL := Color(0.953, 0.890, 0.745, 0.82)   # 크림 칩(paper)
+const FILL_ON := Color(0.949, 0.702, 0.239, 0.95) # 눌림 = 골든(cheese)
+const LINE := Color(0.141, 0.122, 0.106, 0.95)    # 잉크 외곽
+const TXT := Color(0.141, 0.122, 0.106, 1.0)      # 잉크 글자
 
 
 func _ready() -> void:
@@ -96,12 +97,12 @@ func _draw() -> void:
 func _square(center: Vector2, sq: float, active: bool) -> void:
 	var r := Rect2(center.x - sq * 0.5, center.y - sq * 0.5, sq, sq)
 	draw_rect(r, FILL_ON if active else FILL, true)
-	draw_rect(r, LINE, false, 3.0)
+	draw_rect(r, LINE, false, 4.0)   # 두꺼운 잉크 외곽(design.md)
 
 
 func _circle(c: Vector2, r: float, active: bool) -> void:
 	draw_circle(c, r, FILL_ON if active else FILL)
-	draw_arc(c, r, 0.0, TAU, 48, LINE, 3.0, true)
+	draw_arc(c, r, 0.0, TAU, 48, LINE, 4.0, true)   # 두꺼운 잉크 외곽
 
 
 ## 가운데 정렬 텍스트(여러 줄 \n 지원)

@@ -7,6 +7,7 @@ extends Control
 
 func _ready() -> void:
 	$Version.text = GameState.BUILD + " ver."
+	Style.style_button($StartButton, "cta", Style.FS_DISPLAY_L)   # 카툰 빨강 CTA(design.md)
 	$StartButton.pressed.connect(_on_start)
 	get_viewport().size_changed.connect(_layout_title)
 	_layout_title()

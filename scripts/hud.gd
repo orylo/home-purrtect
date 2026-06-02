@@ -53,7 +53,7 @@ func _build_coin_label() -> void:
 	coin_label = Label.new()
 	coin_label.add_theme_font_override("font", UI_FONT)
 	coin_label.add_theme_font_size_override("font_size", 26)
-	coin_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.2))
+	coin_label.add_theme_color_override("font_color", Style.CHEESE)
 	coin_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
 	coin_label.add_theme_constant_override("outline_size", 4)
 	coin_label.position = Vector2(44, 62)   # HP바 아래 좌상단
@@ -89,27 +89,11 @@ func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
 
 
 func _style_primary(btn: Button) -> void:
-	btn.add_theme_font_override("font", UI_FONT)
-	var o := Color(0.9882, 0.3137, 0.0)
-	var oh := Color(0.86, 0.27, 0.0)
-	btn.add_theme_stylebox_override("normal", _pill(o, 0.0, o))
-	btn.add_theme_stylebox_override("hover", _pill(oh, 0.0, oh))
-	btn.add_theme_stylebox_override("pressed", _pill(oh, 0.0, oh))
-	btn.add_theme_stylebox_override("focus", _pill(o, 0.0, o))
-	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	Style.style_button(btn, "cta", Style.FS_TITLE)   # 빨강 CTA(design.md)
 
 
 func _style_ghost(btn: Button) -> void:
-	btn.add_theme_font_override("font", UI_FONT)
-	btn.add_theme_stylebox_override("normal", _pill(Color(1, 1, 1, 0.0), 2.5, Color(1, 1, 1, 0.9)))
-	btn.add_theme_stylebox_override("hover", _pill(Color(1, 1, 1, 0.14), 2.5, Color(1, 1, 1, 1)))
-	btn.add_theme_stylebox_override("pressed", _pill(Color(1, 1, 1, 0.2), 2.5, Color(1, 1, 1, 1)))
-	btn.add_theme_stylebox_override("focus", _pill(Color(1, 1, 1, 0.0), 2.5, Color(1, 1, 1, 0.9)))
-	btn.add_theme_color_override("font_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	btn.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	Style.style_button(btn, "paper", Style.FS_TITLE)   # 보조 = 크림
 
 
 func _process(_delta: float) -> void:
