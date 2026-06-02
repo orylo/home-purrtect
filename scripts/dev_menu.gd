@@ -14,6 +14,7 @@ var _diff := 1.0
 var _count_mult := 1.0
 var _godmode := false
 var _oneshot := false
+var _grant_skills := false
 var _lv_buttons: Array = []
 var _title_lbl: Label   # 미리보기: 직업명(Lv별)
 var _rank_lbl: Label    # 미리보기: 등급 라벨(색)
@@ -119,9 +120,13 @@ func _ready() -> void:
 	cheat_row.add_child(one)
 	box.add_child(cheat_row)
 
-	# 스킬·아이템 빈 슬롯 (시스템 생기면 연결)
-	box.add_child(_dim("스킬: (시스템 준비중)", 18))
-	box.add_child(_dim("아이템: (시스템 준비중)", 18))
+	# 스킬 테스트 — 현재 직업 스킬 전부 지급+장착(맨몸이면 보안관으로 전환)
+	var grant := CheckBox.new()
+	grant.text = "스킬 지급+장착 (테스트)"
+	_font(grant, 24)
+	grant.toggled.connect(func(p): _grant_skills = p)
+	box.add_child(grant)
+	box.add_child(_dim("↑ 켜면 전투 중 스킬칸/키 1·2·3·4로 발동 가능", 16))
 
 	# 시작 / 뒤로
 	var start_btn := Button.new()
@@ -193,6 +198,8 @@ func _apply_settings() -> void:
 	GameState.stage_minor = _stage
 	GameState.difficulty = _diff
 	GameState.cheats = {"godmode": _godmode, "enemy_oneshot": _oneshot, "enemy_count_mult": _count_mult}
+	if _grant_skills:
+		GameState.dev_grant_skills()   # 현재 직업 스킬 전부 지급+장착(스킬 테스트)
 
 
 # --- helpers ---

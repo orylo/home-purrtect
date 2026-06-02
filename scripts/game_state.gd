@@ -3,7 +3,7 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.26"
+const BUILD := "0.27"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -103,9 +103,24 @@ const MATERIALS := {
 }
 const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "bee_sting", "spider_silk", "gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
+var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
+
+## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋
+func start_battle_loot() -> void:
+	run_loot = {}
 
 func add_material(id: String, n: int = 1) -> void:
 	materials[id] = int(materials.get(id, 0)) + n
+	run_loot[id] = int(run_loot.get(id, 0)) + n   # 이번 판 집계
+
+## 클리어 화면용 — 이번 판 전리품 요약 문자열("회색쥐 털 ×4, 보석 ×1") / 없으면 ""
+func run_loot_summary() -> String:
+	var parts: Array = []
+	for id in MAT_ORDER:
+		var n: int = int(run_loot.get(id, 0))
+		if n > 0:
+			parts.append("%s ×%d" % [String(MATERIALS[id]["name"]), n])
+	return ", ".join(parts)
 
 func mat_count(id: String) -> int:
 	return int(materials.get(id, 0))
@@ -295,6 +310,42 @@ func award_stage_clear() -> int:
 		bonus += 200
 	coins += bonus
 	return bonus
+
+
+## 클리어 이벤트 텍스트(로드맵 2-B) — 해당 스테이지 클리어 시 띄울 해금 이벤트. 없으면 "".
+## (지금은 placeholder 안내 텍스트. 나중에 컷신·NPC를 이 자리에 끼움.)
+func clear_event_for(stage: int) -> String:
+	match stage:
+		3:  return "보안관이 합류했다!\n전투 준비에서 직업으로 선택할 수 있어."
+		5:  return "고양이 숙녀 '펄'을 만났다.\n(펄 시스템은 준비 중 — 로드맵 6단계)"
+		7:  return "맥스의 상점이 열렸다!\n메이드·음악가를 재료로 제작할 수 있어."
+		9:  return "맥스가 스킬을 팔기 시작했다!\n상점 [스킬] 탭에서 직업 스킬 구매."
+		10: return "중간보스 펑거스를 물리쳤다!"
+		13: return "비둘기 동료를 만났다.\n(동료 시스템은 준비 중)"
+		15: return "두 번째 스킬을 살 수 있게 됐다!"
+		16: return "치와와 동료를 만났다.\n(동료 시스템은 준비 중)"
+		19: return "직업 Lv2 강화가 열렸다!\n상점 [레벨업]에서 더 세질 수 있어."
+		20: return "최종보스 큰 뱀을 물리쳤다! 1막 클리어!"
+		_:  return ""
+
+
+## [개발자용] 현재 선택 직업의 스킬을 전부 지급 + 슬롯만큼 장착 (스킬 테스트)
+func dev_grant_skills() -> void:
+	var job := selected_job
+	if job == "base":
+		job = "sheriff"
+		selected_job = "sheriff"
+		if not unlocked_jobs.has("sheriff"):
+			unlocked_jobs.append("sheriff")
+	if int(job_level.get(job, 1)) < 1:
+		job_level[job] = 1
+	equipped_skills[job] = []
+	for sid in SKILLS:
+		if SKILLS[sid]["job"] == job:
+			if not owned_skills.has(sid):
+				owned_skills.append(sid)
+			if equipped_skills[job].size() < skill_slots(job):
+				equipped_skills[job].append(sid)
 
 
 ## 도달한(현재) 스테이지 기준으로 해금 직업 보강 — idempotent(세이브 로드 후에도 안전)

@@ -22,6 +22,8 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 
 var _wave_cur: int = 0
 var _wave_total: int = 0
+var _event_pending: bool = false   # 클리어 이벤트 [확인] 대기 중
+var _event_text: String = ""
 var coin_label: Label   # 상단 코인 표시(💰)
 
 
@@ -145,8 +147,24 @@ func show_clear(bonus: int = 0) -> void:
 	var msg := "스테이지 클리어!"
 	if bonus > 0:
 		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
+	var loot := GameState.run_loot_summary()
+	if loot != "":
+		msg += "\n전리품: " + loot           # #2: 이번 판 얻은 전리품 표시
+	else:
+		msg += "\n전리품: 없음"
 	msg += "\n보유 코인 %s" % _commafy(GameState.coins)
 	clear_title.text = msg
+	# #4: 해금 이벤트 스테이지면 [확인] 강제 후 진행 (로드맵 2-B)
+	var ev := GameState.clear_event_for(GameState.stage_minor)
+	if ev != "":
+		_event_pending = true
+		_event_text = ev
+		clear_next.text = "확인 ▶"
+		clear_restart.visible = false
+	else:
+		_event_pending = false
+		clear_next.text = "다음 ▶"
+		clear_restart.visible = true
 	clear_panel.visible = true
 
 
@@ -172,8 +190,14 @@ func _on_to_select_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/home.tscn")   # 전투 포기 → 홈
 
 
-## [다음 ▶] — 클리어 → 다음 스테이지로 바로 이어서(같은 직업, 마찰 없는 연속)
+## [다음 ▶ / 확인 ▶] — 이벤트 스테이지면 첫 탭은 이벤트 실행(placeholder), 그 뒤 진행 열림
 func _on_clear_next() -> void:
+	if _event_pending:
+		_event_pending = false
+		clear_title.text += "\n\n● " + _event_text   # 이벤트 placeholder 안내
+		clear_next.text = "다음 ▶"
+		clear_restart.visible = true
+		return
 	get_tree().paused = false
 	GameState.advance_stage()
 	if GameState.mode != "dev" and GameState.AUTOSAVE:

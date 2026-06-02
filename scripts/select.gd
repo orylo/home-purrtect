@@ -99,11 +99,12 @@ func _ready() -> void:
 			btn.mouse_entered.connect(_on_hover.bind(job))
 			btn.mouse_exited.connect(_on_unhover.bind(job))
 
+	$Center.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 카드만 클릭, 빈 영역은 통과(하단버튼 막힘 방지)
 	_build_tabbar()
-	_build_bottom_bar()
 	_build_placeholder()
 	_build_item_slots()
 	_build_skill_pane()
+	_build_bottom_bar()   # ★최상위(맨 마지막)로 추가 → 어느 탭에서도 [홈]/[출격] 클릭 보장
 
 	# 기본 선택 = 이전에 고른 직업(없거나 잠겼으면 맨몸)
 	var start_job: String = GameState.selected_job
@@ -153,6 +154,7 @@ func _build_placeholder() -> void:
 	_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_placeholder.size = Vector2(vp.x, 120)
 	_placeholder.position = Vector2(0, vp.y * 0.5 - 60)
+	_placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_placeholder.visible = false
 	add_child(_placeholder)
 	# 직업 탭 하단 선택 안내
@@ -163,6 +165,7 @@ func _build_placeholder() -> void:
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.size = Vector2(vp.x, 36)
 	_hint.position = Vector2(0, vp.y - 168)
+	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_hint)
 
 
@@ -171,6 +174,7 @@ func _build_item_slots() -> void:
 	var vp := get_viewport_rect().size
 	_item_slots = Control.new()
 	_item_slots.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_item_slots.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 빈 영역 클릭 통과(슬롯 버튼은 별도)
 	_item_slots.visible = false
 	add_child(_item_slots)
 	var row := HBoxContainer.new()
@@ -228,6 +232,7 @@ func _refresh_item_slots() -> void:
 func _build_skill_pane() -> void:
 	_skill_pane = Control.new()
 	_skill_pane.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_skill_pane.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 빈 영역 클릭 통과
 	_skill_pane.visible = false
 	add_child(_skill_pane)
 
