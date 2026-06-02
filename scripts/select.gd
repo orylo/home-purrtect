@@ -75,8 +75,8 @@ func _build_base() -> void:
 	_center_art = TextureRect.new()
 	_center_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_center_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_center_art.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_center_art.custom_minimum_size = Vector2(0, ph * 0.42)
+	_center_art.size_flags_vertical = Control.SIZE_EXPAND_FILL   # 남는 공간만 차지(고정비율 X → 스탯 안 잘림)
+	_center_art.custom_minimum_size = Vector2(0, 0)
 	lcol.add_child(_center_art)
 	var name_lbl := Design.label("", "display_s", Design.INK)
 	name_lbl.name = "NameLbl"; name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -181,31 +181,33 @@ func _item_slot_text() -> String:
 func _slot_button(cat: String, label: String) -> Button:
 	var b := Button.new()
 	b.name = "Slot_" + cat
-	b.add_theme_font_override("font", FONT)
-	b.add_theme_font_size_override("font_size", Design.FS_TITLE)
-	b.add_theme_color_override("font_color", Design.INK)
-	b.add_theme_color_override("font_hover_color", Design.INK)
-	b.add_theme_color_override("font_pressed_color", Design.INK)
 	for stn in ["normal", "hover", "pressed", "focus"]:
 		b.add_theme_stylebox_override(stn, Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.pressed.connect(_open_picker.bind(cat))
-	# 라벨(좌상단 caption) + 값(본문)을 자식 라벨로
+	# 내용(라벨+값)을 카드 안에 세로 중앙 정렬
+	var mc := MarginContainer.new()
+	mc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for s in ["left", "right", "top", "bottom"]:
+		mc.add_theme_constant_override("margin_" + s, Design.GAP)
+	b.add_child(mc)
+	var vb := VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	vb.add_theme_constant_override("separation", 4)
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mc.add_child(vb)
 	var cap := Design.label(label + "   ▶", "caption", Design.PAPER_DEEP.darkened(0.35))
-	cap.name = "Cap"; cap.position = Vector2(Design.GAP, 8)
-	b.add_child(cap)
+	cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var val := Design.label("", "body", Design.INK)
-	val.name = "Val"; val.position = Vector2(Design.GAP, 34)
-	b.add_child(val)
+	val.name = "Val"; val.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vb.add_child(cap); vb.add_child(val)
 	return b
 
 func _set_slot(cat: String, value: String) -> void:
 	var b: Button = _base.find_child("Slot_" + cat, true, false)
 	if b == null: return
 	var val: Label = b.find_child("Val", true, false)
-	if val:
-		val.text = value
-		val.size = Vector2(b.size.x - Design.GAP * 2, 30)
+	if val: val.text = value
 
 
 # ══════════════ 픽커 오버레이 ══════════════
