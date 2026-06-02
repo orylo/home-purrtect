@@ -24,8 +24,8 @@ func _menu() -> void:
 	portrait(PURPLE, "shy" if lv >= 3 else "neutral")
 	say("펄  ·  호감도 Lv%d" % lv, PINK, GREET[clampi(lv, 0, 5)])
 	choices([
-		["✦ 출격 축복을 받는다", _bless_menu],
-		["✦ 보석을 바친다", _gift_menu],
+		["◆ 출격 축복을 받는다", _bless_menu],
+		["◆ 보석을 바친다", _gift_menu],
 		["나간다", _leave],
 	])
 

@@ -24,7 +24,7 @@ func _ready() -> void:
 
 func _build_ui() -> void:
 	var btn := Button.new()
-	btn.text = "🐞"
+	btn.text = "버그"   # (이모지는 폰트에 없어 텍스트로)
 	btn.position = Vector2(10, 100)      # 원위치(좌상단)
 	_font(btn, 24)
 	btn.pressed.connect(func(): _panel.visible = not _panel.visible)
