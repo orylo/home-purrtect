@@ -303,6 +303,7 @@ func _physics_process(delta: float) -> void:
 		if not on_ground and _jump_state == "air":
 			_jump_state = "land"
 			_jump_land_timer = JUMP_LAND_TIME
+			Fx.burst("dust", global_position + Vector2(0, -8), 0.4, 8)
 		on_ground = true
 	if _jump_state == "land":
 		_jump_land_timer -= delta
@@ -478,6 +479,7 @@ func _fire_ranged() -> void:
 			})
 		if is_instance_valid(_click_player):
 			_click_player.play()
+		Fx.burst("steam", global_position + muzzle_offset, 0.3, 45)   # 불발 = 힘없는 연기
 		return
 	var hit := _roll_attack(ranged_damage)
 	var cfg := {"dmg": hit["dmg"], "kb": hit["kb"], "stun": hit["stun"], "crit": hit["crit"]}
@@ -520,6 +522,7 @@ func _fire_ranged() -> void:
 	if is_gun and is_instance_valid(muzzle_fx):
 		muzzle_fx.flash()
 		Fx.request_shake(5.0)
+		Fx.burst("muzzle_flash", global_position + muzzle_offset, 0.34, 45)
 
 
 func _nearest_enemy(exclude_air: bool = false) -> Node2D:
@@ -568,15 +571,18 @@ func heal(amount: float) -> void:
 	if _dead:
 		return
 	health = minf(max_health, health + amount)
+	Fx.burst("red_heart", global_position + Vector2(0, -185), 0.42, 60)
 
 ## 말린 멸치: 공격력 버프 dur초(중첩 시 더 긴 쪽 유지)
 func apply_atk_buff(dur: float) -> void:
 	if _dead:
 		return
 	_atk_buff_t = maxf(_atk_buff_t, dur)
+	Fx.burst("shine_burst", global_position + Vector2(0, -110), 0.5, 60)
 
 ## 폭죽: 살아있는 모든 적에게 고정 광역 데미지
 func aoe_damage(amount: float) -> void:
+	Fx.burst("poof_explosion", global_position + Vector2(0, -90), 0.85, 47)   # 폭죽
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e):
 			continue
@@ -592,12 +598,14 @@ func apply_guard(dur: float, pct: float) -> void:
 		return
 	_guard_t = maxf(_guard_t, dur)
 	_guard_pct = pct
+	Fx.burst("sparkle", global_position + Vector2(0, -110), 0.5, 60)
 
 ## 앵콜: dur초 동안 공속+40%·이속+20%
 func apply_encore(dur: float) -> void:
 	if _dead:
 		return
 	_encore_t = maxf(_encore_t, dur)
+	Fx.burst("shine_burst", global_position + Vector2(0, -110), 0.55, 60)
 
 
 ## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)
@@ -608,6 +616,7 @@ func apply_status(st: String) -> void:
 		"poison":
 			_poison_timer = 3.0
 			_poison_tick = 0.5
+			Fx.burst("poison_bubbles", global_position + Vector2(0, -90), 0.45, 46, 16.0, true, 3.0)
 		"slow":
 			_slow_timer = 2.5
 

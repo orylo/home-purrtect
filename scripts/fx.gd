@@ -20,3 +20,44 @@ func request_hitstop(duration: float) -> void:
 	await get_tree().create_timer(duration, true, false, true).timeout
 	if my == _hitstop_token:
 		Engine.time_scale = 1.0
+
+
+# ── 이펙트 스프라이트 (assets/fx/<name>/0~8.png, 9프레임) ──────────
+var _sf_cache: Dictionary = {}   # "name|loop" → SpriteFrames
+
+func _frames(anim: String, loop: bool) -> SpriteFrames:
+	var key := anim + ("|1" if loop else "|0")
+	if _sf_cache.has(key):
+		return _sf_cache[key]
+	var sf := SpriteFrames.new()
+	for i in 9:
+		var tex: Texture2D = load("res://assets/fx/%s/%d.png" % [anim, i])
+		if tex:
+			sf.add_frame("default", tex)
+	sf.set_animation_loop("default", loop)
+	sf.set_animation_speed("default", 18.0)
+	_sf_cache[key] = sf
+	return sf
+
+## 월드 좌표 pos에 9프레임 이펙트를 1회(또는 loop) 재생하고 끝나면 자동 제거.
+##  scale: 342px 원본 기준 배율 / z: z_index / fps / loop+life: 루프 시 life초 후 제거.
+func burst(anim: String, pos: Vector2, scale: float = 1.0, z: int = 40,
+		fps: float = 18.0, loop: bool = false, life: float = 0.0,
+		modulate: Color = Color.WHITE) -> void:
+	var scn := get_tree().current_scene
+	if scn == null:
+		return
+	var s := AnimatedSprite2D.new()
+	s.sprite_frames = _frames(anim, loop)
+	s.global_position = pos
+	s.scale = Vector2(scale, scale)
+	s.z_index = z
+	s.modulate = modulate
+	s.speed_scale = fps / 18.0
+	scn.add_child(s)
+	s.play("default")
+	if loop:
+		if life > 0.0:
+			get_tree().create_timer(life).timeout.connect(s.queue_free)
+	else:
+		s.animation_finished.connect(s.queue_free)

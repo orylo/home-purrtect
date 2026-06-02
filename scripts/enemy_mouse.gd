@@ -351,6 +351,13 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		if stun > 0.0:
 			_stun_timer = stun
 		Fx.request_shake(7.0 if crit else 3.0)
+		var _fy := -50.0 - (AIR_HEIGHT if _air else 0.0)
+		if crit:
+			Fx.burst("critical_hit", global_position + Vector2(0, _fy), 0.62, 45)
+		else:
+			Fx.burst("impact_flash", global_position + Vector2(0, _fy), 0.42, 45)
+		if knockback >= 140.0:
+			Fx.burst("knockback", global_position + Vector2(0, _fy), 0.5, 44)   # 강한 넉백 whoosh
 		if _use_sprite:
 			anim.play("hit")
 
@@ -361,12 +368,14 @@ func apply_slow(dur: float, factor: float) -> void:
 		return
 	_eslow_timer = maxf(_eslow_timer, dur)
 	_eslow_factor = factor
+	Fx.burst("slime_drip", global_position + Vector2(0, -42.0 - (AIR_HEIGHT if _air else 0.0)), 0.4, 44, 14.0, true, minf(dur, 1.2))
 
 ## 스킬 스턴(완전 정지 dur초) — 자장가. 데미지·넉백 없음
 func apply_stun(dur: float) -> void:
 	if dead:
 		return
 	_stun_timer = maxf(_stun_timer, dur)
+	Fx.burst("dizzy_stars", global_position + Vector2(0, -92.0 - (AIR_HEIGHT if _air else 0.0)), 0.46, 46, 14.0, true, dur)
 
 
 func _on_anim_finished() -> void:
@@ -391,6 +400,7 @@ func _die() -> void:
 	pop.global_position = global_position + Vector2(0, -45 - (AIR_HEIGHT if _air else 0.0))
 	Fx.request_shake(7.0)
 	Fx.request_hitstop(0.05)
+	Fx.burst("poof_explosion", global_position + Vector2(0, -45.0 - (AIR_HEIGHT if _air else 0.0)), 0.6, 47)
 	if _use_sprite:
 		anim.modulate = Color(1, 1, 1)
 		anim.play("ghost")
