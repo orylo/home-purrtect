@@ -105,10 +105,12 @@ const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparr
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
 
-## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 설정
+## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 + 축복 1회 소비
+## (player._ready가 game._ready보다 먼저 실행되어 발톱·배는 이미 적용된 뒤 여기서 소비됨)
 func start_battle_loot() -> void:
 	run_loot = {}
 	run_coin_mult = (1.0 + blessing_pct("coin")) if selected_blessing == "coin" else 1.0
+	selected_blessing = ""   # 축복은 1회용 — 매 출격마다 펄에게 다시 받아야 함(§5.5)
 
 func add_material(id: String, n: int = 1) -> void:
 	materials[id] = int(materials.get(id, 0)) + n
@@ -313,6 +315,11 @@ func equip_companion(id: String) -> void:
 		equipped_companion = id   # ""(해제) 또는 보유 동료
 		if mode != "dev" and AUTOSAVE:
 			save_game()
+
+## [개발자용] 동료 둘 다 지급 + 첫 동료 장착 (동료 테스트)
+func dev_grant_companions() -> void:
+	owned_companions = ["dove", "chihuahua"]
+	equipped_companion = "dove"
 
 ## --- 펄: 출격 축복 + 호감도(보석 헌납) (로드맵 6단계, 시스템밸런스 §5.5) ---
 ## 1-5 해금. 출격 전 축복 1개 택1(매 판). 보석 헌납 → 호감도 누적 → 레벨↑ → 축복 강화.

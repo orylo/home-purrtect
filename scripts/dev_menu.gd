@@ -15,6 +15,7 @@ var _count_mult := 1.0
 var _godmode := false
 var _oneshot := false
 var _grant_skills := false
+var _grant_comps := false
 var _lv_buttons: Array = []
 var _title_lbl: Label   # 미리보기: 직업명(Lv별)
 var _rank_lbl: Label    # 미리보기: 등급 라벨(색)
@@ -127,6 +128,12 @@ func _ready() -> void:
 	grant.toggled.connect(func(p): _grant_skills = p)
 	box.add_child(grant)
 	box.add_child(_dim("↑ 켜면 전투 중 스킬칸/키 1·2·3·4로 발동 가능", 16))
+	var grantc := CheckBox.new()
+	grantc.text = "동료 지급+장착 (테스트)"
+	_font(grantc, 24)
+	grantc.toggled.connect(func(p): _grant_comps = p)
+	box.add_child(grantc)
+	box.add_child(_dim("↑ 켜면 전투 중 동료칸/키 4로 호출 가능", 16))
 
 	# 시작 / 뒤로
 	var start_btn := Button.new()
@@ -200,6 +207,8 @@ func _apply_settings() -> void:
 	GameState.cheats = {"godmode": _godmode, "enemy_oneshot": _oneshot, "enemy_count_mult": _count_mult}
 	if _grant_skills:
 		GameState.dev_grant_skills()   # 현재 직업 스킬 전부 지급+장착(스킬 테스트)
+	if _grant_comps:
+		GameState.dev_grant_companions()   # 동료 둘 지급+장착(동료 테스트)
 
 
 # --- helpers ---

@@ -60,11 +60,41 @@ func _summon(id: String) -> void:
 				if e.has_method("apply_slow"):
 					e.apply_slow(float(c["slow_dur"]), 1.0 - float(c["slow_pct"]))
 			_flash(Color(0.7, 0.85, 1.0))
+			_dove_actor()
 		"dog_charge":
 			for e in _alive(true):   # 지상만(공중 제외)
 				e.take_damage(dmg, 760.0, 0.0, false)   # 강한 우측 넉백 = 밀어내기
 			_flash(Color(0.95, 0.8, 0.5))
+			_dog_actor()
 	Fx.request_shake(6.0)
+
+
+## placeholder: 비둘기가 좌→우로 날며 똥 떨굼
+func _dove_actor() -> void:
+	var vp := get_viewport_rect().size
+	var gy := Layout.ground_y()
+	var bird := ColorRect.new()
+	bird.color = Color(0.8, 0.85, 0.95); bird.size = Vector2(44, 26)
+	bird.position = Vector2(vp.x * 0.18, gy - 360)
+	add_child(bird)
+	create_tween().tween_property(bird, "position:x", vp.x * 0.82, 0.8).finished.connect(bird.queue_free)
+	for i in range(4):
+		var d := ColorRect.new()
+		d.color = Color(0.5, 0.4, 0.25); d.size = Vector2(13, 13)
+		d.position = Vector2(vp.x * (0.30 + 0.12 * i), gy - 340)
+		add_child(d)
+		create_tween().tween_property(d, "position:y", gy - 50, 0.5).finished.connect(d.queue_free)
+
+
+## placeholder: 치와와가 좌→우로 질주
+func _dog_actor() -> void:
+	var vp := get_viewport_rect().size
+	var gy := Layout.ground_y()
+	var dog := ColorRect.new()
+	dog.color = Color(0.86, 0.7, 0.5); dog.size = Vector2(72, 48)
+	dog.position = Vector2(-90, gy - 48)
+	add_child(dog)
+	create_tween().tween_property(dog, "position:x", vp.x + 90, 0.55).finished.connect(dog.queue_free)
 
 
 ## 살아있는 적 (ground_only=true면 공중 제외)
