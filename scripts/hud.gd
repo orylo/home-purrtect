@@ -53,7 +53,7 @@ func _build_coin_label() -> void:
 	coin_label = Label.new()
 	coin_label.add_theme_font_override("font", UI_FONT)
 	coin_label.add_theme_font_size_override("font_size", 26)
-	coin_label.add_theme_color_override("font_color", Style.CHEESE)
+	coin_label.add_theme_color_override("font_color", Design.CHEESE)
 	coin_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
 	coin_label.add_theme_constant_override("outline_size", 4)
 	coin_label.position = Vector2(44, 62)   # HP바 아래 좌상단
@@ -89,11 +89,11 @@ func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
 
 
 func _style_primary(btn: Button) -> void:
-	Style.style_button(btn, "cta", Style.FS_TITLE)   # 빨강 CTA(design.md)
+	Design.style_button(btn, "cta", Design.FS_TITLE)   # 빨강 CTA(design.md)
 
 
 func _style_ghost(btn: Button) -> void:
-	Style.style_button(btn, "paper", Style.FS_TITLE)   # 보조 = 크림
+	Design.style_button(btn, "paper", Design.FS_TITLE)   # 보조 = 크림
 
 
 func _process(_delta: float) -> void:

@@ -24,7 +24,7 @@ Fx="*res://scripts/fx.gd"
 GameState="*res://scripts/game_state.gd"
 RotateGate="*res://scripts/rotate_gate.gd"
 Enemies="*res://scripts/enemy_data.gd"
-Style="*res://scripts/style.gd"
+Design="*res://scripts/style.gd"
 
 [display]
 

@@ -139,7 +139,7 @@ func _ready() -> void:
 	var start_btn := Button.new()
 	start_btn.text = "이 설정으로 시작"
 	_font(start_btn, 30)
-	Style.style_button(start_btn, "cta", 30)   # 빨강 CTA(design.md)
+	Design.style_button(start_btn, "cta", 30)   # 빨강 CTA(design.md)
 	start_btn.pressed.connect(_on_start)
 	box.add_child(start_btn)
 

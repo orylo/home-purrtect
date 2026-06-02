@@ -67,9 +67,9 @@ func _make_pill(c: Color, bw: float = 0.0, bc: Color = Color(1, 1, 1, 1)) -> Sty
 func _ready() -> void:
 	$Build.text = GameState.BUILD + " ver."
 	_head_font = load("res://assets/fonts/Pretendard-Regular.ttf")
-	_pill_normal = _make_pill(Style.PAPER, 3.0, Style.INK)            # 미선택 = 크림
-	_pill_selected = _make_pill(Style.CHEESE, 5.0, Style.INK)        # 선택 = 골든 + 굵은 잉크
-	_pill_disabled = _make_pill(Style.PAPER_DEEP, 3.0, Style.INK)    # 잠김 = 진한 크림
+	_pill_normal = _make_pill(Design.PAPER, 3.0, Design.INK)            # 미선택 = 크림
+	_pill_selected = _make_pill(Design.CHEESE, 5.0, Design.INK)        # 선택 = 골든 + 굵은 잉크
+	_pill_disabled = _make_pill(Design.PAPER_DEEP, 3.0, Design.INK)    # 잠김 = 진한 크림
 
 	$Center/Box/Title.text = "전투 준비"
 
@@ -125,7 +125,7 @@ func _build_tabbar() -> void:
 	bar.size = Vector2(640, 60)
 	add_child(bar)
 	for t in TABS:
-		var b := Style.button(t["name"], "paper", Style.FS_BODY)
+		var b := Design.button(t["name"], "paper", Design.FS_BODY)
 		b.custom_minimum_size = Vector2(150, 56)
 		b.pressed.connect(_set_tab.bind(t["id"]))
 		bar.add_child(b)
@@ -135,8 +135,8 @@ func _build_tabbar() -> void:
 ## 하단 [← 홈] / [출격 ▶]
 func _build_bottom_bar() -> void:
 	var vp := get_viewport_rect().size
-	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(180, 80), Style.PAPER, 30, _on_home)
-	_solid_btn("출격 ▶", Vector2(vp.x - 300, vp.y - 112), Vector2(260, 80), Style.RED, 36, _on_launch)
+	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(180, 80), Design.PAPER, 30, _on_home)
+	_solid_btn("출격 ▶", Vector2(vp.x - 300, vp.y - 112), Vector2(260, 80), Design.RED, 36, _on_launch)
 
 
 ## 비-직업 탭 안내 라벨(가운데, 기본 숨김)
@@ -243,7 +243,7 @@ func _skill_label(txt: String, fs: int, alpha: float = 1.0) -> Label:
 
 func _skill_button(txt: String, w: float, bg: Color, fn: Callable) -> Button:
 	# bg가 ORANGE(장착중 강조)면 골든, 그 외 크림
-	var b := Style.button(txt, "cheese" if bg == ORANGE else "paper", Style.FS_BODY)
+	var b := Design.button(txt, "cheese" if bg == ORANGE else "paper", Design.FS_BODY)
 	b.custom_minimum_size = Vector2(w, 78)
 	if fn.is_valid():
 		b.pressed.connect(fn)
@@ -376,7 +376,7 @@ func _equip_ally(cid: String) -> void:
 func _set_tab(tab: String) -> void:
 	_tab = tab
 	for id in _tab_btns:
-		Style.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Style.FS_BODY)
+		Design.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Design.FS_BODY)
 	var is_job := (tab == "job")
 	var is_item := (tab == "item")
 	var is_skill := (tab == "skill")
@@ -474,7 +474,7 @@ func _style_job_btn(job: String) -> void:
 	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
 		btn.add_theme_stylebox_override(st, sb)
 	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
-		btn.add_theme_color_override(cn, Style.INK)   # 크림/골든 알약 위 = 잉크 글자
+		btn.add_theme_color_override(cn, Design.INK)   # 크림/골든 알약 위 = 잉크 글자
 	if _head_font:
 		btn.add_theme_font_override("font", _head_font)
 	btn.add_theme_font_size_override("font_size", 36)
@@ -507,7 +507,7 @@ func _set_lock_label(rank: Label, job: String) -> void:
 
 ## 하단바 버튼 — bg가 RED면 CTA, 그 외 크림(design.md)
 func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
-	var b := Style.button(label, "cta" if bg == Style.RED else "paper", fs)
+	var b := Design.button(label, "cta" if bg == Design.RED else "paper", fs)
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz

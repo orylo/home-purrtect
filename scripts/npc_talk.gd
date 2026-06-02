@@ -42,20 +42,20 @@ func _build() -> void:
 	var panel := Panel.new()
 	panel.position = Vector2(24, vp.y - 264)
 	panel.size = Vector2(vp.x - 48, 248)
-	panel.add_theme_stylebox_override("panel", Style.panel_box())
+	panel.add_theme_stylebox_override("panel", Design.panel_box())
 	add_child(panel)
 
 	# 이름 띠 (잉크 박스 + 크림 역상) — 레퍼런스 "제목 검정 박스"
 	var band := Panel.new()
 	band.position = Vector2(24, -22)
 	band.size = Vector2(300, 52)
-	band.add_theme_stylebox_override("panel", Style.card_box(Style.INK, 3, 10))
+	band.add_theme_stylebox_override("panel", Design.card_box(Design.INK, 3, 10))
 	panel.add_child(band)
-	_name_lbl = Style.label("", "title", Style.INK_CREAM)
+	_name_lbl = Design.label("", "title", Design.INK_CREAM)
 	_name_lbl.position = Vector2(18, 6)
 	band.add_child(_name_lbl)
 
-	_text_lbl = Style.label("", "body", Style.INK)
+	_text_lbl = Design.label("", "body", Design.INK)
 	_text_lbl.position = Vector2(32, 52)
 	_text_lbl.size = Vector2(panel.size.x * 0.54, 170)
 	_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -85,7 +85,7 @@ func choices(items: Array) -> void:
 	for it in items:
 		# 첫 항목 강조(cheese), 나머지 크림
 		var kind := "cheese" if _choice_box.get_child_count() == 0 else "paper"
-		var b := Style.button(String(it[0]), kind, Style.FS_BODY)
+		var b := Design.button(String(it[0]), kind, Design.FS_BODY)
 		b.custom_minimum_size = Vector2(0, 58)
 		b.pressed.connect(it[1])
 		_choice_box.add_child(b)

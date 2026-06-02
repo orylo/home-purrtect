@@ -68,7 +68,7 @@ func _build() -> void:
 
 	# 콘텐츠 패널(공통 배경) + 각 탭 컨테이너
 	var frame := Panel.new()
-	frame.add_theme_stylebox_override("panel", Style.panel_box(Style.PAPER, 5, 16))
+	frame.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 5, 16))
 	frame.position = _content_rect.position - Vector2(20, 20)
 	frame.size = _content_rect.size + Vector2(40, 40)
 	add_child(frame)
@@ -80,10 +80,10 @@ func _build() -> void:
 	_build_sell_pane()
 	_build_craft_pane()
 
-	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(200, 80), Style.PAPER, 30,
+	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(200, 80), Design.PAPER, 30,
 			func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 
-	_toast = _text("", 30, Style.INK)
+	_toast = _text("", 30, Design.INK)
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast.size = Vector2(vp.x, 50)
 	_toast.position = Vector2(0, vp.y - 170)
@@ -103,7 +103,7 @@ func _build_tabbar(vp: Vector2) -> void:
 	bar.position = Vector2(vp.x * 0.5 - total * 0.5, 100)
 	add_child(bar)
 	for t in TABS:
-		var b := Style.button(t["name"], "paper", Style.FS_BODY)
+		var b := Design.button(t["name"], "paper", Design.FS_BODY)
 		b.custom_minimum_size = Vector2(bw, 56)
 		b.pressed.connect(_set_tab.bind(t["id"]))
 		bar.add_child(b)
@@ -387,7 +387,7 @@ func _rebuild_craft() -> void:
 func _set_tab(tab: String) -> void:
 	_tab = tab
 	for id in _tab_btns:
-		Style.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Style.FS_BODY)
+		Design.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Design.FS_BODY)
 	for id in _panes:
 		_panes[id].visible = (id == tab)
 	if tab == "sell":
@@ -482,31 +482,31 @@ func _toast_msg(msg: String) -> void:
 ## 크림 패널 위라 밝은색(흰계열)→잉크, ORANGE→빨강, GOLD→머스타드로 리맵
 func _ink(col: Color) -> Color:
 	if col == ORANGE:
-		return Style.RED
+		return Design.RED
 	if col == GOLD:
-		return Style.CHEESE_DEEP
+		return Design.CHEESE_DEEP
 	if col.v > 0.78 and col.s < 0.25:
-		return Style.INK
+		return Design.INK
 	return col
 
 func _text(s: String, fs: int, col: Color) -> Label:
 	var kind := "title" if fs >= 30 else ("caption" if fs <= 18 else "body")
-	return Style.label(s, kind, _ink(col))
+	return Design.label(s, kind, _ink(col))
 
 ## 버튼 폰트/기본 스타일(크림) — 호출부 호환용 래퍼
 func _font(b: Button, fs: int) -> void:
-	Style.style_button(b, "paper", fs)
+	Design.style_button(b, "paper", fs)
 
 ## bg로 버튼 종류 추론 후 Style 재적용
 func _btn_colors(b: Button, bg: Color) -> void:
 	var fs := int(b.get_theme_font_size("font_size"))
-	Style.style_button(b, "cta" if bg == ORANGE else "paper", fs if fs > 0 else Style.FS_BODY)
+	Design.style_button(b, "cta" if bg == ORANGE else "paper", fs if fs > 0 else Design.FS_BODY)
 
 func _card_sb() -> StyleBoxFlat:
-	return Style.card_box(Style.PAPER, 3, 10)
+	return Design.card_box(Design.PAPER, 3, 10)
 
 func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
-	var b := Style.button(label, "cta" if bg == ORANGE else "paper", fs)
+	var b := Design.button(label, "cta" if bg == ORANGE else "paper", fs)
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz

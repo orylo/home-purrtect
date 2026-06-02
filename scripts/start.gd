@@ -4,12 +4,30 @@ extends Control
 
 @onready var title: TextureRect = $Title
 
+var _plate: Panel   # 버전 명판(물건화)
+
+
+## 우하단 버전 명판 생성/재배치 (세이프영역 안쪽). 리사이즈마다 호출되므로 1개만 유지.
+func _version_plate() -> void:
+	var sz := Vector2(168, 44)
+	if _plate == null or not is_instance_valid(_plate):
+		_plate = Design.framed_plate(GameState.BUILD + " ver.", "caption")
+		_plate.custom_minimum_size = sz
+		_plate.size = sz
+		add_child(_plate)
+	var vp := get_viewport_rect().size
+	_plate.position = Vector2(vp.x - sz.x - 40.0, vp.y - sz.y - 28.0)
+
 
 func _ready() -> void:
-	$Version.text = GameState.BUILD + " ver."
-	Style.style_button($StartButton, "cta", Style.FS_DISPLAY_L)   # 카툰 빨강 CTA(design.md)
+	# [게임 시작] = 게임으로 "진입/수락" → 골드 브랜드 CTA(베벨). 전투 돌입 아니므로 빨강 아님(design.md §1 CTA규칙)
+	Design.style_button($StartButton, "brand", Design.FS_DISPLAY_S)
 	$StartButton.pressed.connect(_on_start)
+	# 버전 = 작은 금속 명판(물건화 데모, design.md §0-7). 원래 라벨은 숨김.
+	$Version.visible = false
+	_version_plate()
 	get_viewport().size_changed.connect(_layout_title)
+	get_viewport().size_changed.connect(_version_plate)
 	_layout_title()
 	# 개발자 모드 진입 = 우하단 작은 흰 동그라미(나만 인지). 호버 효과 없음. DEV 빌드만.
 	$DevButton.visible = GameState.is_dev()
