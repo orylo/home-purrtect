@@ -520,9 +520,11 @@ func _fire_ranged() -> void:
 		bullet.setup(cfg)
 	# 보안관 총 발사: 큰 화염 + 화면 흔들림(불발과 확 차이)
 	if is_gun and is_instance_valid(muzzle_fx):
-		muzzle_fx.flash()
+		muzzle_fx.flash()   # 오른쪽으로 뻗는 직선 총구 화염(코드 드로잉) — 방사형 스프라이트는 손에서 터져 보여 제거
 		Fx.request_shake(5.0)
-		Fx.burst("muzzle_flash", global_position + muzzle_offset, 0.34, 45)
+	elif not is_lob:
+		# 음악가: 음표 발사 순간 작은 반짝(허전함 보완)
+		Fx.burst("sparkle", global_position + muzzle_offset, 0.22, 45, 24.0)
 
 
 func _nearest_enemy(exclude_air: bool = false) -> Node2D:
