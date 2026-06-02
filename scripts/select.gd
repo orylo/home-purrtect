@@ -1,524 +1,392 @@
 extends Control
-## 전투 준비 화면 (로드맵 3단계) — 홈에서 진입해 출격 세팅.
-##   상단 탭: [직업] [스킬] [동료] [소모품]  (지금은 직업만 진짜, 나머지 "준비중")
-##   직업 탭: 보유(해금) 직업 카드 택1 → 선택만 하고 화면 유지(카드 강조 + 미리보기 재생)
-##   하단: [← 홈] / [출격 ▶]  — 출격하면 선택한 직업으로 바로 전투
-## 직업 해금 타임라인(§6-A: 맨몸 항상 / 보안관 1-3 / 메이드·음악가 1-7)을 읽어 잠금 표시.
+## 전투준비 = 장비 장착(로드아웃) 화면 (2026-06-03 개편 — 시스템밸런스 §5.2 / 홈로드맵 §4)
+## 좌: 인벤토리 탭(직업/동료/스킬/소지품) + 보유 목록  →  중앙: 선택 항목 상세 + [장착]  →  우: 내 장비 + [출격]
+## ★직업 = '장비'. 등급은 별개 아이템(owned_grades). 보유 (직업×등급) 중 택1 장착.
 
-const JOBS := {
-	"base": "맨몸",
-	"sheriff": "보안관",
-	"maid": "메이드",
-	"jazz": "음악가",
-}
-const IDLE_FPS := 9.0   # 카드 미리보기 idle 재생 속도
-const ORANGE := Color(0.9882, 0.3137, 0.0)
-const DARK := Color(0.12, 0.12, 0.16)
-# 탭별 안내(준비중 단계)
-const TABS := [
-	{"id": "job", "name": "직업"},
-	{"id": "skill", "name": "스킬"},
-	{"id": "ally", "name": "동료"},
-	{"id": "item", "name": "소모품"},
-]
-const TAB_TODO := {
-	"skill": "스킬 장착 — 준비중 (로드맵 5단계)",
-	"ally": "동료(치와와·비둘기) — 준비중 (로드맵 6단계)",
-	"item": "소모품(회복·폭탄·츄르) — 준비중 (로드맵 4단계)",
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const JOB_ORDER := ["base", "sheriff", "maid", "jazz"]
+const CATS := [["job", "직업"], ["ally", "동료"], ["skill", "스킬"], ["item", "소지품"]]
+const IDLE_FPS := 9.0
+const ITEM_ICON := {
+	"bandage": "res://assets/items/food/medkit.png",
+	"anchovy": "res://assets/items/food/fish.png",
+	"firecracker": "res://assets/items/gadgets/firecracker.png",
 }
 
-var _sf := {}        # job -> SpriteFrames
-var _preview := {}   # job -> TextureRect
-var _btns := {}      # job -> Button (선택 강조 재적용용)
-var _hover := ""     # 마우스 호버 중인 직업(데스크톱)
-var _selected := ""  # 현재 선택된 직업
-var _tab := "job"    # 현재 탭
+var _cat := "job"
+var _sel := ""                # 선택 키: 직업="job:grade" / 그외=id
+var _sf := {}                 # job -> SpriteFrames(idle)
 var _t := 0.0
 var _frame := 0
-var _test_unlocked := false   # 0키 치트로 전 직업 해금했는지
-var _head_font: Font
-var _pill_normal: StyleBoxFlat
-var _pill_selected: StyleBoxFlat
-var _pill_disabled: StyleBoxFlat
-var _tab_btns := {}           # tab id -> Button
-var _placeholder: Label       # 스킬·동료 탭 안내
-var _hint: Label              # 직업 탭 하단 선택 안내
-var _item_slots: Control      # 소모품 탭 슬롯 자리(3칸)
-var _slot_btns := []          # 소모품 슬롯 버튼 3개
-var _skill_pane: Control      # 스킬 탭(장착 UI)
-var _ally_pane: Control       # 동료 탭(장착 UI)
-
-
-## 알약 스타일 박스 — bw>0이면 테두리
-func _make_pill(c: Color, bw: float = 0.0, bc: Color = Color(1, 1, 1, 1)) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = c
-	sb.set_corner_radius_all(100)
-	sb.content_margin_left = 28.0
-	sb.content_margin_right = 28.0
-	sb.content_margin_top = 16.0
-	sb.content_margin_bottom = 16.0
-	if bw > 0.0:
-		sb.set_border_width_all(int(bw))
-		sb.border_color = bc
-	return sb
+var _tab_btns := {}
+var _list_box: VBoxContainer
+var _detail: Control
+var _loadout: Control
+var _power_lbl: Label
+var _center_art: TextureRect
+var _vp: Vector2
 
 
 func _ready() -> void:
-	$Build.text = GameState.BUILD + " ver."
-	_head_font = load("res://assets/fonts/Pretendard-Regular.ttf")
-	_pill_normal = _make_pill(Design.PAPER, 3.0, Design.INK)            # 미선택 = 크림
-	_pill_selected = _make_pill(Design.CHEESE, 5.0, Design.INK)        # 선택 = 골든 + 굵은 잉크
-	_pill_disabled = _make_pill(Design.PAPER_DEEP, 3.0, Design.INK)    # 잠김 = 진한 크림
+	_vp = get_viewport_rect().size
+	if has_node("Center"): $Center.visible = false
+	if has_node("BG"): $BG.color = Design.CANVAS
+	if has_node("Build"):
+		$Build.text = GameState.BUILD + " ver."
+		$Build.position = Vector2(_vp.x - 120, _vp.y - 30)
+	for j in JOB_ORDER:
+		var sf: SpriteFrames = load("res://assets/sprites/cheese/%s/cheese_%s.tres" % [j, j])
+		if sf: _sf[j] = sf
+	_build_skeleton()
+	_select_cat("job")
 
-	$Center/Box/Title.text = "전투 준비"
 
-	# 직업 카드 구성
-	for job in JOBS:
-		var box: Control = $Center/Box/Row.get_node(job)
-		var preview: TextureRect = box.get_node("Preview")
-		var sf: SpriteFrames = load("res://assets/sprites/cheese/%s/cheese_%s.tres" % [job, job])
-		_sf[job] = sf
-		_preview[job] = preview
-		if sf and sf.has_animation("idle"):
-			preview.texture = sf.get_frame_texture("idle", 0)
+func _build_skeleton() -> void:
+	var home := Design.button("← 홈", "secondary", Design.FS_BODY)
+	home.position = Vector2(24, 16); home.custom_minimum_size = Vector2(140, 48); home.size = Vector2(140, 48)
+	home.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
+	add_child(home)
+	_power_lbl = Design.label("", "title", Design.CHEESE)
+	_power_lbl.position = Vector2(_vp.x - 380, 24); _power_lbl.size = Vector2(340, 40)
+	_power_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(_power_lbl)
 
-		var btn: Button = box.get_node("Btn")
-		var rank: Label = box.get_node("Rank")
-		var unlocked: bool = GameState.is_job_unlocked(job)
-		btn.disabled = not unlocked
-		box.modulate = Color(1, 1, 1, 1.0) if unlocked else Color(1, 1, 1, 0.35)
-		btn.text = GameState.job_title(job) + ("" if unlocked else " (잠김)")
-		if unlocked:
-			_set_rank_label(rank, job)         # 해금: 등급 라벨
+	var top := 84.0
+	var h := _vp.y - top - 24.0
+	var lx := 24.0; var lw := 392.0
+	var tabrow := HBoxContainer.new()
+	tabrow.add_theme_constant_override("separation", 6)
+	tabrow.position = Vector2(lx, top); tabrow.size = Vector2(lw, 48)
+	add_child(tabrow)
+	for c in CATS:
+		var b := Design.button(c[1], "paper", Design.FS_BODY)
+		b.custom_minimum_size = Vector2(92, 48)
+		b.pressed.connect(_select_cat.bind(c[0]))
+		_tab_btns[c[0]] = b
+		tabrow.add_child(b)
+	var lpanel := Panel.new()
+	lpanel.position = Vector2(lx, top + 56); lpanel.size = Vector2(lw, h - 56)
+	lpanel.add_theme_stylebox_override("panel", Design.panel_box())
+	add_child(lpanel)
+	var sc := ScrollContainer.new()
+	sc.position = Vector2(12, 12); sc.size = lpanel.size - Vector2(24, 24)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	lpanel.add_child(sc)
+	_list_box = VBoxContainer.new()
+	_list_box.add_theme_constant_override("separation", 8)
+	_list_box.custom_minimum_size = Vector2(sc.size.x, 0)
+	sc.add_child(_list_box)
+
+	var cx := lx + lw + 20.0; var cw := 612.0
+	var cpanel := Panel.new()
+	cpanel.position = Vector2(cx, top); cpanel.size = Vector2(cw, h)
+	cpanel.add_theme_stylebox_override("panel", Design.panel_box())
+	add_child(cpanel)
+	_detail = Control.new()
+	_detail.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cpanel.add_child(_detail)
+
+	var rx := cx + cw + 20.0; var rw := _vp.x - rx - 24.0
+	var rpanel := Panel.new()
+	rpanel.position = Vector2(rx, top); rpanel.size = Vector2(rw, h)
+	rpanel.add_theme_stylebox_override("panel", Design.panel_box())
+	add_child(rpanel)
+	_loadout = Control.new()
+	_loadout.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rpanel.add_child(_loadout)
+
+
+func _select_cat(cat: String) -> void:
+	_cat = cat
+	for id in _tab_btns:
+		Design.style_button(_tab_btns[id], "cheese" if id == cat else "paper", Design.FS_BODY)
+	_sel = _default_sel(cat)
+	_refresh_list()
+	_refresh_detail()
+	_refresh_loadout()
+
+
+func _default_sel(cat: String) -> String:
+	match cat:
+		"job": return "%s:%d" % [GameState.selected_job, GameState.display_grade(GameState.selected_job)]
+		"ally": return String(GameState.owned_companions[0]) if GameState.owned_companions.size() > 0 else ""
+		"skill":
+			var ow: Array = GameState.owned_for(GameState.selected_job)
+			return String(ow[0]) if ow.size() > 0 else ""
+		"item":
+			for id in ["bandage", "anchovy", "firecracker"]:
+				if int(GameState.inventory.get(id, 0)) > 0: return id
+	return ""
+
+
+func _refresh_list() -> void:
+	for c in _list_box.get_children(): c.queue_free()
+	match _cat:
+		"job":
+			for j in JOB_ORDER:
+				for g in GameState.owned_grades.get(j, []):
+					_add_list_row("%s:%d" % [j, g], GameState.job_title(j, g),
+						(GameState.rank_label(g, j) if j != "base" else "맨몸"),
+						GameState.rank_color(g, j) if j != "base" else Design.PAPER_DEEP)
+		"ally":
+			if GameState.owned_companions.is_empty(): _add_empty("동료 없음 — 펄/상점에서 호루라기 입수")
+			for cid in GameState.owned_companions:
+				_add_list_row(cid, String(GameState.COMPANIONS[cid]["name"]), "동료 호루라기", Design.TEAL)
+		"skill":
+			if GameState.selected_job == "base":
+				_add_empty("맨몸은 스킬 없음 — 직업을 장착하세요")
+			else:
+				var ow: Array = GameState.owned_for(GameState.selected_job)
+				if ow.is_empty(): _add_empty("보유 스킬 없음 — 맥스 상점에서 구매")
+				for sid in ow:
+					_add_list_row(sid, String(GameState.SKILLS[sid]["name"]), "스킬", Design.BLUE)
+		"item":
+			var any := false
+			for id in ["bandage", "anchovy", "firecracker"]:
+				var n := int(GameState.inventory.get(id, 0))
+				if n > 0:
+					any = true
+					_add_list_row(id, String(GameState.CONSUMABLES[id]["name"]), "보유 %d" % n, Design.CHEESE_DEEP)
+			if not any: _add_empty("소지품 없음 — 맥스 상점에서 구매")
+
+
+func _add_list_row(key: String, name: String, sub: String, accent: Color) -> void:
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(0, 64)
+	b.text = "%s\n%s" % [name, sub]
+	b.add_theme_font_override("font", FONT)
+	b.add_theme_font_size_override("font_size", Design.FS_BODY)
+	b.add_theme_color_override("font_color", Design.INK)
+	var picked := (key == _sel)
+	var sb := Design.card_box(Design.CHEESE if picked else Design.PAPER, 4 if picked else 3, 12)
+	sb.border_color = accent if picked else Design.INK
+	for st in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(st, sb)
+	b.pressed.connect(_select_item.bind(key))
+	_list_box.add_child(b)
+
+
+func _add_empty(msg: String) -> void:
+	_list_box.add_child(Design.label("  " + msg, "caption", Design.PAPER_DEEP.darkened(0.25)))
+
+
+func _select_item(key: String) -> void:
+	_sel = key
+	_refresh_list()
+	_refresh_detail()
+
+
+func _refresh_detail() -> void:
+	for c in _detail.get_children(): c.queue_free()
+	_center_art = null
+	if _sel == "":
+		_detail.add_child(_dlabel("좌측에서 선택하세요", "body", Design.PAPER_DEEP.darkened(0.2), _detail_h() * 0.5))
+		return
+	match _cat:
+		"job": _detail_job()
+		"ally": _detail_simple(String(GameState.COMPANIONS[_sel]["name"]), String(GameState.COMPANIONS[_sel]["desc"]), Design.TEAL, GameState.equipped_companion == _sel, "동료")
+		"skill": _detail_simple(String(GameState.SKILLS[_sel]["name"]), String(GameState.SKILLS[_sel]["desc"]), Design.BLUE, GameState.is_equipped(GameState.selected_job, _sel), "스킬")
+		"item": _detail_item()
+
+
+func _detail_job() -> void:
+	var parts := _sel.split(":")
+	var job: String = parts[0]
+	var g := int(parts[1])
+	_center_art = TextureRect.new()
+	_center_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_center_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_center_art.position = Vector2(40, 36); _center_art.size = Vector2(_detail_w() - 80, 230)
+	if _sf.has(job): _center_art.texture = _sf[job].get_frame_texture("idle", 0)
+	_detail.add_child(_center_art)
+	var y := 278.0
+	_detail.add_child(_dlabel(GameState.job_title(job, g), "display_s", Design.INK, y)); y += 58
+	if job != "base":
+		var pill := Design.label("  %s   %s  " % [_stars(g), GameState.rank_label(g, job)], "title", Design.INK_CREAM)
+		pill.add_theme_stylebox_override("normal", Design.card_box(GameState.rank_color(g, job), 3, 99))
+		pill.position = Vector2(120, y); pill.size = Vector2(_detail_w() - 240, 40)
+		pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_detail.add_child(pill); y += 54
+	var st: Dictionary = GameState.JOB_STATS[job]
+	var m: float = GameState.LV_MULT[clampi(g - 1, 0, 4)]
+	for ln in [
+		"♥ 체력  %d" % int(round(st["hp"] * m)),
+		"근접  %d      원거리  %d" % [int(round(st["near"] * m)), int(round(st["ranged"] * m))],
+		"공속  %.2f      이속  %.2f" % [st["atk_spd"], st["move"]],
+		"◆ 크리  %d%%" % int(st["crit"] * 100),
+	]:
+		_detail.add_child(_dlabel(ln, "body", Design.INK, y)); y += 30
+	var equipped := (GameState.selected_job == job and GameState.equipped_grade == g)
+	_add_equip_btn("장착됨" if equipped else "장착", equipped, func():
+		GameState.selected_job = job
+		GameState.equipped_grade = g
+		if GameState.mode != "dev" and GameState.AUTOSAVE: GameState.save_game()
+		_refresh_list(); _refresh_detail(); _refresh_loadout())
+
+
+func _detail_simple(name: String, desc: String, accent: Color, equipped: bool, kind: String) -> void:
+	var badge := Panel.new()
+	badge.position = Vector2(_detail_w() * 0.5 - 70, 50); badge.size = Vector2(140, 140)
+	badge.add_theme_stylebox_override("panel", Design.card_box(accent, 4, 99))
+	_detail.add_child(badge)
+	var bl := Design.label(name.substr(0, 2), "display_s", Design.INK_CREAM)
+	bl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; bl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_child(bl)
+	var y := 210.0
+	_detail.add_child(_dlabel(name, "display_s", Design.INK, y)); y += 60
+	_detail.add_child(_dlabel("[%s]" % kind, "caption", accent, y)); y += 34
+	var d := Design.label(desc, "body", Design.INK)
+	d.position = Vector2(48, y); d.size = Vector2(_detail_w() - 96, 130)
+	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_detail.add_child(d)
+	_add_equip_btn("해제" if equipped else "장착", false, func():
+		if _cat == "ally":
+			GameState.equip_companion("" if equipped else _sel)
 		else:
-			_set_lock_label(rank, job)         # 잠김: 해금 조건 안내
-		_btns[job] = btn
-		_style_job_btn(job)
-		btn.pressed.connect(_select.bind(job))
-		if unlocked:
-			btn.mouse_entered.connect(_on_hover.bind(job))
-			btn.mouse_exited.connect(_on_unhover.bind(job))
-
-	$Center.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 카드만 클릭, 빈 영역은 통과(하단버튼 막힘 방지)
-	_build_tabbar()
-	_build_placeholder()
-	_build_item_slots()
-	_build_skill_pane()
-	_build_ally_pane()
-	_build_bottom_bar()   # ★최상위(맨 마지막)로 추가 → 어느 탭에서도 [홈]/[출격] 클릭 보장
-
-	# 기본 선택 = 이전에 고른 직업(없거나 잠겼으면 맨몸)
-	var start_job: String = GameState.selected_job
-	if not JOBS.has(start_job) or not GameState.is_job_unlocked(start_job):
-		start_job = "base"
-	_select(start_job)
-	_set_tab("job")
+			if equipped: GameState.unequip_skill(GameState.selected_job, _sel)
+			elif not GameState.equip_skill(GameState.selected_job, _sel):
+				_toast("스킬 슬롯이 꽉 찼어요 (다른 스킬 해제 후)")
+		_refresh_list(); _refresh_detail(); _refresh_loadout())
 
 
-## 상단 탭바 (직업/스킬/동료/소모품)
-func _build_tabbar() -> void:
-	var vp := get_viewport_rect().size
-	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 14)
-	bar.position = Vector2(vp.x * 0.5 - 320, 28)
-	bar.size = Vector2(640, 60)
-	add_child(bar)
-	for t in TABS:
-		var b := Design.button(t["name"], "paper", Design.FS_BODY)
-		b.custom_minimum_size = Vector2(150, 56)
-		b.pressed.connect(_set_tab.bind(t["id"]))
-		bar.add_child(b)
-		_tab_btns[t["id"]] = b
-
-
-## 하단 [← 홈] / [출격 ▶]
-func _build_bottom_bar() -> void:
-	var vp := get_viewport_rect().size
-	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(180, 80), Design.PAPER, 30, _on_home)
-	_solid_btn("출격 ▶", Vector2(vp.x - 300, vp.y - 112), Vector2(260, 80), Design.RED, 36, _on_launch)
-
-
-## 비-직업 탭 안내 라벨(가운데, 기본 숨김)
-func _build_placeholder() -> void:
-	var vp := get_viewport_rect().size
-	_placeholder = Label.new()
-	_placeholder.add_theme_font_override("font", _head_font)
-	_placeholder.add_theme_font_size_override("font_size", 40)
-	_placeholder.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.8))
-	_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_placeholder.size = Vector2(vp.x, 120)
-	_placeholder.position = Vector2(0, vp.y * 0.5 - 60)
-	_placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_placeholder.visible = false
-	add_child(_placeholder)
-	# 직업 탭 하단 선택 안내
-	_hint = Label.new()
-	_hint.add_theme_font_override("font", _head_font)
-	_hint.add_theme_font_size_override("font_size", 24)
-	_hint.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.55))
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint.size = Vector2(vp.x, 36)
-	_hint.position = Vector2(0, vp.y - 168)
-	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_hint)
-
-
-## 소모품 탭 슬롯 자리(3칸) — 4단계서 실제 장착·사용 연결
-func _build_item_slots() -> void:
-	var vp := get_viewport_rect().size
-	_item_slots = Control.new()
-	_item_slots.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_item_slots.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 빈 영역 클릭 통과(슬롯 버튼은 별도)
-	_item_slots.visible = false
-	add_child(_item_slots)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 36)
-	row.position = Vector2(vp.x * 0.5 - 294, vp.y * 0.42 - 90)
-	_item_slots.add_child(row)
-	_slot_btns = []
-	for i in range(3):
-		var slot := Button.new()
-		slot.custom_minimum_size = Vector2(184, 172)
-		slot.add_theme_font_override("font", _head_font)
-		slot.add_theme_font_size_override("font_size", 26)
-		for cn in ["font_color", "font_hover_color", "font_pressed_color"]:
-			slot.add_theme_color_override(cn, Color(0.0275, 0.0235, 0.0275, 1))
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.84, 0.84, 0.82, 1)
-		sb.set_corner_radius_all(18)
-		sb.set_border_width_all(3)
-		sb.border_color = Color(0.0275, 0.0235, 0.0275, 0.35)
-		for st in ["normal", "hover", "pressed", "focus"]:
-			slot.add_theme_stylebox_override(st, sb)
-		slot.pressed.connect(_cycle_slot.bind(i))
-		row.add_child(slot)
-		_slot_btns.append(slot)
-	var cap := Label.new()
-	cap.text = "슬롯을 탭하면 소모품이 바뀐다 (보유는 맥스 상점에서 구매)"
-	cap.add_theme_font_override("font", _head_font)
-	cap.add_theme_font_size_override("font_size", 24)
-	cap.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.7))
-	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cap.size = Vector2(vp.x, 36)
-	cap.position = Vector2(0, vp.y * 0.42 + 110)
-	_item_slots.add_child(cap)
-	_refresh_item_slots()
-
-
-## 슬롯 탭 → 소모품 종류 순환(없음→붕대→멸치→폭죽→없음). GameState에 즉시 저장.
-const ITEM_CYCLE := ["", "bandage", "anchovy", "firecracker"]
-func _cycle_slot(i: int) -> void:
-	var idx: int = ITEM_CYCLE.find(GameState.item_slots[i])
-	GameState.item_slots[i] = ITEM_CYCLE[(idx + 1) % ITEM_CYCLE.size()]
-	_refresh_item_slots()
-
-func _refresh_item_slots() -> void:
-	for i in range(_slot_btns.size()):
-		var id: String = GameState.item_slots[i]
-		if id == "":
-			_slot_btns[i].text = "빈 슬롯\n(탭하여 배치)"
+func _detail_item() -> void:
+	var icon := TextureRect.new()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.position = Vector2(_detail_w() * 0.5 - 80, 36); icon.size = Vector2(160, 160)
+	if ITEM_ICON.has(_sel): icon.texture = load(ITEM_ICON[_sel])
+	_detail.add_child(icon)
+	var y := 210.0
+	_detail.add_child(_dlabel(String(GameState.CONSUMABLES[_sel]["name"]), "display_s", Design.INK, y)); y += 60
+	_detail.add_child(_dlabel("보유 %d개" % int(GameState.inventory.get(_sel, 0)), "caption", Design.CHEESE_DEEP, y)); y += 34
+	var d := Design.label(String(GameState.CONSUMABLES[_sel]["desc"]), "body", Design.INK)
+	d.position = Vector2(48, y); d.size = Vector2(_detail_w() - 96, 80)
+	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_detail.add_child(d)
+	var slotted := GameState.item_slots.has(_sel)
+	_add_equip_btn("슬롯에서 빼기" if slotted else "소지품 슬롯에 넣기", false, func():
+		if slotted:
+			GameState.item_slots[GameState.item_slots.find(_sel)] = ""
 		else:
-			_slot_btns[i].text = "%s\n보유 %d" % [
-					String(GameState.CONSUMABLES[id]["name"]), int(GameState.inventory.get(id, 0))]
+			var i := GameState.item_slots.find("")
+			if i < 0: _toast("소지품 슬롯 3칸이 꽉 찼어요")
+			else: GameState.item_slots[i] = _sel
+		_refresh_detail(); _refresh_loadout())
 
 
-## --- 스킬 탭 (장착 UI, 로드맵 5단계) ---
-func _build_skill_pane() -> void:
-	_skill_pane = Control.new()
-	_skill_pane.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_skill_pane.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 빈 영역 클릭 통과
-	_skill_pane.visible = false
-	add_child(_skill_pane)
+func _add_equip_btn(text: String, disabled: bool, fn: Callable) -> void:
+	var b := Design.button(text, "brand", Design.FS_TITLE)
+	b.custom_minimum_size = Vector2(240, 60); b.size = Vector2(240, 60)
+	b.position = Vector2(_detail_w() * 0.5 - 120, _detail_h() - 84)
+	b.disabled = disabled
+	if not disabled: b.pressed.connect(fn)
+	_detail.add_child(b)
 
-func _skill_label(txt: String, fs: int, alpha: float = 1.0) -> Label:
-	var l := Label.new()
-	l.text = txt
-	l.add_theme_font_override("font", _head_font)
-	l.add_theme_font_size_override("font_size", fs)
-	l.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, alpha))
+
+func _refresh_loadout() -> void:
+	for c in _loadout.get_children(): c.queue_free()
+	var y := 18.0
+	var hdr := Design.label("내 장비", "title", Design.INK); hdr.position = Vector2(16, y); _loadout.add_child(hdr); y += 46
+	var jt := GameState.job_title(GameState.selected_job, GameState.equipped_grade)
+	var jr := (GameState.rank_label(GameState.equipped_grade, GameState.selected_job) if GameState.selected_job != "base" else "맨몸")
+	y = _equip_slot("직업", "%s · %s" % [jt, jr], GameState.rank_color(GameState.equipped_grade, GameState.selected_job), y)
+	var comp: String = GameState.equipped_companion
+	y = _equip_slot("동료 호루라기", (String(GameState.COMPANIONS[comp]["name"]) if comp != "" else "(빈 슬롯)"), Design.TEAL, y)
+	var eq: Array = GameState.equipped_for(GameState.selected_job)
+	var ns := GameState.skill_slots(GameState.selected_job)
+	var stxt := ""
+	if ns == 0:
+		stxt = "(직업 없음)"
+	else:
+		for i in ns:
+			stxt += ("• %s\n" % String(GameState.SKILLS[eq[i]]["name"])) if i < eq.size() else "• (빈 슬롯)\n"
+	y = _equip_slot("스킬 %d칸" % ns, stxt.strip_edges(), Design.BLUE, y, 90)
+	var itxt := ""
+	for s in GameState.item_slots:
+		itxt += ("[%s] " % String(GameState.CONSUMABLES[s]["name"])) if s != "" else "[빈] "
+	y = _equip_slot("소지품 3", itxt.strip_edges(), Design.CHEESE_DEEP, y)
+	var w := _loadout_w()
+	var go := Design.button("출격 ▶", "primary", Design.FS_DISPLAY_S)
+	go.custom_minimum_size = Vector2(w - 32, 72); go.size = Vector2(w - 32, 72)
+	go.position = Vector2(16, _loadout_h() - 88)
+	go.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
+	_loadout.add_child(go)
+	_power_lbl.text = "전투력  %s" % _commafy(_power())
+
+
+func _equip_slot(label: String, value: String, accent: Color, y: float, hh: float = 70.0) -> float:
+	var w := _loadout_w()
+	var p := Panel.new()
+	p.position = Vector2(16, y); p.size = Vector2(w - 32, hh)
+	var sb := Design.card_box(Design.PAPER, 3, 12); sb.border_color = accent
+	p.add_theme_stylebox_override("panel", sb)
+	_loadout.add_child(p)
+	var lab := Design.label(label, "caption", accent.darkened(0.12)); lab.position = Vector2(12, 6); p.add_child(lab)
+	var v := Design.label(value, "body", Design.INK); v.position = Vector2(12, 28); v.size = Vector2(w - 56, hh - 30); p.add_child(v)
+	return y + hh + 10.0
+
+
+func _power() -> int:
+	var st: Dictionary = GameState.JOB_STATS[GameState.selected_job]
+	var m := GameState.level_mult()
+	var v := (float(st["hp"]) + (float(st["ranged"]) + float(st["near"])) * 6.0 + float(st["crit"]) * 200.0) * m
+	v += GameState.equipped_for(GameState.selected_job).size() * 40.0
+	if GameState.equipped_companion != "": v += 100.0
+	for s in GameState.item_slots:
+		if s != "": v += 20.0
+	return int(round(v))
+
+
+func _detail_w() -> float: return 612.0
+func _detail_h() -> float: return _vp.y - 84.0 - 24.0
+func _loadout_w() -> float: return _vp.x - (24.0 + 392.0 + 20.0 + 612.0 + 20.0) - 24.0
+func _loadout_h() -> float: return _vp.y - 84.0 - 24.0
+
+func _stars(g: int) -> String:
+	return "★".repeat(clampi(g, 0, 5))
+
+func _dlabel(text: String, kind: String, col: Color, y: float) -> Label:
+	var l := Design.label(text, kind, col)
+	l.position = Vector2(40, y); l.size = Vector2(_detail_w() - 80, 40)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return l
 
-func _skill_button(txt: String, w: float, bg: Color, fn: Callable) -> Button:
-	# bg가 ORANGE(장착중 강조)면 골든, 그 외 크림
-	var b := Design.button(txt, "cheese" if bg == ORANGE else "paper", Design.FS_BODY)
-	b.custom_minimum_size = Vector2(w, 78)
-	if fn.is_valid():
-		b.pressed.connect(fn)
-	return b
+func _commafy(n: int) -> String:
+	var s := str(n); var out := ""; var c := 0
+	for i in range(s.length() - 1, -1, -1):
+		out = s[i] + out; c += 1
+		if c % 3 == 0 and i > 0: out = "," + out
+	return out
 
-func _rebuild_skill_pane() -> void:
-	for c in _skill_pane.get_children():
-		c.queue_free()
-	var vp := get_viewport_rect().size
-	var job: String = GameState.selected_job
-	if job == "base":
-		var none := _skill_label("맨몸(길냥이)은 스킬 슬롯이 없어요.\n직업 탭에서 직업을 골라 보세요.", 32)
-		none.position = Vector2(0, vp.y * 0.40); none.size = Vector2(vp.x, 120)
-		_skill_pane.add_child(none)
-		return
-	var slots: int = GameState.skill_slots(job)
-	var equipped: Array = GameState.equipped_for(job)
-	var lv := GameState.display_grade(job)
-	# 슬롯 행
-	var sh := _skill_label("장착 슬롯  %d칸 (Lv%d) — 탭하면 빼기" % [slots, lv], 28)
-	sh.position = Vector2(0, vp.y * 0.14); sh.size = Vector2(vp.x, 40)
-	_skill_pane.add_child(sh)
-	var sw := 224.0
-	var stotal := slots * sw + maxf(0, slots - 1) * 24.0
-	var srow := HBoxContainer.new()
-	srow.add_theme_constant_override("separation", 24)
-	srow.position = Vector2(vp.x * 0.5 - stotal * 0.5, vp.y * 0.14 + 52)
-	_skill_pane.add_child(srow)
-	for i in range(slots):
-		if i < equipped.size():
-			var sid: String = equipped[i]
-			srow.add_child(_skill_button(String(GameState.SKILLS[sid]["name"]) + "\n(빼기)", sw, ORANGE, _unequip_skill.bind(job, sid)))
-		else:
-			srow.add_child(_skill_button("빈 슬롯", sw, Color(0.55, 0.55, 0.55), Callable()))
-	# 보유 스킬(미장착)
-	var oh := _skill_label("보유 스킬 — 탭해서 슬롯에 끼우기", 26)
-	oh.position = Vector2(0, vp.y * 0.44); oh.size = Vector2(vp.x, 36)
-	_skill_pane.add_child(oh)
-	var owned: Array = GameState.owned_for(job)
-	if owned.is_empty():
-		var e := _skill_label("아직 이 직업 스킬이 없어요. 맥스 상점 [스킬]에서 구매하세요.", 24, 0.8)
-		e.position = Vector2(0, vp.y * 0.52); e.size = Vector2(vp.x, 40)
-		_skill_pane.add_child(e)
-		return
-	var avail: Array = []
-	for sid in owned:
-		if not equipped.has(sid):
-			avail.append(sid)
-	if avail.is_empty():
-		var allset := _skill_label("보유 스킬을 모두 장착했어요.", 24, 0.8)
-		allset.position = Vector2(0, vp.y * 0.52); allset.size = Vector2(vp.x, 40)
-		_skill_pane.add_child(allset)
-		return
-	var ow := 248.0
-	var ototal := avail.size() * ow + maxf(0, avail.size() - 1) * 20.0
-	var orow := HBoxContainer.new()
-	orow.add_theme_constant_override("separation", 20)
-	orow.position = Vector2(vp.x * 0.5 - ototal * 0.5, vp.y * 0.50)
-	_skill_pane.add_child(orow)
-	var full := equipped.size() >= slots
-	for sid in avail:
-		var b := _skill_button("끼우기:\n" + String(GameState.SKILLS[sid]["name"]), ow, Color(0.22, 0.42, 0.30), _equip_skill.bind(job, String(sid)))
-		b.disabled = full
-		orow.add_child(b)
-	if full:
-		var fl := _skill_label("슬롯이 꽉 찼어요 — 위에서 빼면 끼울 수 있어요.", 22, 0.7)
-		fl.position = Vector2(0, vp.y * 0.62); fl.size = Vector2(vp.x, 34)
-		_skill_pane.add_child(fl)
-
-func _equip_skill(job: String, sid: String) -> void:
-	GameState.equip_skill(job, sid)
-	_rebuild_skill_pane()
-
-func _unequip_skill(job: String, sid: String) -> void:
-	GameState.unequip_skill(job, sid)
-	_rebuild_skill_pane()
-
-
-## --- 동료 탭 (장착 UI, 로드맵 6단계) ---
-func _build_ally_pane() -> void:
-	_ally_pane = Control.new()
-	_ally_pane.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_ally_pane.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ally_pane.visible = false
-	add_child(_ally_pane)
-
-func _rebuild_ally_pane() -> void:
-	for c in _ally_pane.get_children():
-		c.queue_free()
-	var vp := get_viewport_rect().size
-	var owned: Array = GameState.owned_companions
-	if owned.is_empty():
-		var none := _skill_label("보유한 동료가 없어요.\n맥스 상점 [동료]에서 호루라기를 사세요.", 30)
-		none.position = Vector2(0, vp.y * 0.40); none.size = Vector2(vp.x, 120)
-		_ally_pane.add_child(none)
-		return
-	var head := _skill_label("동료 슬롯 1칸 — 탭해서 장착 (매 판 택1)", 28)
-	head.position = Vector2(0, vp.y * 0.16); head.size = Vector2(vp.x, 40)
-	_ally_pane.add_child(head)
-	# 카드들: 보유 동료 + "없음(해제)"
-	var ids: Array = []
-	for cid in GameState.COMPANION_ORDER:
-		if owned.has(cid):
-			ids.append(cid)
-	ids.append("")   # 해제 옵션
-	var cw := 260.0
-	var total := ids.size() * cw + maxf(0, ids.size() - 1) * 24.0
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
-	row.position = Vector2(vp.x * 0.5 - total * 0.5, vp.y * 0.30)
-	_ally_pane.add_child(row)
-	for cid in ids:
-		var equipped: bool = (GameState.equipped_companion == cid)
-		var txt: String
-		var col: Color
-		if cid == "":
-			txt = "없음\n(해제)"
-			col = ORANGE if equipped else Color(0.55, 0.55, 0.55)
-		else:
-			txt = "%s\n%s" % [String(GameState.COMPANIONS[cid]["name"]), "★ 장착됨" if equipped else "탭해서 장착"]
-			col = ORANGE if equipped else Color(0.22, 0.42, 0.30)
-		row.add_child(_skill_button(txt, cw, col, _equip_ally.bind(cid)))
-
-func _equip_ally(cid: String) -> void:
-	GameState.equip_companion(cid)
-	_rebuild_ally_pane()
-
-
-## 탭 전환
-func _set_tab(tab: String) -> void:
-	_tab = tab
-	for id in _tab_btns:
-		Design.style_button(_tab_btns[id], "cheese" if id == tab else "paper", Design.FS_BODY)
-	var is_job := (tab == "job")
-	var is_item := (tab == "item")
-	var is_skill := (tab == "skill")
-	$Center.visible = is_job
-	_hint.visible = is_job
-	_item_slots.visible = is_item
-	if is_item:
-		_refresh_item_slots()   # 보유 수 최신화(상점서 산 뒤 들어올 수 있음)
-	_skill_pane.visible = is_skill
-	if is_skill:
-		_rebuild_skill_pane()   # 현재 선택 직업 기준 장착 UI
-	var is_ally := (tab == "ally")
-	_ally_pane.visible = is_ally
-	if is_ally:
-		_rebuild_ally_pane()
-	_placeholder.visible = false   # 모든 탭이 실제 작동(준비중 안내 불필요)
-
-
-## [테스트 치트] 숫자 0 → 잠긴 직업까지 전부 선택 가능
-func _input(event: InputEvent) -> void:
-	if not GameState.is_dev() or _test_unlocked:
-		return
-	if event is InputEventKey and event.pressed and not event.echo \
-			and (event.keycode == KEY_0 or event.keycode == KEY_KP_0):
-		_test_unlocked = true
-		GameState.unlocked_jobs = ["base", "sheriff", "maid", "jazz"]
-		for job in JOBS:
-			var box: Control = $Center/Box/Row.get_node(job)
-			var btn: Button = box.get_node("Btn")
-			var was_locked := btn.disabled
-			btn.disabled = false
-			box.modulate = Color(1, 1, 1, 1.0)
-			btn.text = GameState.job_title(job)
-			_style_job_btn(job)
-			if was_locked:
-				btn.mouse_entered.connect(_on_hover.bind(job))
-				btn.mouse_exited.connect(_on_unhover.bind(job))
-		$Center/Box/Title.text = "전투 준비  [테스트: 전 직업 해금]"
+var _toast_lbl: Label
+func _toast(msg: String) -> void:
+	if _toast_lbl == null:
+		_toast_lbl = Design.label("", "title", Design.INK_CREAM)
+		_toast_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_toast_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_toast_lbl.size = Vector2(_vp.x * 0.6, 48); _toast_lbl.position = Vector2(_vp.x * 0.2, _vp.y * 0.42)
+		_toast_lbl.add_theme_stylebox_override("normal", Design.card_box(Design.RED, 3, 10))
+		add_child(_toast_lbl)
+	_toast_lbl.text = msg
+	_toast_lbl.visible = true
+	_toast_lbl.modulate.a = 1.0
+	var tw := create_tween()
+	tw.tween_interval(1.4)
+	tw.tween_property(_toast_lbl, "modulate:a", 0.0, 0.4)
 
 
 func _process(delta: float) -> void:
-	# 호버 중이면 그 카드, 아니면 선택된 카드의 idle을 재생(터치 환경 대응)
-	var anim := _hover if _hover != "" else _selected
-	if anim == "" or _tab != "job":
-		return
-	var sf: SpriteFrames = _sf.get(anim)
-	if sf == null:
-		return
+	if _center_art == null or _cat != "job" or _sel == "": return
+	var job: String = _sel.split(":")[0]
+	if not _sf.has(job): return
+	var sf: SpriteFrames = _sf[job]
 	var n := sf.get_frame_count("idle")
-	if n <= 1:
-		return
+	if n <= 0: return
 	_t += delta
 	if _t >= 1.0 / IDLE_FPS:
-		_t -= 1.0 / IDLE_FPS
+		_t = 0.0
 		_frame = (_frame + 1) % n
-		_preview[anim].texture = sf.get_frame_texture("idle", _frame)
-
-
-func _on_hover(job: String) -> void:
-	_hover = job
-	_frame = 0
-	_t = 0.0
-
-
-func _on_unhover(job: String) -> void:
-	if _hover == job:
-		_hover = ""
-		_frame = 0
-
-
-## 직업 카드 선택(강조 + 즉시 GameState 반영, 화면 유지)
-func _select(job: String) -> void:
-	if not GameState.is_job_unlocked(job):
-		return
-	_selected = job
-	GameState.selected_job = job
-	GameState.equipped_grade = maxi(1, GameState.top_grade(job))   # 장착 = 보유 최고 등급
-	for j in _btns:
-		_style_job_btn(j)
-	if _hint:
-		_hint.text = "선택: %s  —  [출격]으로 이 직업으로 전투" % GameState.job_title(job)
-
-
-## 카드 버튼 스타일: 선택=흰테두리 / 잠김=흐림 / 그 외=일반
-func _style_job_btn(job: String) -> void:
-	var btn: Button = _btns.get(job)
-	if btn == null:
-		return
-	var sb: StyleBoxFlat
-	if not GameState.is_job_unlocked(job):
-		sb = _pill_disabled
-	elif job == _selected:
-		sb = _pill_selected
-	else:
-		sb = _pill_normal
-	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
-		btn.add_theme_stylebox_override(st, sb)
-	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_disabled_color"]:
-		btn.add_theme_color_override(cn, Design.INK)   # 크림/골든 알약 위 = 잉크 글자
-	if _head_font:
-		btn.add_theme_font_override("font", _head_font)
-	btn.add_theme_font_size_override("font_size", 36)
-
-
-## 등급 라벨(맨몸은 숨김)
-func _set_rank_label(rank: Label, job: String) -> void:
-	var txt := GameState.rank_label(0, job)
-	if txt == "":
-		rank.visible = false
-	else:
-		rank.visible = true
-		rank.text = txt
-		rank.add_theme_font_override("font", _head_font)
-		rank.add_theme_color_override("font_color", GameState.rank_color(0, job))
-
-
-## 잠긴 직업 해금 조건 안내(§6-A 타임라인)
-func _set_lock_label(rank: Label, job: String) -> void:
-	var hint: String = {
-		"sheriff": "1-3 클리어 시 지급",
-		"maid": "1-7 상점에서 제작",
-		"jazz": "1-7 상점에서 제작",
-	}.get(job, "")
-	rank.visible = hint != ""
-	rank.text = hint
-	rank.add_theme_font_override("font", _head_font)
-	rank.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.6))
-
-
-## 하단바 버튼 — bg가 RED면 CTA, 그 외 크림(design.md)
-func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
-	var b := Design.button(label, "cta" if bg == Design.RED else "paper", fs)
-	b.position = pos
-	b.custom_minimum_size = sz
-	b.size = sz
-	b.pressed.connect(fn)
-	add_child(b)
-
-
-func _on_home() -> void:
-	get_tree().change_scene_to_file("res://scenes/home.tscn")
-
-
-func _on_launch() -> void:
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+		_center_art.texture = sf.get_frame_texture("idle", _frame)

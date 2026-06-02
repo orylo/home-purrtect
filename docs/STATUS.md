@@ -9,6 +9,7 @@
 - **엔진**: Godot 4.6.3 / 출시 타깃: iOS 먼저 → 안드로이드
 - **마지막 갱신**: 2026-06-02
 - **문서 정합성**: 로드맵·시스템밸런스의 옛 수치(직업/레벨업/스킬/소모품 가격, 동료 1-13/1-16 순서, 1막 수입)를 §5.2~§5.5·§6-A 최신값으로 통일(2026-06-02).
+- **전투준비 로드아웃 화면(2026-06-03)**: `select` 전면 재작성 — 좌 인벤토리 탭(직업/동료/스킬/소지품)+보유목록 / 중앙 상세(직업=idle 아트·등급pill·★·스탯 / 동료·스킬·소지품=아이콘+설명)+[장착] / 우 내 장비 슬롯(직업·동료호루라기·스킬N·소지품3)+전투력+[출격]. 직업=등급별 장비 모델 위에서 작동. 소지품 슬롯에 아이템 아이콘 에셋 연결. 헤드리스 빌드/장착 검증.
 - **★성장 모델 변경 확정(2026-06-03)**: "직업 레벨업" **폐기**. 각 등급 = **별개 제작 장비**(이름없는 보안관 ≠ 떠오르는 보안관, 따로 제작·동시 보유). 전투준비 = **장비 장착(로드아웃) + 인벤토리 목록 + 상세설명**. 기획문서 정렬 완료(시스템밸런스 §2.2 콜아웃·§5.2 / 홈로드맵 §4). ⚠️ **코드 괴리**: 현재 `do_levelup`/`job_level`(직업당 단일 Lv↑)는 신 모델과 충돌 → 보유 `(직업×등급)` 세트 + 전투준비 장비화로 **리팩터 필요**(미착수).
 - **이펙트 전투 연결(2026-06-03)**: `Fx.burst(anim,pos,...)` 헬퍼(9프레임 1회/루프 재생·자동제거). 연결: 적 피격=impact_flash·크리=critical_hit·강넉백=knockback·사망=poof_explosion·스턴=dizzy_stars(루프)·둔화=slime_drip(루프) / 치즈 회복=red_heart·공버프=shine_burst·방패=sparkle·앵콜=shine·폭죽=poof·독=poison_bubbles(루프)·착지=dust·보안관 총구=muzzle_flash·불발=steam. 미연결: exclamation·light_bulb(대화/레벨업용).
 - **이펙트 스프라이트 도입(2026-06-03)**: 9프레임 이펙트 시트 15종 → `assets/fx/<name>/0~8.png`(135장). 3×3 균등분할 + **luminance→alpha**(검정 투명·밝을수록 불투명, 연기/집중선 부드럽게) + 알파 무게중심 중앙정렬(재생 흔들림 제거). 세트: poof_explosion·impact_flash·critical_hit·muzzle_flash·knockback·dust·steam·poison_bubbles·sparkle·dizzy_stars·red_heart·light_bulb·exclamation·shine_burst·slime_drip. AnimatedSprite2D용.
