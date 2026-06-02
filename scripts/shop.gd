@@ -405,18 +405,30 @@ func _set_tab(tab: String) -> void:
 func _refresh() -> void:
 	_coin_lbl.text = "코인 " + _commafy(GameState.coins)
 	var job: String = GameState.selected_job
-	var lv := int(GameState.job_level.get(job, 1))
-	_job_lbl.text = "%s   ·   %s" % [GameState.job_title(job), GameState.rank_label(job)]
-	var cost := GameState.levelup_cost(job)
-	if cost <= 0:
-		_lv_lbl.text = "Lv %d — 최고 레벨 (전투력 배율 ×%.1f)" % [lv, GameState.level_mult(job)]
-		_buy_btn.text = "최고 레벨 도달"
+	if job == "base":
+		_job_lbl.text = "길냥이"
+		_lv_lbl.text = "맨몸은 등급이 없어요 (직업을 장착하세요)"
+		_buy_btn.text = "—"
+		_buy_btn.disabled = true
+		for id2 in _inv_lbls.keys():
+			_inv_lbls[id2].text = "보유 %d" % int(GameState.inventory.get(id2, 0))
+			_item_btns[id2].text = "구매 (%d)" % GameState.consumable_price(id2)
+			_item_btns[id2].disabled = not GameState.can_buy_consumable(id2)
+		return
+	var g := GameState.top_grade(job)   # 보유 최고 등급
+	_job_lbl.text = "%s   ·   %s" % [GameState.job_title(job, maxi(1, g)), GameState.rank_label(maxi(1, g), job)]
+	var ng := GameState.next_grade(job)
+	var cost := GameState.craft_grade_cost(job)
+	if ng <= 0:
+		_lv_lbl.text = "전설 등급 보유 (배율 ×%.1f) — 최고 등급" % GameState.LV_MULT[clampi(maxi(1, g) - 1, 0, 4)]
+		_buy_btn.text = "최고 등급 보유"
 		_buy_btn.disabled = true
 	else:
-		var next_mult: float = GameState.LV_MULT[clampi(lv, 0, 4)]
-		_lv_lbl.text = "Lv %d → Lv %d   (전투력 배율 ×%.1f → ×%.1f)" % [lv, lv + 1, GameState.level_mult(job), next_mult]
-		_buy_btn.text = "레벨업  —  %s 코인" % _commafy(cost)
-		_buy_btn.disabled = not GameState.can_levelup(job)
+		var cur_mult: float = GameState.LV_MULT[clampi(maxi(1, g) - 1, 0, 4)]
+		var next_mult: float = GameState.LV_MULT[clampi(ng - 1, 0, 4)]
+		_lv_lbl.text = "%s 제작  (배율 ×%.1f → ×%.1f)" % [GameState.rank_label(ng, job), cur_mult, next_mult]
+		_buy_btn.text = "%s 제작  —  %s 코인" % [GameState.rank_label(ng, job), _commafy(cost)]
+		_buy_btn.disabled = not GameState.can_craft_grade(job)
 	for id in _inv_lbls.keys():
 		_inv_lbls[id].text = "보유 %d" % int(GameState.inventory.get(id, 0))
 		_item_btns[id].text = "구매 (%d)" % GameState.consumable_price(id)
@@ -426,11 +438,12 @@ func _refresh() -> void:
 # --- 버튼 핸들러 ---
 func _on_buy_levelup() -> void:
 	var job: String = GameState.selected_job
-	if GameState.do_levelup(job):
-		_toast_msg("레벨업! %s" % GameState.job_title(job))
+	var ng := GameState.next_grade(job)
+	if GameState.craft_grade(job):
+		_toast_msg("%s 제작!" % GameState.job_title(job, ng))
 		_refresh()
 	else:
-		_toast_msg("코인이 부족해요 (%s 필요)" % _commafy(GameState.levelup_cost(job)))
+		_toast_msg("코인이 부족해요 (%s 필요)" % _commafy(GameState.craft_grade_cost(job)))
 
 func _on_buy_consumable(id: String) -> void:
 	if GameState.buy_consumable(id):

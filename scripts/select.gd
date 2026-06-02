@@ -261,7 +261,7 @@ func _rebuild_skill_pane() -> void:
 		return
 	var slots: int = GameState.skill_slots(job)
 	var equipped: Array = GameState.equipped_for(job)
-	var lv := int(GameState.job_level.get(job, 1))
+	var lv := GameState.display_grade(job)
 	# 슬롯 행
 	var sh := _skill_label("장착 슬롯  %d칸 (Lv%d) — 탭하면 빼기" % [slots, lv], 28)
 	sh.position = Vector2(0, vp.y * 0.14); sh.size = Vector2(vp.x, 40)
@@ -453,6 +453,7 @@ func _select(job: String) -> void:
 		return
 	_selected = job
 	GameState.selected_job = job
+	GameState.equipped_grade = maxi(1, GameState.top_grade(job))   # 장착 = 보유 최고 등급
 	for j in _btns:
 		_style_job_btn(j)
 	if _hint:
@@ -482,14 +483,14 @@ func _style_job_btn(job: String) -> void:
 
 ## 등급 라벨(맨몸은 숨김)
 func _set_rank_label(rank: Label, job: String) -> void:
-	var txt := GameState.rank_label(job)
+	var txt := GameState.rank_label(0, job)
 	if txt == "":
 		rank.visible = false
 	else:
 		rank.visible = true
 		rank.text = txt
 		rank.add_theme_font_override("font", _head_font)
-		rank.add_theme_color_override("font_color", GameState.rank_color(job))
+		rank.add_theme_color_override("font_color", GameState.rank_color(0, job))
 
 
 ## 잠긴 직업 해금 조건 안내(§6-A 타임라인)

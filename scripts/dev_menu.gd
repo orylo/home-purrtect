@@ -195,8 +195,7 @@ func _on_test() -> void:
 
 func _apply_settings() -> void:
 	GameState.mode = "dev"
-	GameState.selected_job = _job
-	GameState.job_level[_job] = _lv
+	GameState.dev_set_job(_job, _lv)   # 직업+등급 즉시 장착(1~_lv 전부 보유 처리)
 	GameState.stage_minor = _stage
 	GameState.difficulty = _diff
 	GameState.cheats = {"godmode": _godmode, "enemy_oneshot": _oneshot, "enemy_count_mult": _count_mult}

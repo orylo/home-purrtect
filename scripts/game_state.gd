@@ -27,36 +27,73 @@ var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 
-## --- 등급(Lv) 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
+## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
+## ★새 모델: 등급 = 별개 장비. 전투 배율은 "장착된 등급"(equipped_grade) 기준.
 const LV_MULT := [1.0, 1.5, 2.2, 3.2, 4.5]
-func level_mult(job: String = "") -> float:
-	var j := job if job != "" else selected_job
-	return LV_MULT[clampi(int(job_level.get(j, 1)) - 1, 0, 4)]
+func level_mult() -> float:
+	return LV_MULT[clampi(equipped_grade - 1, 0, 4)]
 
-## --- 레벨업 구매 (상점, 시스템밸런스 §5.2-C) ---
-## 다음 Lv 도달 비용: Lv1→2=1,000 / 2→3=2,500 / 3→4=5,000 / 4→5=10,000
-const LEVELUP_COST := [1000, 2500, 5000, 10000]   # index = 현재 Lv-1
-func levelup_cost(job: String = "") -> int:
-	var j := job if job != "" else selected_job
-	var lv := int(job_level.get(j, 1))
-	if lv >= 5:
-		return 0   # 최고 레벨
-	return LEVELUP_COST[lv - 1]
+## --- 등급 제작 (★레벨업 폐기, 시스템밸런스 §5.2-C/§2.2) ---
+## 각 상위 등급은 *별개 장비*로 제작. 비용: 2등급 1,000 / 3 2,500 / 4 5,000 / 5 10,000
+const GRADE_COST := [1000, 2500, 5000, 10000]   # index = (만들 등급 - 2)
 
-func can_levelup(job: String = "") -> bool:
-	var j := job if job != "" else selected_job
-	var c := levelup_cost(j)
+## job이 보유한 최고 등급(없으면 0)
+func top_grade(job: String) -> int:
+	var a: Array = owned_grades.get(job, [])
+	return (a as Array).max() if a.size() > 0 else 0
+
+## 화면 표시용 등급(장착직업=장착등급 / 그 외=보유 최고, 없으면 1)
+func display_grade(job: String) -> int:
+	if job == selected_job:
+		return equipped_grade
+	var g := top_grade(job)
+	return g if g > 0 else 1
+
+func owns_job(job: String) -> bool:
+	return (owned_grades.get(job, []) as Array).size() > 0
+
+## 다음 제작 가능 등급(보유 최고+1, 5 초과/미보유면 0)
+func next_grade(job: String) -> int:
+	var g := top_grade(job)
+	if g <= 0 or g >= 5:
+		return 0
+	return g + 1
+
+func craft_grade_cost(job: String) -> int:
+	var ng := next_grade(job)
+	return GRADE_COST[ng - 2] if ng >= 2 else 0
+
+func can_craft_grade(job: String) -> bool:
+	var c := craft_grade_cost(job)
 	return c > 0 and coins >= c
 
-func do_levelup(job: String = "") -> bool:
-	var j := job if job != "" else selected_job
-	if not can_levelup(j):
+## 상위 등급을 별개 장비로 제작(보유 등급 세트에 추가). 기존 직업을 "올리는" 게 아님.
+func craft_grade(job: String) -> bool:
+	if not can_craft_grade(job):
 		return false
-	coins -= levelup_cost(j)
-	job_level[j] = int(job_level.get(j, 1)) + 1
+	var ng := next_grade(job)
+	coins -= craft_grade_cost(job)
+	_add_grade(job, ng)
 	if mode != "dev" and AUTOSAVE:
 		save_game()
 	return true
+
+## 보유 등급 세트에 등급 추가(중복 방지·정렬)
+func _add_grade(job: String, g: int) -> void:
+	var a: Array = owned_grades.get(job, [])
+	if g >= 1 and not a.has(g):
+		a.append(g)
+		a.sort()
+	owned_grades[job] = a
+
+## [개발자] 직업+등급 즉시 장착(1~grade 전부 보유 처리)
+func dev_set_job(job: String, grade: int) -> void:
+	if not unlocked_jobs.has(job):
+		unlocked_jobs.append(job)
+	for g in range(1, grade + 1):
+		_add_grade(job, g)
+	selected_job = job
+	equipped_grade = clampi(grade, 1, 5)
 
 ## --- 소모품 (상점 구매·보유, 시스템밸런스 §5.4) ---
 ## 전투 중 실제 사용은 다음 조각(소모품 탭·HUD). 지금은 "사서 보유"까지.
@@ -172,6 +209,7 @@ func craft_job(job: String) -> bool:
 		materials[mid] = mat_count(mid) - int(r["mats"][mid])
 	if not unlocked_jobs.has(job):
 		unlocked_jobs.append(job)
+	_add_grade(job, 1)   # 1등급(이름없는) 장비를 보유로 추가
 	if mode != "dev" and AUTOSAVE:
 		save_game()
 	return true
@@ -202,10 +240,10 @@ func skill_slots(job: String = "") -> int:
 	var j := job if job != "" else selected_job
 	if j == "base":
 		return 0
-	var lv := int(job_level.get(j, 1))
-	if lv >= 5:
+	var g := equipped_grade if j == selected_job else top_grade(j)
+	if g >= 5:
 		return 4
-	if lv >= 3:
+	if g >= 3:
 		return 3
 	return 2
 
@@ -276,7 +314,7 @@ func skill_value(id: String) -> float:
 	var s: Dictionary = SKILLS.get(id, {})
 	var v := float(s.get("base", 0.0))
 	if bool(s.get("scaled", false)):
-		v *= level_mult(String(s.get("job", "")))
+		v *= level_mult()   # 장착 등급 배율(전투 중 = 장착 직업의 스킬)
 	return v
 
 ## --- 동료(호루라기) 시스템 (로드맵 6단계, 시스템밸런스 §5.5-B) ---
@@ -435,8 +473,7 @@ func dev_grant_skills() -> void:
 		selected_job = "sheriff"
 		if not unlocked_jobs.has("sheriff"):
 			unlocked_jobs.append("sheriff")
-	if int(job_level.get(job, 1)) < 1:
-		job_level[job] = 1
+	_add_grade(job, maxi(1, equipped_grade if job == selected_job else top_grade(job)))
 	equipped_skills[job] = []
 	for sid in SKILLS:
 		if SKILLS[sid]["job"] == job:
@@ -448,8 +485,10 @@ func dev_grant_skills() -> void:
 
 ## 도달한(현재) 스테이지 기준으로 해금 직업 보강 — idempotent(세이브 로드 후에도 안전)
 func _check_stage_unlocks() -> void:
-	if stage_minor >= 4 and not unlocked_jobs.has("sheriff"):
-		unlocked_jobs.append("sheriff")        # 1-3 클리어 → 보안관
+	if stage_minor >= 4:                          # 1-3 클리어 → 보안관 "지급"(1등급 보유)
+		if not unlocked_jobs.has("sheriff"):
+			unlocked_jobs.append("sheriff")
+		_add_grade("sheriff", 1)
 	if stage_minor >= 8:                          # 1-7 클리어 → 메이드·음악가
 		if not unlocked_jobs.has("maid"):
 			unlocked_jobs.append("maid")
@@ -475,8 +514,9 @@ func reset_progress() -> void:
 	unlocked_jobs = ["base"]
 	cleared_stages = []
 	selected_job = "base"
+	equipped_grade = 1
+	owned_grades = {"base": [1]}
 	coins = 0
-	job_level = {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
 	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
 	materials = {}
 	item_slots = ["", "", ""]
@@ -530,8 +570,11 @@ var rank_colors := [
 	Color(0.90, 0.55, 0.00),  # Lv5 금색
 ]
 
-## 직업별 현재 등급(Lv). 지금은 전부 1(레벨 시스템 붙으면 여기 갱신).
-var job_level := {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
+## ★보유 등급 세트 (직업 → 보유한 등급 Array, 정렬). 각 (직업×등급) = 별개 장비.
+##   맨몸은 항상 [1](등급 개념 없음). 제작/해금/dev로 추가됨.
+var owned_grades: Dictionary = {"base": [1]}
+## 현재 장착된 직업의 등급(전투 배율·슬롯·표기에 쓰임). selected_job과 짝.
+var equipped_grade: int = 1
 
 
 ## 맨몸은 등급 라벨이 없다
@@ -539,25 +582,25 @@ func has_rank(job: String) -> bool:
 	return job != "base"
 
 
-## 직업+Lv 호칭 (예: 견습 보안관)
-func job_title(job: String) -> String:
+## 직업+등급 호칭 (예: 견습 보안관). grade 생략 시 표시용 등급 자동.
+func job_title(job: String, grade: int = 0) -> String:
 	var names: Array = JOB_TITLES.get(job, ["?"])
-	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, names.size() - 1)
-	return names[idx]
+	var g := grade if grade > 0 else display_grade(job)
+	return names[clampi(g - 1, 0, names.size() - 1)]
 
 
 ## 등급 라벨 텍스트 (맨몸은 "")
-func rank_label(job: String) -> String:
-	if not has_rank(job):
+func rank_label(grade: int = 0, job: String = "") -> String:
+	if job == "base":
 		return ""
-	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, RANK_LABELS.size() - 1)
-	return RANK_LABELS[idx]
+	var g := grade if grade > 0 else display_grade(job if job != "" else selected_job)
+	return RANK_LABELS[clampi(g - 1, 0, RANK_LABELS.size() - 1)]
 
 
 ## 등급 라벨 색
-func rank_color(job: String) -> Color:
-	var idx: int = clampi(int(job_level.get(job, 1)) - 1, 0, rank_colors.size() - 1)
-	return rank_colors[idx]
+func rank_color(grade: int = 0, job: String = "") -> Color:
+	var g := grade if grade > 0 else display_grade(job if job != "" else selected_job)
+	return rank_colors[clampi(g - 1, 0, rank_colors.size() - 1)]
 
 
 ## 선택 직업의 SpriteFrames 경로
@@ -580,8 +623,9 @@ func save_game() -> void:
 		"stage_major": stage_major, "stage_minor": stage_minor,
 		"unlocked_jobs": unlocked_jobs, "coins": coins,
 		"cleared_stages": cleared_stages,
-		"selected_job": selected_job,   # 마지막 출격 세팅(로드맵 3단계)
-		"job_level": job_level,         # 직업별 Lv(상점 레벨업, 로드맵 4단계)
+		"selected_job": selected_job,   # 마지막 장착 직업
+		"equipped_grade": equipped_grade,  # 장착 등급
+		"owned_grades": owned_grades,   # 보유 (직업×등급) 세트(★등급=별개 장비)
 		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
 		"materials": materials,         # 전리품(재료) 보유(드랍·매입·제작, 로드맵 4단계)
 		"item_slots": item_slots,       # 소모품 슬롯 배치(로드맵 4단계)
@@ -626,11 +670,31 @@ func load_game() -> void:
 		# 마지막 출격 직업 복원(해금 안 된 값이면 맨몸으로)
 		var sj := String(data.get("selected_job", "base"))
 		selected_job = sj if unlocked_jobs.has(sj) else "base"
-		# 직업별 Lv 복원(상점 레벨업)
-		var jl = data.get("job_level", {})
-		if typeof(jl) == TYPE_DICTIONARY:
-			for k in job_level.keys():
-				job_level[k] = clampi(int(jl.get(k, 1)), 1, 5)
+		# 보유 등급 세트 복원 (없으면 옛 job_level에서 마이그레이션: Lv N → 1..N 보유)
+		owned_grades = {"base": [1]}
+		var og = data.get("owned_grades", null)
+		if typeof(og) == TYPE_DICTIONARY:
+			for k in og.keys():
+				var arr: Array = []
+				for g in og[k]:
+					var gi := clampi(int(g), 1, 5)
+					if not arr.has(gi):
+						arr.append(gi)
+				arr.sort()
+				if arr.size() > 0:
+					owned_grades[String(k)] = arr
+		else:
+			var jl = data.get("job_level", {})
+			if typeof(jl) == TYPE_DICTIONARY:
+				for k in jl.keys():
+					var lv := clampi(int(jl[k]), 1, 5)
+					owned_grades[String(k)] = range(1, lv + 1)
+		if not owns_job("base"):
+			owned_grades["base"] = [1]
+		# 장착 직업이 미보유면 맨몸으로
+		if not owns_job(selected_job):
+			selected_job = "base"
+		equipped_grade = clampi(int(data.get("equipped_grade", maxi(1, top_grade(selected_job)))), 1, 5)
 		# 소모품 보유 복원
 		var inv = data.get("inventory", {})
 		if typeof(inv) == TYPE_DICTIONARY:

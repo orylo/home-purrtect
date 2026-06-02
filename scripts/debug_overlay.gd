@@ -87,7 +87,7 @@ func _build_ui() -> void:
 		_font(jb, 18)
 		var jid: String = j[0]
 		jb.pressed.connect(func():
-			GameState.selected_job = jid
+			GameState.dev_set_job(jid, maxi(1, GameState.equipped_grade))   # 현재 등급 유지하며 직업 교체
 			get_tree().reload_current_scene())
 		jgrid.add_child(jb)
 	right.add_child(jgrid)
