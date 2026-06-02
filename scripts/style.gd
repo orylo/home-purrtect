@@ -149,19 +149,19 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 		"primary", "cta", "dark": fg = INK_CREAM
 		"danger": fg = RED
 		_: fg = INK
-	# 베벨 알약 텍스처(pill2, 나노바나나) — 색=의미. icon은 코드 박스.
-	if kind == "icon":
-		for st in ["normal", "focus", "hover"]:
-			b.add_theme_stylebox_override(st, _btn_box(PAPER))
-		b.add_theme_stylebox_override("pressed", _btn_box_pressed(PAPER))
-		b.add_theme_stylebox_override("disabled", _btn_box(PAPER_DEEP, false))
-	else:
-		var key := _pill_key(kind)
-		b.add_theme_stylebox_override("normal", _pill_tex(key))
-		b.add_theme_stylebox_override("focus", _pill_tex(key))
-		b.add_theme_stylebox_override("hover", _pill_tex(key, Color(1.06, 1.06, 1.06)))
-		b.add_theme_stylebox_override("pressed", _pill_tex(key, Color(0.88, 0.88, 0.88), 20.0, 12.0))
-		b.add_theme_stylebox_override("disabled", _pill_tex("gray", Color(0.95, 0.95, 0.95)))
+	# 채움색(kind별). ※알약 텍스처(TEX_PILL)는 세로로 뚱뚱한 로젠지라 버튼에서 찌부러짐
+	#   → 벡터 코드 알약 사용(어떤 크기에도 안 찌부러짐, design.md §3.5 알약).
+	var bg := PAPER
+	match kind:
+		"brand", "cheese": bg = CHEESE
+		"primary", "cta": bg = RED
+		"dark": bg = Color("3a3330")
+		_: bg = PAPER
+	for st in ["normal", "focus"]:
+		b.add_theme_stylebox_override(st, _btn_box(bg))
+	b.add_theme_stylebox_override("hover", _btn_box(bg.lightened(0.06)))
+	b.add_theme_stylebox_override("pressed", _btn_box_pressed(bg))
+	b.add_theme_stylebox_override("disabled", _btn_box(PAPER_DEEP, false))
 	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(cn, fg)
 	b.add_theme_color_override("font_disabled_color", INK.lerp(PAPER_DEEP, 0.5))
