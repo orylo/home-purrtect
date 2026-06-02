@@ -8,6 +8,8 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 
 ## 소모품 짧은 이름(아이템칸 표시용)
 const SHORT := {"bandage": "붕대", "anchovy": "멸치", "firecracker": "폭죽"}
+## 동료 짧은 이름(동료칸 표시용)
+const COMP_SHORT := {"dove": "비둘기", "chihuahua": "치와와"}
 ## 스킬 짧은 이름(스킬칸 표시용)
 const SKILL_SHORT := {
 	"warn_shot": "경고", "shield": "방패", "support": "지원",
@@ -47,9 +49,21 @@ func _draw() -> void:
 			var col := TXT if n > 0 else Color(1, 1, 1, 0.4)
 			_label(font, 18, SHORT.get(id, "?") + "\n×" + str(n), items[i], col)
 
-	# 동료 (원, 키 4)
-	_circle(L["companion"], Layout.ACT_R, Input.is_key_pressed(KEY_4))
-	_label(font, 28, "동료", L["companion"])
+	# 동료 (원, 키 4) — 장착 동료 + 쿨타임. 없으면 어둡게.
+	var comp: String = GameState.equipped_companion
+	if comp == "":
+		draw_circle(L["companion"], Layout.ACT_R, Color(0, 0, 0, 0.22))
+		draw_arc(L["companion"], Layout.ACT_R, 0.0, TAU, 48, Color(1, 1, 1, 0.22), 2.0, true)
+		_label(font, 22, "동료", L["companion"], Color(1, 1, 1, 0.4))
+	else:
+		var cbtn := get_parent().get_node_or_null("CompanionButton")
+		var ccd: float = cbtn.cd_left() if cbtn else 0.0
+		_circle(L["companion"], Layout.ACT_R, Input.is_key_pressed(KEY_4))
+		if ccd > 0.0:
+			draw_circle(L["companion"], Layout.ACT_R, Color(0, 0, 0, 0.5))
+			_label(font, 30, str(int(ceil(ccd))), L["companion"])
+		else:
+			_label(font, 24, COMP_SHORT.get(comp, "동료"), L["companion"])
 
 	# 스킬 1~4 — 장착 슬롯(현재 직업×Lv)대로 표시. 비활성 슬롯은 어둡게, 쿨 중엔 남은 초.
 	var skills: Array = L["skills"]

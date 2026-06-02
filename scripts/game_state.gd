@@ -276,6 +276,43 @@ func skill_value(id: String) -> float:
 		v *= level_mult(String(s.get("job", "")))
 	return v
 
+## --- 동료(호루라기) 시스템 (로드맵 6단계, 시스템밸런스 §5.5-B) ---
+## 만남(meet 스테이지·무료 이벤트) 후 호루라기를 맥스에서 구매. 슬롯 1개 → 매 판 택1, 전투 중 호출.
+## kind: 전투 발동 종류. meet: 만남 스테이지(1-13/1-16).
+const COMPANIONS := {
+	"dove":      {"name": "비둘기", "price": 300, "cd": 22.0, "meet": 13, "kind": "dove_bomb",  "dmg": 10.0, "slow_dur": 3.0, "slow_pct": 0.40, "desc": "전방 광역 똥 폭격 — 3초 둔화 40%↓ + 딜"},
+	"chihuahua": {"name": "치와와", "price": 500, "cd": 30.0, "meet": 16, "kind": "dog_charge", "dmg": 5.0,  "desc": "좌→우로 달리며 지상 적 전부 밀어냄"},
+}
+const COMPANION_ORDER := ["dove", "chihuahua"]
+var owned_companions: Array = []      # 보유(호루라기 구매) 동료 id
+var equipped_companion: String = ""   # 장착(매 판 택1) 동료 id
+
+func owns_companion(id: String) -> bool:
+	return owned_companions.has(id)
+
+## 1막 구매 가능: 미보유 + 코인 충분 (기획상 meet 이벤트 후지만, 상점이 테스트 상시노출이라 코인만 게이팅)
+func can_buy_companion(id: String) -> bool:
+	if not COMPANIONS.has(id) or owns_companion(id):
+		return false
+	return coins >= int(COMPANIONS[id]["price"])
+
+func buy_companion(id: String) -> bool:
+	if not can_buy_companion(id):
+		return false
+	coins -= int(COMPANIONS[id]["price"])
+	owned_companions.append(id)
+	if equipped_companion == "":
+		equipped_companion = id   # 첫 동료는 자동 장착
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
+func equip_companion(id: String) -> void:
+	if id == "" or owns_companion(id):
+		equipped_companion = id   # ""(해제) 또는 보유 동료
+		if mode != "dev" and AUTOSAVE:
+			save_game()
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -384,6 +421,8 @@ func reset_progress() -> void:
 	item_slots = ["", "", ""]
 	owned_skills = []
 	equipped_skills = {"sheriff": [], "maid": [], "jazz": []}
+	owned_companions = []
+	equipped_companion = ""
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -484,6 +523,8 @@ func save_game() -> void:
 		"item_slots": item_slots,       # 소모품 슬롯 배치(로드맵 4단계)
 		"owned_skills": owned_skills,   # 보유 스킬(로드맵 5단계)
 		"equipped_skills": equipped_skills,  # 장착 스킬(로드맵 5단계)
+		"owned_companions": owned_companions,    # 보유 동료(로드맵 6단계)
+		"equipped_companion": equipped_companion,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -559,6 +600,15 @@ func load_game() -> void:
 						var sid := String(s)
 						if SKILLS.has(sid) and SKILLS[sid]["job"] == j and owned_skills.has(sid):
 							equipped_skills[j].append(sid)
+		# 동료 복원(로드맵 6단계)
+		owned_companions = []
+		var ocp = data.get("owned_companions", [])
+		if typeof(ocp) == TYPE_ARRAY:
+			for c in ocp:
+				if COMPANIONS.has(String(c)) and not owned_companions.has(String(c)):
+					owned_companions.append(String(c))
+		var ec := String(data.get("equipped_companion", ""))
+		equipped_companion = ec if owned_companions.has(ec) else ""
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

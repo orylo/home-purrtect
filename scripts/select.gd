@@ -46,6 +46,7 @@ var _hint: Label              # 직업 탭 하단 선택 안내
 var _item_slots: Control      # 소모품 탭 슬롯 자리(3칸)
 var _slot_btns := []          # 소모품 슬롯 버튼 3개
 var _skill_pane: Control      # 스킬 탭(장착 UI)
+var _ally_pane: Control       # 동료 탭(장착 UI)
 
 
 ## 알약 스타일 박스 — bw>0이면 테두리
@@ -104,6 +105,7 @@ func _ready() -> void:
 	_build_placeholder()
 	_build_item_slots()
 	_build_skill_pane()
+	_build_ally_pane()
 	_build_bottom_bar()   # ★최상위(맨 마지막)로 추가 → 어느 탭에서도 [홈]/[출격] 클릭 보장
 
 	# 기본 선택 = 이전에 고른 직업(없거나 잠겼으면 맨몸)
@@ -337,6 +339,56 @@ func _unequip_skill(job: String, sid: String) -> void:
 	_rebuild_skill_pane()
 
 
+## --- 동료 탭 (장착 UI, 로드맵 6단계) ---
+func _build_ally_pane() -> void:
+	_ally_pane = Control.new()
+	_ally_pane.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_ally_pane.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ally_pane.visible = false
+	add_child(_ally_pane)
+
+func _rebuild_ally_pane() -> void:
+	for c in _ally_pane.get_children():
+		c.queue_free()
+	var vp := get_viewport_rect().size
+	var owned: Array = GameState.owned_companions
+	if owned.is_empty():
+		var none := _skill_label("보유한 동료가 없어요.\n맥스 상점 [동료]에서 호루라기를 사세요.", 30)
+		none.position = Vector2(0, vp.y * 0.40); none.size = Vector2(vp.x, 120)
+		_ally_pane.add_child(none)
+		return
+	var head := _skill_label("동료 슬롯 1칸 — 탭해서 장착 (매 판 택1)", 28)
+	head.position = Vector2(0, vp.y * 0.16); head.size = Vector2(vp.x, 40)
+	_ally_pane.add_child(head)
+	# 카드들: 보유 동료 + "없음(해제)"
+	var ids: Array = []
+	for cid in GameState.COMPANION_ORDER:
+		if owned.has(cid):
+			ids.append(cid)
+	ids.append("")   # 해제 옵션
+	var cw := 260.0
+	var total := ids.size() * cw + maxf(0, ids.size() - 1) * 24.0
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 24)
+	row.position = Vector2(vp.x * 0.5 - total * 0.5, vp.y * 0.30)
+	_ally_pane.add_child(row)
+	for cid in ids:
+		var equipped: bool = (GameState.equipped_companion == cid)
+		var txt: String
+		var col: Color
+		if cid == "":
+			txt = "없음\n(해제)"
+			col = ORANGE if equipped else Color(0.55, 0.55, 0.55)
+		else:
+			txt = "%s\n%s" % [String(GameState.COMPANIONS[cid]["name"]), "★ 장착됨" if equipped else "탭해서 장착"]
+			col = ORANGE if equipped else Color(0.22, 0.42, 0.30)
+		row.add_child(_skill_button(txt, cw, col, _equip_ally.bind(cid)))
+
+func _equip_ally(cid: String) -> void:
+	GameState.equip_companion(cid)
+	_rebuild_ally_pane()
+
+
 ## 탭 전환
 func _set_tab(tab: String) -> void:
 	_tab = tab
@@ -362,9 +414,11 @@ func _set_tab(tab: String) -> void:
 	_skill_pane.visible = is_skill
 	if is_skill:
 		_rebuild_skill_pane()   # 현재 선택 직업 기준 장착 UI
-	_placeholder.visible = (tab == "ally")   # 동료만 텍스트 안내
-	if _placeholder.visible:
-		_placeholder.text = TAB_TODO.get(tab, "준비중")
+	var is_ally := (tab == "ally")
+	_ally_pane.visible = is_ally
+	if is_ally:
+		_rebuild_ally_pane()
+	_placeholder.visible = false   # 모든 탭이 실제 작동(준비중 안내 불필요)
 
 
 ## [테스트 치트] 숫자 0 → 잠긴 직업까지 전부 선택 가능

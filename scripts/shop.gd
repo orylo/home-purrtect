@@ -12,6 +12,7 @@ const ITEM_ORDER := ["bandage", "anchovy", "firecracker"]
 const TABS := [
 	{"id": "level", "name": "레벨업"},
 	{"id": "skill", "name": "스킬"},
+	{"id": "companion", "name": "동료"},
 	{"id": "item", "name": "소모품"},
 	{"id": "sell", "name": "전리품 매입"},
 	{"id": "craft", "name": "직업 제작"},
@@ -32,6 +33,7 @@ var _item_btns := {}
 var _sell_box: VBoxContainer
 var _craft_box: VBoxContainer
 var _skill_box: VBoxContainer
+var _comp_box: VBoxContainer
 var _toast: Label
 var _toast_t := 0.0
 var _content_rect: Rect2
@@ -78,6 +80,7 @@ func _build() -> void:
 
 	_build_level_pane()
 	_build_skill_pane()
+	_build_companion_pane()
 	_build_item_pane()
 	_build_sell_pane()
 	_build_craft_pane()
@@ -97,8 +100,8 @@ func _build() -> void:
 
 func _build_tabbar(vp: Vector2) -> void:
 	var n := TABS.size()
-	var sep := 10
-	var bw := 162
+	var sep := 8
+	var bw := 138
 	var total := n * bw + (n - 1) * sep
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", sep)
@@ -286,6 +289,56 @@ func _rebuild_skill() -> void:
 		card.add_child(b)
 
 
+# --- 동료 탭(동적, §5.5-B) ---
+func _build_companion_pane() -> void:
+	var p := _new_pane("companion")
+	var head := _text("동료 호루라기 구매 (슬롯 1 · 매 판 택1)", 30, ORANGE)
+	head.position = Vector2(20, 12)
+	p.add_child(head)
+	_comp_box = VBoxContainer.new()
+	_comp_box.add_theme_constant_override("separation", 14)
+	_comp_box.position = Vector2(20, 64)
+	_comp_box.custom_minimum_size = Vector2(800, 0)
+	p.add_child(_comp_box)
+
+
+func _rebuild_companion() -> void:
+	for c in _comp_box.get_children():
+		c.queue_free()
+	for cid in GameState.COMPANION_ORDER:
+		var cdef: Dictionary = GameState.COMPANIONS[cid]
+		var card := Panel.new()
+		card.add_theme_stylebox_override("panel", _card_sb())
+		card.custom_minimum_size = Vector2(800, 116)
+		_comp_box.add_child(card)
+		var nm := _text("%s   (CD %ds · 만남 1-%d)" % [String(cdef["name"]), int(cdef["cd"]), int(cdef["meet"])], 26, Color(1, 1, 1))
+		nm.position = Vector2(16, 10)
+		card.add_child(nm)
+		var ds := _text(String(cdef["desc"]), 21, Color(0.82, 0.88, 0.95))
+		ds.position = Vector2(16, 50)
+		card.add_child(ds)
+		var b := Button.new()
+		b.position = Vector2(560, 30)
+		b.custom_minimum_size = Vector2(224, 56)
+		_font(b, 24)
+		if GameState.owns_companion(cid):
+			_btn_colors(b, Color(0.3, 0.4, 0.3)); b.text = "보유 완료"; b.disabled = true
+		else:
+			_btn_colors(b, ORANGE); b.text = "구매 (%d)" % int(cdef["price"])
+			b.disabled = not GameState.can_buy_companion(cid)
+			b.pressed.connect(_on_buy_companion.bind(cid))
+		card.add_child(b)
+
+
+func _on_buy_companion(cid: String) -> void:
+	if GameState.buy_companion(cid):
+		_toast_msg("%s 호루라기 구매! 전투 준비 [동료]에서 장착" % String(GameState.COMPANIONS[cid]["name"]))
+		_rebuild_companion()
+		_refresh()
+	else:
+		_toast_msg("코인이 부족해요 (%d)" % int(GameState.COMPANIONS[cid]["price"]))
+
+
 # --- 직업 제작 탭(동적) ---
 func _build_craft_pane() -> void:
 	var p := _new_pane("craft")
@@ -357,6 +410,8 @@ func _set_tab(tab: String) -> void:
 		_rebuild_craft()
 	elif tab == "skill":
 		_rebuild_skill()
+	elif tab == "companion":
+		_rebuild_companion()
 	_refresh()
 
 
