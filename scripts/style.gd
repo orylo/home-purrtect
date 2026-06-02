@@ -4,7 +4,9 @@ extends Node
 ## 톤: 고전 카툰 — 두꺼운 잉크 외곽선 + 단색 면 + 단색(블러0) 오프셋 그림자 + 베벨 입체 + 물건화 패널 + 8px 그리드.
 ## 버튼=Design.style_button(b, kind) / 패널=Design.make_panel(panel, ...).
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")        # 본문·숫자·캡션
+const FONT_TITLE := preload("res://assets/fonts/Jalnan.ttf")              # 타이틀·버튼(여기어때 잘난체, TTF=웹/Godot 안전, 한글+기호 전수 커버)
+const TITLE_KINDS := ["display", "display_s", "title"]
 
 # --- 컬러 토큰 (design.md §1) ---
 const INK := Color("241f1b")          # 외곽선·본문 (따뜻한 먹색)
@@ -68,7 +70,7 @@ func label(text: String, kind: String = "body", color: Color = INK) -> Label:
 	return l
 
 func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
-	l.add_theme_font_override("font", FONT)
+	l.add_theme_font_override("font", FONT_TITLE if kind in TITLE_KINDS else FONT)
 	l.add_theme_font_size_override("font_size", int(FS.get(kind, FS_BODY)))
 	l.add_theme_color_override("font_color", color)
 	var ow: int = int(OUTLINE.get(kind, 0))
@@ -141,7 +143,7 @@ func _pill_key(kind: String) -> String:
 ## kind: brand/cheese(골드=성장·획득) / primary/cta(빨강=전투·돌입)
 ##       secondary/paper/ghost(크림=뒤로·중립) / danger(크림+빨강글자) / dark / icon
 func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> void:
-	b.add_theme_font_override("font", FONT)
+	b.add_theme_font_override("font", FONT_TITLE)   # 버튼 글자 = 잘난체(통통 카툰)
 	b.add_theme_font_size_override("font_size", fs)
 	b.clip_contents = false
 	var fg := INK
