@@ -83,10 +83,11 @@ func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
 
 # 4색 알약 버튼 텍스처(나노바나나 에셋). 베벨·외곽선·질감이 그림에 구워져 있음. 색=의미(§1).
 const TEX_PILL := {
-	"gold": preload("res://assets/ui/buttons/btn_pill_gold.png"),
-	"red": preload("res://assets/ui/buttons/btn_pill_red.png"),
-	"cream": preload("res://assets/ui/buttons/btn_pill_cream.png"),
-	"gray": preload("res://assets/ui/buttons/btn_pill_gray.png"),
+	"gold": preload("res://assets/ui/buttons/pill2_gold.png"),
+	"red": preload("res://assets/ui/buttons/pill2_red.png"),
+	"cream": preload("res://assets/ui/buttons/pill2_cream.png"),
+	"blue": preload("res://assets/ui/buttons/pill2_blue.png"),
+	"gray": preload("res://assets/ui/buttons/pill2_gray.png"),
 }
 
 ## (폴백) 코드 알약 박스 — 텍스처 못 쓰는 icon kind 등에서 사용
@@ -116,12 +117,12 @@ func _btn_box_pressed(bg: Color) -> StyleBoxFlat:
 func _pill_tex(key: String, modulate := Color.WHITE, ctop := 14.0, cbot := 18.0) -> StyleBoxTexture:
 	var sb := StyleBoxTexture.new()
 	sb.texture = TEX_PILL.get(key, TEX_PILL["cream"])
-	sb.texture_margin_left = 128.0     # ≈ 캡 반지름(텍스처 높이÷2) → 둥근 끝 유지
-	sb.texture_margin_right = 128.0
+	sb.texture_margin_left = 100.0     # ≈ 둥근 끝 폭 → 캡 보존, 가운데만 가로 스트레치
+	sb.texture_margin_right = 100.0
 	sb.texture_margin_top = 0.0         # 세로는 통째 스트레치(버튼 높이 다양 대응)
 	sb.texture_margin_bottom = 0.0
-	sb.content_margin_left = 44.0
-	sb.content_margin_right = 44.0
+	sb.content_margin_left = 40.0
+	sb.content_margin_right = 40.0
 	sb.content_margin_top = ctop
 	sb.content_margin_bottom = cbot
 	sb.modulate_color = modulate
@@ -148,18 +149,19 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 		"primary", "cta", "dark": fg = INK_CREAM
 		"danger": fg = RED
 		_: fg = INK
-	# 채움색(kind별). ※알약 텍스처(TEX_PILL)는 로젠지 형태라 버튼엔 부적합 → 코드 알약 사용.
-	var bg := PAPER
-	match kind:
-		"brand", "cheese": bg = CHEESE
-		"primary", "cta": bg = RED
-		"dark": bg = Color("3a3330")
-		_: bg = PAPER
-	for st in ["normal", "focus"]:
-		b.add_theme_stylebox_override(st, _btn_box(bg))
-	b.add_theme_stylebox_override("hover", _btn_box(bg.lightened(0.06)))
-	b.add_theme_stylebox_override("pressed", _btn_box_pressed(bg))
-	b.add_theme_stylebox_override("disabled", _btn_box(PAPER_DEEP, false))
+	# 베벨 알약 텍스처(pill2, 나노바나나) — 색=의미. icon은 코드 박스.
+	if kind == "icon":
+		for st in ["normal", "focus", "hover"]:
+			b.add_theme_stylebox_override(st, _btn_box(PAPER))
+		b.add_theme_stylebox_override("pressed", _btn_box_pressed(PAPER))
+		b.add_theme_stylebox_override("disabled", _btn_box(PAPER_DEEP, false))
+	else:
+		var key := _pill_key(kind)
+		b.add_theme_stylebox_override("normal", _pill_tex(key))
+		b.add_theme_stylebox_override("focus", _pill_tex(key))
+		b.add_theme_stylebox_override("hover", _pill_tex(key, Color(1.06, 1.06, 1.06)))
+		b.add_theme_stylebox_override("pressed", _pill_tex(key, Color(0.88, 0.88, 0.88), 20.0, 12.0))
+		b.add_theme_stylebox_override("disabled", _pill_tex("gray", Color(0.95, 0.95, 0.95)))
 	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(cn, fg)
 	b.add_theme_color_override("font_disabled_color", INK.lerp(PAPER_DEEP, 0.5))

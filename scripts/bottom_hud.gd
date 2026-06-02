@@ -24,10 +24,10 @@ const LINE := Color(0.141, 0.122, 0.106, 0.95)    # 잉크 외곽
 const TXT := Color(0.141, 0.122, 0.106, 1.0)      # 잉크 글자
 
 # 나노바나나 에셋 — 슬롯/손 텍스처
-const TEX_SLOT_SQ := preload("res://assets/ui/slots/slot_square.png")
-const TEX_RND_SKILL := preload("res://assets/ui/buttons/btn_round_gold.png")
-const TEX_RND_COMP := preload("res://assets/ui/buttons/btn_round_teal.png")
-const TEX_RND_ACT := preload("res://assets/ui/buttons/btn_round_red.png")
+const TEX_SLOT_SQ := preload("res://assets/ui/slots/slot2_sq.png")
+const TEX_RND_SKILL := preload("res://assets/ui/slots/slot2_skill.png")
+const TEX_RND_COMP := preload("res://assets/ui/slots/slot2_comp.png")
+const TEX_RND_ACT := preload("res://assets/ui/slots/slot2_act.png")
 const TEX_MELEE := preload("res://assets/ui/hands/action_melee_v1.png")
 const TEX_RANGED := preload("res://assets/ui/hands/action_ranged_v1.png")
 
