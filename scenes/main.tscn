@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
 [ext_resource type="Script" path="res://scripts/joystick.gd" id="10_joystick"]
 [ext_resource type="Script" path="res://scripts/attack_button.gd" id="11_attack"]
+[ext_resource type="Script" path="res://scripts/item_button.gd" id="12_item"]
 [ext_resource type="Script" path="res://scripts/game.gd" id="12_game"]
 [ext_resource type="Script" path="res://scripts/muzzle_flash.gd" id="13_muzzle"]
 [ext_resource type="FontFile" path="res://assets/fonts/DoHyeon-Regular.ttf" id="14_head"]
@@ -112,6 +113,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("11_attack")
+
+[node name="ItemButton" type="Control" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("12_item")
 
 [node name="TopDim" type="ColorRect" parent="HUD"]
 mouse_filter = 2

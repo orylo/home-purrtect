@@ -103,6 +103,8 @@ var _hurt_flash_timer: float = 0.0
 var _poison_timer: float = 0.0   # 독(지속 데미지) 남은 시간
 var _poison_tick: float = 0.0    # 다음 독 틱까지
 var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
+var _atk_buff_t: float = 0.0     # 말린 멸치: 공격력 버프 남은 시간
+const ATK_BUFF_MULT := 1.5       # 말린 멸치: +50%
 var _hurt_popups: Array = []     # 치즈가 받은 데미지 숫자(머리 위로 상승+페이드)
 const HURT_POP_DUR := 0.8
 # 눕기 그림자 크기는 현재 sit 스프라이트 프레임에 직접 맞춘다(_draw 참고)
@@ -207,6 +209,8 @@ func _physics_process(delta: float) -> void:
 			_poison_damage(2.0)
 	if _slow_timer > 0.0:
 		_slow_timer -= delta
+	if _atk_buff_t > 0.0:
+		_atk_buff_t -= delta
 
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
@@ -398,6 +402,8 @@ func _handle_attack() -> void:
 ## 평타는 약하게(작은 넉백), 크리 터지면 직업 효과가 강하게.
 func _roll_attack(base_dmg: float) -> Dictionary:
 	var dmg := base_dmg
+	if _atk_buff_t > 0.0:
+		dmg *= ATK_BUFF_MULT   # 말린 멸치 버프 중
 	var kb := NORMAL_KNOCKBACK
 	var stun := 0.0
 	var is_crit := randf() < crit_chance
@@ -534,6 +540,30 @@ func take_damage(amount: float) -> void:
 		health = 0.0
 		_dead = true
 		died.emit()   # 게임오버 — game.gd가 연출 처리
+
+
+## --- 소모품 효과 (로드맵 4단계 §5.4) ---
+## 낡은 붕대: 즉시 고정 회복(최대 초과 안 함)
+func heal(amount: float) -> void:
+	if _dead:
+		return
+	health = minf(max_health, health + amount)
+
+## 말린 멸치: 공격력 버프 dur초(중첩 시 더 긴 쪽 유지)
+func apply_atk_buff(dur: float) -> void:
+	if _dead:
+		return
+	_atk_buff_t = maxf(_atk_buff_t, dur)
+
+## 폭죽: 살아있는 모든 적에게 고정 광역 데미지
+func aoe_damage(amount: float) -> void:
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		if e.has_method("is_dead") and e.is_dead():
+			continue
+		if e.has_method("take_damage"):
+			e.take_damage(amount, 0.0, 0.0, false)
 
 
 ## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)

@@ -66,6 +66,8 @@ const CONSUMABLES := {
 	"firecracker": {"name": "폭죽",      "price": 80, "desc": "광역 60 데미지"},
 }
 var inventory := {"bandage": 0, "anchovy": 0, "firecracker": 0}
+## 전투 준비 소모품 슬롯(종류만 저장, 양은 inventory 따라감) — 로드맵 4단계
+var item_slots := ["", "", ""]
 
 func consumable_price(id: String) -> int:
 	return int(CONSUMABLES.get(id, {}).get("price", 0))
@@ -225,6 +227,7 @@ func reset_progress() -> void:
 	job_level = {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
 	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
 	materials = {}
+	item_slots = ["", "", ""]
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -322,6 +325,7 @@ func save_game() -> void:
 		"job_level": job_level,         # 직업별 Lv(상점 레벨업, 로드맵 4단계)
 		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
 		"materials": materials,         # 전리품(재료) 보유(드랍·매입·제작, 로드맵 4단계)
+		"item_slots": item_slots,       # 소모품 슬롯 배치(로드맵 4단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -374,6 +378,12 @@ func load_game() -> void:
 			for k in mat.keys():
 				if MATERIALS.has(k):
 					materials[k] = maxi(0, int(mat[k]))
+		# 소모품 슬롯 복원
+		var slots = data.get("item_slots", [])
+		if typeof(slots) == TYPE_ARRAY:
+			for i in range(3):
+				var v := String(slots[i]) if i < slots.size() else ""
+				item_slots[i] = v if CONSUMABLES.has(v) else ""
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

@@ -43,7 +43,8 @@ var _pill_disabled: StyleBoxFlat
 var _tab_btns := {}           # tab id -> Button
 var _placeholder: Label       # 스킬·동료 탭 안내
 var _hint: Label              # 직업 탭 하단 선택 안내
-var _item_slots: Control      # 소모품 탭 슬롯 자리(3칸, 4단계서 작동)
+var _item_slots: Control      # 소모품 탭 슬롯 자리(3칸)
+var _slot_btns := []          # 소모품 슬롯 버튼 3개
 
 
 ## 알약 스타일 박스 — bw>0이면 테두리
@@ -171,37 +172,54 @@ func _build_item_slots() -> void:
 	_item_slots.visible = false
 	add_child(_item_slots)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 40)
-	row.position = Vector2(vp.x * 0.5 - 260, vp.y * 0.42 - 80)
+	row.add_theme_constant_override("separation", 36)
+	row.position = Vector2(vp.x * 0.5 - 294, vp.y * 0.42 - 90)
 	_item_slots.add_child(row)
+	_slot_btns = []
 	for i in range(3):
-		var slot := Panel.new()
-		slot.custom_minimum_size = Vector2(150, 150)
+		var slot := Button.new()
+		slot.custom_minimum_size = Vector2(184, 172)
+		slot.add_theme_font_override("font", _head_font)
+		slot.add_theme_font_size_override("font_size", 26)
+		for cn in ["font_color", "font_hover_color", "font_pressed_color"]:
+			slot.add_theme_color_override(cn, Color(0.0275, 0.0235, 0.0275, 1))
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.78, 0.78, 0.77, 1)
+		sb.bg_color = Color(0.84, 0.84, 0.82, 1)
 		sb.set_corner_radius_all(18)
 		sb.set_border_width_all(3)
 		sb.border_color = Color(0.0275, 0.0235, 0.0275, 0.35)
-		slot.add_theme_stylebox_override("panel", sb)
-		var plus := Label.new()
-		plus.text = "+"
-		plus.add_theme_font_override("font", _head_font)
-		plus.add_theme_font_size_override("font_size", 60)
-		plus.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.4))
-		plus.set_anchors_preset(Control.PRESET_FULL_RECT)
-		plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		slot.add_child(plus)
+		for st in ["normal", "hover", "pressed", "focus"]:
+			slot.add_theme_stylebox_override(st, sb)
+		slot.pressed.connect(_cycle_slot.bind(i))
 		row.add_child(slot)
+		_slot_btns.append(slot)
 	var cap := Label.new()
-	cap.text = "소모품 슬롯 — 준비중 (로드맵 4단계: 상점·실제효과)"
+	cap.text = "슬롯을 탭하면 소모품이 바뀐다 (보유는 맥스 상점에서 구매)"
 	cap.add_theme_font_override("font", _head_font)
-	cap.add_theme_font_size_override("font_size", 26)
+	cap.add_theme_font_size_override("font_size", 24)
 	cap.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275, 0.7))
 	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cap.size = Vector2(vp.x, 36)
 	cap.position = Vector2(0, vp.y * 0.42 + 110)
 	_item_slots.add_child(cap)
+	_refresh_item_slots()
+
+
+## 슬롯 탭 → 소모품 종류 순환(없음→붕대→멸치→폭죽→없음). GameState에 즉시 저장.
+const ITEM_CYCLE := ["", "bandage", "anchovy", "firecracker"]
+func _cycle_slot(i: int) -> void:
+	var idx: int = ITEM_CYCLE.find(GameState.item_slots[i])
+	GameState.item_slots[i] = ITEM_CYCLE[(idx + 1) % ITEM_CYCLE.size()]
+	_refresh_item_slots()
+
+func _refresh_item_slots() -> void:
+	for i in range(_slot_btns.size()):
+		var id: String = GameState.item_slots[i]
+		if id == "":
+			_slot_btns[i].text = "빈 슬롯\n(탭하여 배치)"
+		else:
+			_slot_btns[i].text = "%s\n보유 %d" % [
+					String(GameState.CONSUMABLES[id]["name"]), int(GameState.inventory.get(id, 0))]
 
 
 ## 탭 전환
@@ -223,6 +241,8 @@ func _set_tab(tab: String) -> void:
 	$Center.visible = is_job
 	_hint.visible = is_job
 	_item_slots.visible = is_item
+	if is_item:
+		_refresh_item_slots()   # 보유 수 최신화(상점서 산 뒤 들어올 수 있음)
 	_placeholder.visible = not is_job and not is_item   # 스킬·동료만 텍스트 안내
 	if _placeholder.visible:
 		_placeholder.text = TAB_TODO.get(tab, "준비중")
@@ -329,7 +349,7 @@ func _set_rank_label(rank: Label, job: String) -> void:
 
 ## 잠긴 직업 해금 조건 안내(§6-A 타임라인)
 func _set_lock_label(rank: Label, job: String) -> void:
-	var hint := {
+	var hint: String = {
 		"sheriff": "1-3 클리어 시 지급",
 		"maid": "1-7 상점에서 제작",
 		"jazz": "1-7 상점에서 제작",

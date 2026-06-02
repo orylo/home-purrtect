@@ -6,6 +6,9 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 ## 근접/원거리만 실제 작동(입력=attack_button.gd / Touch). 나머지는 시스템 생기면 연결.
 ## 좌표는 Layout.bottom_row()가 그림·입력 공유로 계산.
 
+## 소모품 짧은 이름(아이템칸 표시용)
+const SHORT := {"bandage": "붕대", "anchovy": "멸치", "firecracker": "폭죽"}
+
 const FILL := Color(0, 0, 0, 0.40)        # 평소(검정 반투명)
 const FILL_ON := Color(1, 1, 1, 0.45)     # 눌림(밝게)
 const LINE := Color(1, 1, 1, 0.78)
@@ -26,11 +29,17 @@ func _draw() -> void:
 	var font := UI_FONT
 	var L := Layout.bottom_row(size)
 
-	# 아이템 1~3 (사각, 키 1 2 3)
+	# 아이템 1~3 (사각, 키 1 2 3) — 배치된 소모품 이름 + 보유 수
 	var items: Array = L["items"]
 	for i in items.size():
 		_square(items[i], Layout.ITEM_SQ, Input.is_action_pressed("item_%d" % (i + 1)))
-		_label(font, 18, "아이템\n" + str(i + 1), items[i])
+		var id: String = GameState.item_slots[i] if i < GameState.item_slots.size() else ""
+		if id == "":
+			_label(font, 17, "비었음", items[i], Color(1, 1, 1, 0.45))
+		else:
+			var n: int = int(GameState.inventory.get(id, 0))
+			var col := TXT if n > 0 else Color(1, 1, 1, 0.4)
+			_label(font, 18, SHORT.get(id, "?") + "\n×" + str(n), items[i], col)
 
 	# 동료 (원, 키 4)
 	_circle(L["companion"], Layout.ACT_R, Input.is_key_pressed(KEY_4))
