@@ -29,6 +29,12 @@ var coin_label: Label   # 상단 코인 표시(💰)
 
 func _ready() -> void:
 	pause_button.pressed.connect(_on_pause_pressed)
+	# 일시정지 = 빈티지 아이콘 뱃지(나노바나나, 자체 크림 원형이라 버튼 배경은 투명)
+	pause_button.text = ""
+	pause_button.icon = preload("res://assets/ui/icons/icon_pause.png")
+	pause_button.expand_icon = true
+	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+		pause_button.add_theme_stylebox_override(st, StyleBoxEmpty.new())
 	resume_button.pressed.connect(_on_resume_pressed)
 	to_select_button.pressed.connect(_on_to_select_pressed)
 	clear_next.pressed.connect(_on_clear_next)

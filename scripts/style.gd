@@ -81,11 +81,19 @@ func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
 #  버튼 — 베벨 입체 (design.md §0-8 / §3 버튼 시스템)
 # ──────────────────────────────────────────────────────────
 
-## 버튼 스타일박스 — 잉크 외곽선 + 알약 라운드 + 단색 오프셋 그림자(블러0).
+# 4색 알약 버튼 텍스처(나노바나나 에셋). 베벨·외곽선·질감이 그림에 구워져 있음. 색=의미(§1).
+const TEX_PILL := {
+	"gold": preload("res://assets/ui/buttons/btn_pill_gold.png"),
+	"red": preload("res://assets/ui/buttons/btn_pill_red.png"),
+	"cream": preload("res://assets/ui/buttons/btn_pill_cream.png"),
+	"gray": preload("res://assets/ui/buttons/btn_pill_gray.png"),
+}
+
+## (폴백) 코드 알약 박스 — 텍스처 못 쓰는 icon kind 등에서 사용
 func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
-	sb.set_corner_radius_all(999)        # 큰 값 → 높이의 절반에 클램프 = 알약(design.md §3.5)
+	sb.set_corner_radius_all(999)        # 알약(design.md §3.5)
 	sb.set_border_width_all(OUTLINE_W)
 	sb.border_color = INK
 	sb.content_margin_left = float(GAP_LG)
@@ -93,17 +101,39 @@ func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	sb.content_margin_top = 12.0
 	sb.content_margin_bottom = 12.0
 	if shadow:
-		sb.shadow_color = INK            # 단색
-		sb.shadow_size = 0               # 블러 없음
-		sb.shadow_offset = Vector2(0, SHADOW_OFF)   # 아래 한 방향
+		sb.shadow_color = INK
+		sb.shadow_size = 0
+		sb.shadow_offset = Vector2(0, SHADOW_OFF)
 	return sb
 
-## 눌림 박스 — 그림자 빠지고 내용이 그림자 자리로 쑥(카툰 누름)
 func _btn_box_pressed(bg: Color) -> StyleBoxFlat:
 	var sb := _btn_box(bg.darkened(0.08), false)
 	sb.content_margin_top = 12.0 + float(SHADOW_OFF)
 	sb.content_margin_bottom = 12.0 - float(SHADOW_OFF) * 0.5
 	return sb
+
+## 알약 텍스처 9-slice 스타일박스 (좌우 끝=둥근 캡 보존, 세로=버튼 높이에 맞춰 스트레치)
+func _pill_tex(key: String, modulate := Color.WHITE, ctop := 14.0, cbot := 18.0) -> StyleBoxTexture:
+	var sb := StyleBoxTexture.new()
+	sb.texture = TEX_PILL.get(key, TEX_PILL["cream"])
+	sb.texture_margin_left = 128.0     # ≈ 캡 반지름(텍스처 높이÷2) → 둥근 끝 유지
+	sb.texture_margin_right = 128.0
+	sb.texture_margin_top = 0.0         # 세로는 통째 스트레치(버튼 높이 다양 대응)
+	sb.texture_margin_bottom = 0.0
+	sb.content_margin_left = 44.0
+	sb.content_margin_right = 44.0
+	sb.content_margin_top = ctop
+	sb.content_margin_bottom = cbot
+	sb.modulate_color = modulate
+	return sb
+
+## kind → 알약 색 키 (브랜드=골드 / 전투=빨강 / 어두움=회 / 그 외=크림)
+func _pill_key(kind: String) -> String:
+	match kind:
+		"brand", "cheese": return "gold"
+		"primary", "cta": return "red"
+		"dark": return "gray"
+		_: return "cream"
 
 
 ## 버튼에 스타일 적용.
@@ -113,15 +143,18 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 	b.add_theme_font_override("font", FONT)
 	b.add_theme_font_size_override("font_size", fs)
 	b.clip_contents = false
-	var bg: Color
-	var fg: Color
+	var fg := INK
 	match kind:
-		"brand", "cheese":              bg = CHEESE;            fg = INK
-		"primary", "cta":               bg = RED;               fg = INK_CREAM
-		"danger":                       bg = PAPER;             fg = RED
-		"dark":                         bg = Color("3a3330");   fg = INK_CREAM
-		"icon":                         bg = PAPER;             fg = INK
-		"secondary", "paper", "ghost", _: bg = PAPER;           fg = INK
+		"primary", "cta", "dark": fg = INK_CREAM
+		"danger": fg = RED
+		_: fg = INK
+	# 채움색(kind별). ※알약 텍스처(TEX_PILL)는 로젠지 형태라 버튼엔 부적합 → 코드 알약 사용.
+	var bg := PAPER
+	match kind:
+		"brand", "cheese": bg = CHEESE
+		"primary", "cta": bg = RED
+		"dark": bg = Color("3a3330")
+		_: bg = PAPER
 	for st in ["normal", "focus"]:
 		b.add_theme_stylebox_override(st, _btn_box(bg))
 	b.add_theme_stylebox_override("hover", _btn_box(bg.lightened(0.06)))
@@ -130,68 +163,12 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(cn, fg)
 	b.add_theme_color_override("font_disabled_color", INK.lerp(PAPER_DEEP, 0.5))
-	# 베벨 림(상단 하이라이트 + 하단 음영) — icon 제외
-	_add_bevel(b, bg, kind != "icon")
-	# 알약 곡선에 맞춰 림 위치를 버튼 크기 변할 때마다 재계산(인셋=반지름)
-	if kind != "icon" and not b.has_meta("_bevel_hooked"):
-		b.set_meta("_bevel_hooked", true)
-		b.resized.connect(_relayout_bevel.bind(b))
-	_relayout_bevel.call_deferred(b)
 
 func button(text: String, kind: String = "secondary", fs: int = FS_TITLE) -> Button:
 	var b := Button.new()
 	b.text = text
 	style_button(b, kind, fs)
 	return b
-
-
-## 베벨 림 — 버튼 위/아래 안쪽에 얇은 밝은/어두운 띠(글자 안 가리게 가장자리에만, §0-8)
-func _add_bevel(b: Control, bg: Color, enabled: bool) -> void:
-	for c in b.get_children():
-		if c is Control and String(c.name).begins_with("_bevel"):
-			b.remove_child(c)
-			c.queue_free()
-	if not enabled:
-		return
-	# 상단 하이라이트 림 (좌우 인셋은 _relayout_bevel에서 알약 반지름에 맞춰 설정)
-	var hi := Panel.new()
-	hi.name = "_bevelHi"
-	hi.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hi.anchor_left = 0.0; hi.anchor_right = 1.0; hi.anchor_top = 0.0; hi.anchor_bottom = 0.0
-	var hsb := StyleBoxFlat.new()
-	hsb.bg_color = Color(bg.lightened(0.5), 0.7)
-	hsb.set_corner_radius_all(99)   # 알약 끝
-	hi.add_theme_stylebox_override("panel", hsb)
-	b.add_child(hi)
-	# 하단 음영 림
-	var lo := Panel.new()
-	lo.name = "_bevelLo"
-	lo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lo.anchor_left = 0.0; lo.anchor_right = 1.0; lo.anchor_top = 1.0; lo.anchor_bottom = 1.0
-	var lsb := StyleBoxFlat.new()
-	lsb.bg_color = Color(bg.darkened(0.28), 0.55)
-	lsb.set_corner_radius_all(99)
-	lo.add_theme_stylebox_override("panel", lsb)
-	b.add_child(lo)
-
-
-## 알약 곡선 안에 림이 들어오도록 좌우 인셋 = 반지름(높이÷2)+여유 로 재배치.
-func _relayout_bevel(b: Control) -> void:
-	if not is_instance_valid(b):
-		return
-	var hi := b.get_node_or_null("_bevelHi")
-	var lo := b.get_node_or_null("_bevelLo")
-	var rad := b.size.y * 0.5
-	var inset := rad + 2.0
-	if hi:
-		hi.offset_left = inset; hi.offset_right = -inset
-		hi.offset_top = 7.0; hi.offset_bottom = 14.0
-		hi.visible = b.size.x > inset * 2.0 + 8.0
-	if lo:
-		var inl := inset + 2.0
-		lo.offset_left = inl; lo.offset_right = -inl
-		lo.offset_top = -14.0; lo.offset_bottom = -7.0
-		lo.visible = b.size.x > inl * 2.0 + 8.0
 
 
 # ──────────────────────────────────────────────────────────
@@ -209,6 +186,27 @@ func panel_box(bg: Color = PAPER, border := 5, radius := 12) -> StyleBoxFlat:
 	sb.shadow_size = 0
 	sb.shadow_offset = Vector2(0, 8)
 	return sb
+
+# 빈티지 간판 패널 텍스처(나노바나나) — 장식 코너 크림 패널(불투명, 9-slice 가능)
+const TEX_SIGNBOARD := preload("res://assets/ui/panels/panel_signboard.png")
+
+## 패널 배경을 빈티지 간판 텍스처로 (9-slice). panel은 stylebox를 비우고 이 NinePatch를 맨 뒤에 깖.
+## 콘텐츠는 호출부에서 테두리 두께만큼 안쪽으로 들여야 함(좌우 ~90, 상하 ~150).
+func frame_signboard(p: Control) -> NinePatchRect:
+	p.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	var np := NinePatchRect.new()
+	np.name = "_signboard"
+	np.texture = TEX_SIGNBOARD
+	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	np.set_anchors_preset(Control.PRESET_FULL_RECT)
+	np.patch_margin_left = 90
+	np.patch_margin_right = 90
+	np.patch_margin_top = 150
+	np.patch_margin_bottom = 150
+	p.add_child(np)
+	p.move_child(np, 0)
+	return np
+
 
 ## 칸/카드 스타일박스 (얇은 잉크 테두리)
 func card_box(bg: Color = PAPER, border := 3, radius := 10) -> StyleBoxFlat:

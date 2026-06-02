@@ -83,11 +83,11 @@ func _show_bag() -> void:
 	var panel := Panel.new()
 	panel.size = Vector2(minf(840, vp.x - 80), vp.y - 120)
 	panel.position = Vector2((vp.x - panel.size.x) * 0.5, 60)
-	panel.add_theme_stylebox_override("panel", Design.panel_box())
 	ov.add_child(panel)
+	Design.frame_signboard(panel)   # 빈티지 간판 패널 텍스처(물건화)
 	var sc := ScrollContainer.new()
-	sc.position = Vector2(28, 24)
-	sc.size = panel.size - Vector2(56, 110)
+	sc.position = Vector2(72, 104)                 # 간판 테두리 안쪽으로 들임
+	sc.size = panel.size - Vector2(144, 230)
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(sc)
 	var vb := VBoxContainer.new()
@@ -124,7 +124,7 @@ func _show_bag() -> void:
 	var close := Design.button("닫기", "cta", Design.FS_TITLE)
 	close.custom_minimum_size = Vector2(180, 60)
 	close.size = Vector2(180, 60)
-	close.position = Vector2(panel.size.x * 0.5 - 90, panel.size.y - 78)
+	close.position = Vector2(panel.size.x * 0.5 - 90, panel.size.y - 110)
 	close.pressed.connect(ov.queue_free)
 	panel.add_child(close)
 
