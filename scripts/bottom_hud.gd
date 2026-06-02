@@ -23,6 +23,14 @@ const FILL_ON := Color(0.949, 0.702, 0.239, 0.95) # 눌림 = 골든(cheese)
 const LINE := Color(0.141, 0.122, 0.106, 0.95)    # 잉크 외곽
 const TXT := Color(0.141, 0.122, 0.106, 1.0)      # 잉크 글자
 
+# 나노바나나 에셋 — 슬롯/손 텍스처
+const TEX_SLOT_SQ := preload("res://assets/ui/slots/slot_square.png")
+const TEX_RND_SKILL := preload("res://assets/ui/buttons/btn_round_gold.png")
+const TEX_RND_COMP := preload("res://assets/ui/buttons/btn_round_teal.png")
+const TEX_RND_ACT := preload("res://assets/ui/buttons/btn_round_red.png")
+const TEX_MELEE := preload("res://assets/ui/hands/action_melee_v1.png")
+const TEX_RANGED := preload("res://assets/ui/hands/action_ranged_v1.png")
+
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -38,71 +46,74 @@ func _draw() -> void:
 	var font := UI_FONT
 	var L := Layout.bottom_row(size)
 
-	# 아이템 1~3 (사각, 키 1 2 3) — 배치된 소모품 이름 + 보유 수
+	# 아이템 1~3 (사각 슬롯 텍스처) — 배치된 소모품 이름 + 보유 수
 	var items: Array = L["items"]
+	var sqd := Layout.ITEM_SQ * 1.18
 	for i in items.size():
-		_square(items[i], Layout.ITEM_SQ, Input.is_action_pressed("item_%d" % (i + 1)))
+		_tex(TEX_SLOT_SQ, items[i], sqd, sqd, _mod(Input.is_action_pressed("item_%d" % (i + 1))))
 		var id: String = GameState.item_slots[i] if i < GameState.item_slots.size() else ""
 		if id == "":
-			_label(font, 17, "비었음", items[i], Color(1, 1, 1, 0.45))
+			_label(font, 17, "비었음", items[i], Color(TXT, 0.45))
 		else:
 			var n: int = int(GameState.inventory.get(id, 0))
-			var col := TXT if n > 0 else Color(1, 1, 1, 0.4)
+			var col := TXT if n > 0 else Color(TXT, 0.4)
 			_label(font, 18, SHORT.get(id, "?") + "\n×" + str(n), items[i], col)
 
-	# 동료 (원, 키 4) — 장착 동료 + 쿨타임. 없으면 어둡게.
+	var d := Layout.ACT_R * 2.2   # 원형 슬롯 지름(텍스처 자체 여백 포함)
+
+	# 동료 (원, 키 4) — 장착 동료 + 쿨타임. 없으면 흐리게.
 	var comp: String = GameState.equipped_companion
 	if comp == "":
-		draw_circle(L["companion"], Layout.ACT_R, Color(0, 0, 0, 0.22))
-		draw_arc(L["companion"], Layout.ACT_R, 0.0, TAU, 48, Color(1, 1, 1, 0.22), 2.0, true)
-		_label(font, 22, "동료", L["companion"], Color(1, 1, 1, 0.4))
+		_tex(TEX_RND_COMP, L["companion"], d, d, Color(1, 1, 1, 0.4))
+		_label(font, 22, "동료", L["companion"], Color(TXT, 0.45))
 	else:
 		var cbtn := get_parent().get_node_or_null("CompanionButton")
 		var ccd: float = cbtn.cd_left() if cbtn else 0.0
-		_circle(L["companion"], Layout.ACT_R, Input.is_key_pressed(KEY_4))
+		_tex(TEX_RND_COMP, L["companion"], d, d, _mod(Input.is_key_pressed(KEY_4)))
 		if ccd > 0.0:
 			draw_circle(L["companion"], Layout.ACT_R, Color(0, 0, 0, 0.5))
 			_label(font, 30, str(int(ceil(ccd))), L["companion"])
 		else:
 			_label(font, 24, COMP_SHORT.get(comp, "동료"), L["companion"])
 
-	# 스킬 1~4 — 장착 슬롯(현재 직업×Lv)대로 표시. 비활성 슬롯은 어둡게, 쿨 중엔 남은 초.
+	# 스킬 1~4 — 장착 슬롯대로. 비활성=흐리게, 쿨 중엔 남은 초.
 	var skills: Array = L["skills"]
 	var sbtn := get_parent().get_node_or_null("SkillButton")
 	var equipped: Array = GameState.equipped_for(GameState.selected_job)
 	var nslots: int = GameState.skill_slots(GameState.selected_job)
+	var ds := Layout.SKILL_BTN_R * 2.2
 	for k in skills.size():
 		var active: bool = k < nslots and k < equipped.size()
 		if not active:
-			draw_circle(skills[k], Layout.SKILL_BTN_R, Color(0, 0, 0, 0.22))
-			draw_arc(skills[k], Layout.SKILL_BTN_R, 0.0, TAU, 48, Color(1, 1, 1, 0.22), 2.0, true)
+			_tex(TEX_RND_SKILL, skills[k], ds, ds, Color(1, 1, 1, 0.28))
 			continue
 		var sid: String = equipped[k]
 		var cd: float = sbtn.cd_left(k) if sbtn else 0.0
-		_circle(skills[k], Layout.SKILL_BTN_R, Input.is_action_pressed("skill_%d" % (k + 1)))
+		_tex(TEX_RND_SKILL, skills[k], ds, ds, _mod(Input.is_action_pressed("skill_%d" % (k + 1))))
 		if cd > 0.0:
 			draw_circle(skills[k], Layout.SKILL_BTN_R, Color(0, 0, 0, 0.5))   # 쿨 중 어둡게
 			_label(font, 30, str(int(ceil(cd))), skills[k])
 		else:
 			_label(font, 20, SKILL_SHORT.get(sid, "?"), skills[k])
 
-	# 근접공격(K) / 원거리공격(L)
-	_circle(L["melee"], Layout.ACT_R, Touch.melee_held or Input.is_key_pressed(KEY_K))
-	_label(font, 26, "근접\n공격", L["melee"])
-
-	_circle(L["ranged"], Layout.ACT_R, Touch.ranged_held or Input.is_action_pressed("attack"))
-	_label(font, 26, "원거리\n공격", L["ranged"])
-
-
-func _square(center: Vector2, sq: float, active: bool) -> void:
-	var r := Rect2(center.x - sq * 0.5, center.y - sq * 0.5, sq, sq)
-	draw_rect(r, FILL_ON if active else FILL, true)
-	draw_rect(r, LINE, false, 4.0)   # 두꺼운 잉크 외곽(design.md)
+	# 근접공격(K) / 원거리공격(L) = 빨간 원형 버튼 + 글러브 손(나노바나나)
+	var am: bool = Touch.melee_held or Input.is_key_pressed(KEY_K)
+	_tex(TEX_RND_ACT, L["melee"], d, d, _mod(am))
+	_tex(TEX_MELEE, L["melee"], d * 0.64, d * 0.64)
+	var ar: bool = Touch.ranged_held or Input.is_action_pressed("attack")
+	_tex(TEX_RND_ACT, L["ranged"], d, d, _mod(ar))
+	_tex(TEX_RANGED, L["ranged"], d * 0.68, d * 0.62)
 
 
-func _circle(c: Vector2, r: float, active: bool) -> void:
-	draw_circle(c, r, FILL_ON if active else FILL)
-	draw_arc(c, r, 0.0, TAU, 48, LINE, 4.0, true)   # 두꺼운 잉크 외곽
+## 활성(눌림) 시 살짝 밝게
+func _mod(active: bool) -> Color:
+	return Color(1.18, 1.18, 1.18) if active else Color.WHITE
+
+## 텍스처를 center에 box(w,h) 안에 비율유지로 그림
+func _tex(tex: Texture2D, center: Vector2, w: float, h: float, mod := Color.WHITE) -> void:
+	var s := minf(w / float(tex.get_width()), h / float(tex.get_height()))
+	var sz := Vector2(tex.get_width() * s, tex.get_height() * s)
+	draw_texture_rect(tex, Rect2(center - sz * 0.5, sz), false, mod)
 
 
 ## 가운데 정렬 텍스트(여러 줄 \n 지원)
