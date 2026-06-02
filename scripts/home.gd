@@ -51,9 +51,8 @@ func _build() -> void:
 			func(): _toast_msg("설정 — 준비중"))
 
 	# NPC 진입점(해금 후 등장) — 지금은 자리만(준비중)
-	if GameState.stage_minor >= 6:   # 1-5 클리어 후
-		_btn("펄", Vector2(vp.x * 0.20, vp.y * 0.40), Vector2(110, 60), Color(0.5, 0.35, 0.5), 24,
-				func(): _toast_msg("펄(축복·호감도) — 준비중 (로드맵 6단계)"))
+	# 펄 — 로드맵 6단계(축복·호감도 작동). ※기획상 1-5 해금이나 테스트 위해 상시 노출.
+	_btn("펄", Vector2(vp.x * 0.20, vp.y * 0.40), Vector2(120, 60), Color(0.5, 0.35, 0.55), 24, _show_pearl)
 	# 맥스 상점 — 로드맵 4단계(레벨업 구매 작동). ※기획상 1-7 해금이나, 지금은 테스트 위해 상시 노출.
 	_btn("맥스 상점", Vector2(vp.x * 0.13, vp.y * 0.62), Vector2(190, 60), Color(0.25, 0.3, 0.4), 24,
 			func(): get_tree().change_scene_to_file("res://scenes/shop.tscn"))
@@ -152,6 +151,108 @@ func _show_bag() -> void:
 		close.add_theme_stylebox_override(st, cs)
 	close.pressed.connect(ov.queue_free)
 	panel.add_child(close)
+
+
+## 펄 오버레이 — 출격 축복 택1 + 보석 헌납(호감도). 작동 시 다시 그림.
+var _pearl_vb: VBoxContainer
+func _show_pearl() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	var ov := ColorRect.new()
+	ov.color = Color(0.05, 0.0, 0.06, 0.66)
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(ov)
+	var panel := Panel.new()
+	panel.size = Vector2(minf(880, vp.x - 80), vp.y - 110)
+	panel.position = Vector2((vp.x - panel.size.x) * 0.5, 55)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.14, 0.09, 0.16, 0.98); sb.set_corner_radius_all(20)
+	sb.set_border_width_all(3); sb.border_color = Color(0.8, 0.6, 0.85, 0.5)
+	panel.add_theme_stylebox_override("panel", sb)
+	ov.add_child(panel)
+	var sc := ScrollContainer.new()
+	sc.position = Vector2(28, 24); sc.size = panel.size - Vector2(56, 100)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(sc)
+	_pearl_vb = VBoxContainer.new()
+	_pearl_vb.add_theme_constant_override("separation", 8)
+	_pearl_vb.custom_minimum_size = Vector2(sc.size.x, 0)
+	sc.add_child(_pearl_vb)
+	_fill_pearl()
+	var close := Button.new()
+	close.text = "닫기"; close.custom_minimum_size = Vector2(180, 56)
+	close.position = Vector2(panel.size.x * 0.5 - 90, panel.size.y - 70)
+	close.add_theme_font_override("font", FONT); close.add_theme_font_size_override("font_size", 26)
+	close.add_theme_color_override("font_color", Color(1, 1, 1))
+	var cs := StyleBoxFlat.new(); cs.bg_color = ORANGE; cs.set_corner_radius_all(16)
+	for st in ["normal", "hover", "pressed", "focus"]:
+		close.add_theme_stylebox_override(st, cs)
+	close.pressed.connect(ov.queue_free)
+	panel.add_child(close)
+
+
+func _fill_pearl() -> void:
+	for c in _pearl_vb.get_children():
+		c.queue_free()
+	var gs := GameState
+	_pearl_vb.add_child(_text("펄 — 출격 축복 & 호감도", 32, Color(0.95, 0.8, 1.0)))
+	var lv := gs.pearl_level()
+	var fav_txt := "호감도 Lv%d" % lv
+	if gs.favor_to_next() > 0:
+		fav_txt += "   (다음 레벨까지 %d · 누적 %d)" % [gs.favor_to_next(), gs.pearl_favor]
+	else:
+		fav_txt += "   (최고 — 누적 %d)" % gs.pearl_favor
+	_pearl_vb.add_child(_text(fav_txt, 24, Color(1, 1, 1)))
+	# 축복 택1
+	_pearl_vb.add_child(_text("◆ 출격 축복 (이번 판 택1)", 24, ORANGE))
+	var brow := HBoxContainer.new(); brow.add_theme_constant_override("separation", 12)
+	_pearl_vb.add_child(brow)
+	for bid in gs.BLESSING_ORDER:
+		var bdef: Dictionary = gs.BLESSINGS[bid]
+		var pct: int = int(round(gs.blessing_pct(bdef["kind"]) * 100.0))
+		var on: bool = (gs.selected_blessing == bid)
+		brow.add_child(_pearl_btn("%s\n+%d%%" % [String(bdef["name"]), pct], 196, ORANGE if on else Color(0.35, 0.3, 0.4), _pick_blessing.bind(bid)))
+	brow.add_child(_pearl_btn("없음\n(축복 끔)", 150, ORANGE if gs.selected_blessing == "" else Color(0.35, 0.3, 0.4), _pick_blessing.bind("")))
+	# 보석 헌납
+	_pearl_vb.add_child(_text("◆ 보석 헌납 (호감도↑) — 팔까 바칠까", 24, ORANGE))
+	var any := false
+	for gid in ["gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]:
+		var n: int = gs.mat_count(gid)
+		if n <= 0:
+			continue
+		any = true
+		var grow := HBoxContainer.new(); grow.add_theme_constant_override("separation", 14)
+		var lbl := _text("  %s ×%d   (호감도 +%d)" % [String(gs.MATERIALS[gid]["name"]), n, int(gs.GEM_FAVOR[gid])], 22, Color(1, 1, 1))
+		lbl.custom_minimum_size = Vector2(440, 0)
+		grow.add_child(lbl)
+		grow.add_child(_pearl_btn("헌납", 150, Color(0.55, 0.35, 0.6), _donate_gem.bind(gid)))
+		_pearl_vb.add_child(grow)
+	if not any:
+		_pearl_vb.add_child(_text("  (헌납할 보석 없음 — 전투에서 보석은 2% 드랍)", 20, Color(1, 1, 1, 0.6)))
+	# placeholder 컷신 안내
+	var cut := ["", "펄이 창가에서 흘끗 본다…", "펄: \"…당신은 왜 잘 보이려 하지 않죠?\"", "펄의 첫 균열 — \"못 본 걸로 해주세요!\"", "펄: \"다들 저를 보면서, 아무도 저를 보지 않았어요.\"", "펄: \"당신한테는… 우아하지 않아도 되나요?\""]
+	_pearl_vb.add_child(_text("· (컷신 placeholder) %s" % cut[clampi(lv, 0, 5)], 20, Color(0.9, 0.8, 0.95, 0.85)))
+
+
+func _pearl_btn(txt: String, w: float, bg: Color, fn: Callable) -> Button:
+	var b := Button.new()
+	b.text = txt; b.custom_minimum_size = Vector2(w, 64)
+	b.add_theme_font_override("font", FONT); b.add_theme_font_size_override("font_size", 22)
+	b.add_theme_color_override("font_color", Color(1, 1, 1))
+	var s := StyleBoxFlat.new(); s.bg_color = bg; s.set_corner_radius_all(12)
+	for st in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(st, s)
+	b.pressed.connect(fn)
+	return b
+
+func _pick_blessing(bid: String) -> void:
+	GameState.set_blessing(bid)
+	_fill_pearl()
+
+func _donate_gem(gid: String) -> void:
+	var g := GameState.donate_gem(gid)
+	if g > 0:
+		_toast_msg("펄에게 헌납 — 호감도 +%d" % g)
+		_fill_pearl()
 
 
 func _toast_msg(msg: String) -> void:

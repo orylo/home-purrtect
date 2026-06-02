@@ -128,6 +128,14 @@ func _ready() -> void:
 	max_health = st["hp"] * lvm
 	ranged_damage = st["ranged"] * lvm
 	near_damage = st["near"] * lvm
+	# 펄 축복(이번 판) — 발톱=공격+% / 배=체력+% (§5.5, 로드맵 6단계)
+	match GameState.selected_blessing:
+		"claw":
+			var p := 1.0 + GameState.blessing_pct("atk")
+			ranged_damage *= p
+			near_damage *= p
+		"belly":
+			max_health *= 1.0 + GameState.blessing_pct("hp")
 	attack_interval = 1.0 / float(st["atk_spd"])
 	move_multiplier = st["move"]
 	crit_chance = st["crit"]

@@ -379,7 +379,7 @@ func _on_anim_finished() -> void:
 
 func _die() -> void:
 	dead = true
-	GameState.coins += _coin   # 처치 코인 지급(§3.1)
+	GameState.coins += int(round(_coin * GameState.run_coin_mult))   # 처치 코인(§3.1, 곳간 축복 배율)
 	for mid in Enemies.roll_drops(_id):   # 전리품 드랍(§5.2)
 		GameState.add_material(mid)
 	velocity = Vector2.ZERO

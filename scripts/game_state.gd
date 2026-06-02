@@ -105,9 +105,10 @@ const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparr
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
 
-## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋
+## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 설정
 func start_battle_loot() -> void:
 	run_loot = {}
+	run_coin_mult = (1.0 + blessing_pct("coin")) if selected_blessing == "coin" else 1.0
 
 func add_material(id: String, n: int = 1) -> void:
 	materials[id] = int(materials.get(id, 0)) + n
@@ -313,6 +314,59 @@ func equip_companion(id: String) -> void:
 		if mode != "dev" and AUTOSAVE:
 			save_game()
 
+## --- 펄: 출격 축복 + 호감도(보석 헌납) (로드맵 6단계, 시스템밸런스 §5.5) ---
+## 1-5 해금. 출격 전 축복 1개 택1(매 판). 보석 헌납 → 호감도 누적 → 레벨↑ → 축복 강화.
+const BLESSINGS := {
+	"claw":  {"name": "맹수의 발톱", "kind": "atk",  "desc": "이번 판 공격력 +"},
+	"belly": {"name": "튼튼한 배",   "kind": "hp",   "desc": "이번 판 체력 +"},
+	"coin":  {"name": "부자집 곳간", "kind": "coin", "desc": "이번 판 동전 획득 +"},
+}
+const BLESSING_ORDER := ["claw", "belly", "coin"]
+const GEM_FAVOR := {"gem_pebble": 1, "gem_amethyst": 5, "gem_sapphire": 15, "gem_ruby": 40, "gem_diamond": 100}
+const FAVOR_THRESHOLDS := [30, 80, 200, 500]   # Lv2/Lv3/Lv4/Lv5 누적 호감도
+var pearl_favor: int = 0          # 누적 호감도
+var selected_blessing: String = ""   # 이번 판 축복("claw"/"belly"/"coin"/"")
+var run_coin_mult: float = 1.0    # 이번 판 동전 배율(곳간 축복)
+
+func pearl_unlocked() -> bool:
+	return stage_minor >= 6   # 1-5 클리어 후
+
+func pearl_level() -> int:
+	var lv := 1
+	for t in FAVOR_THRESHOLDS:
+		if pearl_favor >= int(t):
+			lv += 1
+	return lv
+
+func favor_to_next() -> int:
+	var lv := pearl_level()
+	if lv > FAVOR_THRESHOLDS.size():
+		return 0   # Lv5 만렙
+	return int(FAVOR_THRESHOLDS[lv - 1]) - pearl_favor
+
+## 축복 효과 %: 공격/체력 = 15%~30% / 동전 = 25%~50% (호감도 Lv1~5 강화, §5.5)
+func blessing_pct(kind: String) -> float:
+	var lv := pearl_level()
+	if kind == "coin":
+		return 0.25 + float(lv - 1) * 0.0625
+	return 0.15 + float(lv - 1) * 0.0375
+
+func set_blessing(id: String) -> void:
+	selected_blessing = id if BLESSINGS.has(id) else ""
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+
+## 보석 헌납 → 호감도. 헌납한 favor 반환(0=실패)
+func donate_gem(id: String) -> int:
+	if not GEM_FAVOR.has(id) or mat_count(id) <= 0:
+		return 0
+	materials[id] = mat_count(id) - 1
+	var g := int(GEM_FAVOR[id])
+	pearl_favor += g
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return g
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -423,6 +477,9 @@ func reset_progress() -> void:
 	equipped_skills = {"sheriff": [], "maid": [], "jazz": []}
 	owned_companions = []
 	equipped_companion = ""
+	pearl_favor = 0
+	selected_blessing = ""
+	run_coin_mult = 1.0
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -525,6 +582,8 @@ func save_game() -> void:
 		"equipped_skills": equipped_skills,  # 장착 스킬(로드맵 5단계)
 		"owned_companions": owned_companions,    # 보유 동료(로드맵 6단계)
 		"equipped_companion": equipped_companion,
+		"pearl_favor": pearl_favor,              # 펄 호감도(로드맵 6단계)
+		"selected_blessing": selected_blessing,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -609,6 +668,10 @@ func load_game() -> void:
 					owned_companions.append(String(c))
 		var ec := String(data.get("equipped_companion", ""))
 		equipped_companion = ec if owned_companions.has(ec) else ""
+		# 펄 호감도·축복 복원(로드맵 6단계)
+		pearl_favor = maxi(0, int(data.get("pearl_favor", 0)))
+		var sbl := String(data.get("selected_blessing", ""))
+		selected_blessing = sbl if BLESSINGS.has(sbl) else ""
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
