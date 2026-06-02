@@ -1,8 +1,7 @@
 extends Control
-## 전투준비 = 장비창(로드아웃) + 탭 픽커 (2026-06-03 v2 — design.md 토큰/정렬 준수)
-##  기본: 장착된 치즈 + 장비 슬롯(직업/동료/스킬/소지품) + 스탯 + [출격]
-##  슬롯 탭 → 인벤토리 픽커 오버레이(보유 목록 + 선택 설명 + [장착])
-##  ★직업 = '장비'. 등급은 별개 아이템(owned_grades). (시스템밸런스 §5.2 / 홈로드맵 §4)
+## 전투준비 = 장비창(로드아웃) + 탭 픽커 — v3 (Brawl Stars식 펀치: 큰 캐릭터·아이콘 스탯칩·굵은 위계, 우리 카툰 톤)
+##  좌: 큰 치즈 + 이름 + 등급 배지   /   우: 스탯 칩 + 장비 슬롯(직업/동료/스킬/소지품)   /   하단: [출격]
+##  슬롯 탭 → 인벤토리 픽커(보유 목록 + 설명 + 장착). ★직업=등급별 장비. (시스템밸런스 §5.2)
 
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const JOB_ORDER := ["base", "sheriff", "maid", "jazz"]
@@ -12,15 +11,22 @@ const ITEM_ICON := {
 	"anchovy": "res://assets/items/food/fish.png",
 	"firecracker": "res://assets/items/gadgets/firecracker.png",
 }
+# 스탯 칩: [라벨, 색, 키, 포맷]  (포맷 0=정수×배율 / 1=소수 / 2=퍼센트)
+const STATS := [
+	["체력", "red", "hp", 0], ["근접 공격력", "cheese_deep", "near", 0],
+	["원거리 공격력", "blue", "ranged", 0], ["공격 속도", "green", "atk_spd", 1],
+	["이동 속도", "teal", "move", 1], ["치명타 확률", "cheese", "crit", 2],
+]
+const SLOT_ACCENT := {"job": "cheese_deep", "ally": "teal", "skill": "blue", "item": "cheese"}
 
-var _sf := {}                 # job -> SpriteFrames(idle)
+var _sf := {}
 var _t := 0.0
 var _frame := 0
 var _vp: Vector2
 var _center_art: TextureRect
 var _power_lbl: Label
-var _base: Control            # 기본 장비창 레이어
-var _picker: Control          # 픽커 오버레이(없으면 null)
+var _base: Control
+var _picker: Control
 var _pick_cat := ""
 var _pick_sel := ""
 
@@ -31,11 +37,22 @@ func _ready() -> void:
 	if has_node("BG"): $BG.color = Design.CANVAS
 	if has_node("Build"):
 		$Build.text = GameState.BUILD + " ver."
-		$Build.position = Vector2(_vp.x - 120, _vp.y - 28)
+		$Build.position = Vector2(_vp.x - 120, _vp.y - 26)
 	for j in JOB_ORDER:
 		var sf: SpriteFrames = load("res://assets/sprites/cheese/%s/cheese_%s.tres" % [j, j])
 		if sf: _sf[j] = sf
 	_build_base()
+
+
+func _col(name: String) -> Color:
+	match name:
+		"red": return Design.RED
+		"blue": return Design.BLUE
+		"green": return Design.GREEN
+		"teal": return Design.TEAL
+		"cheese": return Design.CHEESE
+		"cheese_deep": return Design.CHEESE_DEEP
+	return Design.INK
 
 
 # ══════════════ 기본 장비창 ══════════════
@@ -47,36 +64,39 @@ func _build_base() -> void:
 	var E := float(Design.EDGE); var G := float(Design.GAP); var GL := float(Design.GAP_LG)
 	var bar := float(Design.BAR_H)
 
-	# 상단 바: [← 홈] / 전투력
+	# 상단 바
 	var home := Design.button("← 홈", "secondary", Design.FS_BODY)
 	home.position = Vector2(E, 16); home.custom_minimum_size = Vector2(150, bar); home.size = Vector2(150, bar)
 	home.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 	_base.add_child(home)
-	_power_lbl = Design.label("", "title", Design.CHEESE)
-	_power_lbl.position = Vector2(_vp.x - E - 400, 24); _power_lbl.size = Vector2(400, 40)
+	# 전투력(우상단, 크게)
+	var pcap := Design.label("전투력", "caption", Design.PAPER_DEEP)
+	pcap.position = Vector2(_vp.x - E - 320, 14); pcap.size = Vector2(320, 22)
+	pcap.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_base.add_child(pcap)
+	_power_lbl = Design.label("", "display_s", Design.CHEESE)
+	_power_lbl.position = Vector2(_vp.x - E - 320, 30); _power_lbl.size = Vector2(320, 52)
 	_power_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_base.add_child(_power_lbl)
 
-	# 영역 계산(전부 토큰 기반)
 	var y0 := 16.0 + bar + G
-	var go_h := 64.0
+	var go_h := 68.0
 	var go_y := _vp.y - E - go_h
 	var ph := go_y - G - y0
 	var inner := _vp.x - E * 2.0 - G
-	var lw := floorf(inner * 0.5)
+	var lw := floorf(inner * 0.46)
 	var rw := inner - lw
 	var lx := E
 	var rx := E + lw + G
 
-	# 좌 패널: 캐릭터 + 이름 + 등급 + 스탯
+	# ── 좌: 큰 캐릭터 + 이름 + 등급 배지 ──
 	var lp := _panel(Vector2(lx, y0), Vector2(lw, ph))
 	_base.add_child(lp)
 	var lcol := _vbox(lp, GL, G)
 	_center_art = TextureRect.new()
 	_center_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_center_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_center_art.size_flags_vertical = Control.SIZE_EXPAND_FILL   # 남는 공간만 차지(고정비율 X → 스탯 안 잘림)
-	_center_art.custom_minimum_size = Vector2(0, 0)
+	_center_art.size_flags_vertical = Control.SIZE_EXPAND_FILL   # 캐릭터가 남는 공간 다 차지 = 큼
 	lcol.add_child(_center_art)
 	var name_lbl := Design.label("", "display_s", Design.INK)
 	name_lbl.name = "NameLbl"; name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -84,32 +104,33 @@ func _build_base() -> void:
 	var pill := Design.label("", "title", Design.INK_CREAM)
 	pill.name = "GradePill"; pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	pill.custom_minimum_size = Vector2(0, 40)
+	pill.custom_minimum_size = Vector2(0, 48)
 	lcol.add_child(pill)
-	var stat_box := _vbox_node(GAP_XS())
-	stat_box.name = "StatBox"
-	lcol.add_child(stat_box)
 
-	# 우 패널: 장비 슬롯 4
+	# ── 우: 스탯 칩(2열) + 장비 슬롯 4 ──
 	var rp := _panel(Vector2(rx, y0), Vector2(rw, ph))
 	_base.add_child(rp)
 	var rcol := _vbox(rp, GL, G)
+	var sgrid := GridContainer.new()
+	sgrid.name = "StatGrid"
+	sgrid.columns = 2
+	sgrid.add_theme_constant_override("h_separation", G)
+	sgrid.add_theme_constant_override("v_separation", int(Design.GAP_XS))
+	rcol.add_child(sgrid)
+	var sep := Design.label("", "caption", Design.INK); sep.custom_minimum_size = Vector2(0, 2); rcol.add_child(sep)
 	for cat in [["job", "직업"], ["ally", "동료 호루라기"], ["skill", "스킬"], ["item", "소지품"]]:
 		var slot := _slot_button(cat[0], cat[1])
 		slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		rcol.add_child(slot)
 
-	# 하단 중앙: 출격
+	# ── 하단 중앙: 출격 ──
 	var go := Design.button("출격 ▶", "primary", Design.FS_DISPLAY_S)
-	var gw := 360.0
+	var gw := 380.0
 	go.position = Vector2((_vp.x - gw) * 0.5, go_y); go.custom_minimum_size = Vector2(gw, go_h); go.size = Vector2(gw, go_h)
 	go.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
 	_base.add_child(go)
 
 	_refresh_base()
-
-
-func GAP_XS() -> int: return Design.GAP_XS
 
 
 func _refresh_base() -> void:
@@ -125,35 +146,53 @@ func _refresh_base() -> void:
 		pill.add_theme_color_override("font_color", Design.INK)
 	else:
 		pill.text = "%s   %s" % [_stars(g), GameState.rank_label(g, job)]
-		pill.add_theme_stylebox_override("normal", Design.card_box(GameState.rank_color(g, job), 3, Design.RADIUS_CARD))
+		pill.add_theme_stylebox_override("normal", Design.card_box(GameState.rank_color(g, job), 4, Design.RADIUS_CARD))
 		pill.add_theme_color_override("font_color", Design.INK_CREAM)
-	# 스탯
-	var sb: VBoxContainer = _base.find_child("StatBox", true, false)
-	for c in sb.get_children(): c.queue_free()
+	# 스탯 칩
+	var sgrid: GridContainer = _base.find_child("StatGrid", true, false)
+	for c in sgrid.get_children(): c.queue_free()
 	var st: Dictionary = GameState.JOB_STATS[job]
 	var m: float = GameState.LV_MULT[clampi(g - 1, 0, 4)]
-	var rows := [
-		["체력", "%d" % int(round(st["hp"] * m))],
-		["근접 공격력", "%d" % int(round(st["near"] * m))],
-		["원거리 공격력", "%d" % int(round(st["ranged"] * m))],
-		["공격 속도", "%.2f" % st["atk_spd"]],
-		["이동 속도", "%.2f" % st["move"]],
-		["치명타 확률", "%d%%" % int(st["crit"] * 100)],
-	]
-	for r in rows:
-		var row := HBoxContainer.new()
-		var k := Design.label(r[0], "body", Design.INK)
-		k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var v := Design.label(r[1], "body", Design.CHEESE_DEEP)
-		v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		row.add_child(k); row.add_child(v)
-		sb.add_child(row)
-	# 슬롯 값 갱신
-	_set_slot("job", _job_slot_text())
-	_set_slot("ally", "비어 있음" if GameState.equipped_companion == "" else String(GameState.COMPANIONS[GameState.equipped_companion]["name"]))
-	_set_slot("skill", _skill_slot_text())
-	_set_slot("item", _item_slot_text())
-	_power_lbl.text = "전투력  %s" % _commafy(_power())
+	for s in STATS:
+		var raw = st[s[2]]
+		var vtxt := ""
+		match int(s[3]):
+			0: vtxt = "%d" % int(round(float(raw) * m))
+			1: vtxt = "%.2f" % float(raw)
+			2: vtxt = "%d%%" % int(float(raw) * 100)
+		sgrid.add_child(_stat_chip(String(s[0]), _col(String(s[1])), vtxt))
+	# 슬롯 값
+	_set_slot("job", _job_slot_text(), (Design.PAPER_DEEP if job == "base" else GameState.rank_color(g, job)))
+	_set_slot("ally", "비어 있음" if GameState.equipped_companion == "" else String(GameState.COMPANIONS[GameState.equipped_companion]["name"]), Design.TEAL)
+	_set_slot("skill", _skill_slot_text(), Design.BLUE)
+	_set_slot("item", _item_slot_text(), Design.CHEESE)
+	_power_lbl.text = _commafy(_power())
+
+
+func _stat_chip(label: String, accent: Color, value: String) -> Control:
+	var p := Panel.new()
+	p.custom_minimum_size = Vector2(0, 46)
+	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := Design.card_box(Design.PAPER_DEEP.lerp(Design.PAPER, 0.5), 3, Design.RADIUS_CARD)
+	sb.border_color = accent
+	p.add_theme_stylebox_override("panel", sb)
+	var mc := MarginContainer.new(); mc.set_anchors_preset(Control.PRESET_FULL_RECT); mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mc.add_theme_constant_override("margin_left", 12); mc.add_theme_constant_override("margin_right", 12)
+	p.add_child(mc)
+	var hb := HBoxContainer.new(); hb.mouse_filter = Control.MOUSE_FILTER_IGNORE; hb.alignment = BoxContainer.ALIGNMENT_BEGIN
+	hb.add_theme_constant_override("separation", 8)
+	mc.add_child(hb)
+	var dot := Panel.new(); dot.custom_minimum_size = Vector2(14, 14); dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var dsb := StyleBoxFlat.new(); dsb.bg_color = accent; dsb.set_corner_radius_all(7); dsb.set_border_width_all(2); dsb.border_color = Design.INK
+	dot.add_theme_stylebox_override("panel", dsb); dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(dot)
+	var lab := Design.label(label, "caption", Design.INK); lab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(lab)
+	var val := Design.label(value, "num", accent.darkened(0.15))
+	val.vertical_alignment = VERTICAL_ALIGNMENT_CENTER; val.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(val)
+	return p
 
 
 func _job_slot_text() -> String:
@@ -177,37 +216,60 @@ func _item_slot_text() -> String:
 	return "  ·  ".join(parts)
 
 
-# ── 슬롯 버튼(라벨 + 값 + ▶) ──
+# ── 장비 슬롯(아이콘박스 + 라벨/값 + ▶) ──
 func _slot_button(cat: String, label: String) -> Button:
 	var b := Button.new()
 	b.name = "Slot_" + cat
 	for stn in ["normal", "hover", "pressed", "focus"]:
 		b.add_theme_stylebox_override(stn, Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
 	b.pressed.connect(_open_picker.bind(cat))
-	# 내용(라벨+값)을 카드 안에 세로 중앙 정렬
-	var mc := MarginContainer.new()
-	mc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for s in ["left", "right", "top", "bottom"]:
-		mc.add_theme_constant_override("margin_" + s, Design.GAP)
+	var mc := MarginContainer.new(); mc.set_anchors_preset(Control.PRESET_FULL_RECT); mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for s in ["left", "right", "top", "bottom"]: mc.add_theme_constant_override("margin_" + s, 12)
 	b.add_child(mc)
-	var vb := VBoxContainer.new()
-	vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_theme_constant_override("separation", 4)
-	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mc.add_child(vb)
-	var cap := Design.label(label + "   ▶", "caption", Design.PAPER_DEEP.darkened(0.35))
-	cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var val := Design.label("", "body", Design.INK)
-	val.name = "Val"; val.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hb := HBoxContainer.new(); hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_theme_constant_override("separation", 12)
+	mc.add_child(hb)
+	# 아이콘 박스(accent)
+	var ibx := Panel.new(); ibx.name = "Icon"; ibx.custom_minimum_size = Vector2(48, 48); ibx.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	ibx.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(ibx)
+	var ic := TextureRect.new(); ic.name = "IconTex"; ic.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE; ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE; ibx.add_child(ic)
+	# 라벨/값
+	var vb := VBoxContainer.new(); vb.alignment = BoxContainer.ALIGNMENT_CENTER; vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE; vb.add_theme_constant_override("separation", 2)
+	hb.add_child(vb)
+	var cap := Design.label(label, "caption", Design.PAPER_DEEP.darkened(0.35)); cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var val := Design.label("", "body", Design.INK); val.name = "Val"; val.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_child(cap); vb.add_child(val)
+	var arrow := Design.label("▶", "title", Design.PAPER_DEEP.darkened(0.2)); arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arrow.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hb.add_child(arrow)
 	return b
 
-func _set_slot(cat: String, value: String) -> void:
+func _set_slot(cat: String, value: String, accent: Color) -> void:
 	var b: Button = _base.find_child("Slot_" + cat, true, false)
 	if b == null: return
 	var val: Label = b.find_child("Val", true, false)
 	if val: val.text = value
+	# accent 외곽선
+	var sb := Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD); sb.border_color = accent
+	for stn in ["normal", "focus"]: b.add_theme_stylebox_override(stn, sb)
+	# 아이콘 박스 색 + (소지품/스킬은 텍스처)
+	var ibx: Panel = b.find_child("Icon", true, false)
+	if ibx:
+		var isb := StyleBoxFlat.new(); isb.bg_color = accent.lerp(Design.PAPER, 0.45)
+		isb.set_corner_radius_all(10); isb.set_border_width_all(3); isb.border_color = accent
+		ibx.add_theme_stylebox_override("panel", isb)
+	var ic: TextureRect = b.find_child("IconTex", true, false)
+	if ic:
+		ic.texture = null
+		if cat == "item":
+			var first := ""
+			for s in GameState.item_slots:
+				if s != "": first = s; break
+			if first != "" and ITEM_ICON.has(first): ic.texture = load(ITEM_ICON[first])
 
 
 # ══════════════ 픽커 오버레이 ══════════════
@@ -248,9 +310,7 @@ func _build_picker_content(panel: Panel, pw: float, phh: float) -> void:
 	var E := float(Design.GAP_LG)
 	var titles := {"job": "직업", "ally": "동료 호루라기", "skill": "스킬", "item": "소지품"}
 	var ttl := Design.label("%s 인벤토리" % titles[_pick_cat], "title", Design.INK)
-	ttl.position = Vector2(E, E)
-	panel.add_child(ttl)
-	# 목록(스크롤 그리드)
+	ttl.position = Vector2(E, E); panel.add_child(ttl)
 	var list_h := phh * 0.5
 	var sc := ScrollContainer.new()
 	sc.position = Vector2(E, E + 44); sc.size = Vector2(pw - E * 2, list_h)
@@ -263,29 +323,24 @@ func _build_picker_content(panel: Panel, pw: float, phh: float) -> void:
 	sc.add_child(grid)
 	for entry in _picker_entries():
 		grid.add_child(_picker_card(entry))
-	# 설명 영역
 	var desc := Design.label("", "body", Design.INK)
 	desc.name = "PickDesc"
 	desc.position = Vector2(E, E + 44 + list_h + Design.GAP)
 	desc.size = Vector2(pw - E * 2, phh - (E + 44 + list_h + Design.GAP) - 80)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	panel.add_child(desc)
-	# 버튼: 장착 / 닫기
 	var by := phh - Design.GAP_LG - float(Design.BAR_H)
 	var equip := Design.button("장착", "brand", Design.FS_TITLE)
 	equip.position = Vector2(pw - E - 340, by); equip.custom_minimum_size = Vector2(160, Design.BAR_H); equip.size = Vector2(160, Design.BAR_H)
-	equip.pressed.connect(_do_equip)
-	panel.add_child(equip)
+	equip.pressed.connect(_do_equip); panel.add_child(equip)
 	var close := Design.button("닫기", "secondary", Design.FS_TITLE)
 	close.position = Vector2(pw - E - 168, by); close.custom_minimum_size = Vector2(160, Design.BAR_H); close.size = Vector2(160, Design.BAR_H)
-	close.pressed.connect(_close_picker)
-	panel.add_child(close)
+	close.pressed.connect(_close_picker); panel.add_child(close)
 	_update_pick_desc(panel)
 
 
 func _picker_entries() -> Array:
-	var out: Array = []   # [key, name, sub, accent]
+	var out: Array = []
 	match _pick_cat:
 		"job":
 			for j in JOB_ORDER:
@@ -337,7 +392,7 @@ func _update_pick_desc(panel: Panel) -> void:
 			var job: String = parts[0]; var g := int(parts[1])
 			var st: Dictionary = GameState.JOB_STATS[job]
 			var m: float = GameState.LV_MULT[clampi(g - 1, 0, 4)]
-			d.text = "%s\n체력 %d  ·  근접 %d  ·  원거리 %d  ·  치명타 %d%%\n전투 배율 ×%.1f" % [
+			d.text = "%s\n체력 %d   ·   근접 %d   ·   원거리 %d   ·   치명타 %d%%\n전투 배율 ×%.1f" % [
 				GameState.job_title(job, g),
 				int(round(st["hp"] * m)), int(round(st["near"] * m)), int(round(st["ranged"] * m)),
 				int(st["crit"] * 100), m]
@@ -354,8 +409,7 @@ func _do_equip() -> void:
 		"job":
 			if _pick_sel != "":
 				var parts := _pick_sel.split(":")
-				GameState.selected_job = parts[0]
-				GameState.equipped_grade = int(parts[1])
+				GameState.selected_job = parts[0]; GameState.equipped_grade = int(parts[1])
 		"ally":
 			GameState.equip_companion(_pick_sel)
 		"skill":
@@ -363,7 +417,6 @@ func _do_equip() -> void:
 				if GameState.is_equipped(GameState.selected_job, _pick_sel):
 					GameState.unequip_skill(GameState.selected_job, _pick_sel)
 				elif not GameState.equip_skill(GameState.selected_job, _pick_sel):
-					# 슬롯 꽉 참 → 첫 슬롯 교체
 					var eq: Array = GameState.equipped_for(GameState.selected_job)
 					if eq.size() > 0: GameState.unequip_skill(GameState.selected_job, String(eq[0]))
 					GameState.equip_skill(GameState.selected_job, _pick_sel)
@@ -376,7 +429,6 @@ func _do_equip() -> void:
 					if i < 0: i = 0
 					GameState.item_slots[i] = _pick_sel
 	if GameState.mode != "dev" and GameState.AUTOSAVE: GameState.save_game()
-	# 스킬·소지품은 연속 장착이 자연스러우니 픽커 유지하고 갱신, 직업·동료는 닫기
 	if _pick_cat in ["skill", "item"]:
 		var panel := _picker.get_child(1)
 		_build_picker_content(panel, panel.size.x, panel.size.y)
@@ -406,11 +458,6 @@ func _vbox(parent: Control, margin: float, sep: int) -> VBoxContainer:
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", sep)
 	mc.add_child(vb)
-	return vb
-
-func _vbox_node(sep: int) -> VBoxContainer:
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", sep)
 	return vb
 
 func _stars(g: int) -> String:
