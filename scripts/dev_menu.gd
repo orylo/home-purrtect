@@ -2,7 +2,7 @@ extends Control
 ## 개발자 테스트 메뉴 (DEV 전용) — 직업/등급/스테이지/난이도/치트 세팅 후 게임 진입.
 ## UI는 코드로 구성. 스킬·아이템은 빈 슬롯(시스템 생기면 연결).
 
-const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const JOBS := [["base", "맨몸"], ["sheriff", "보안관"], ["maid", "메이드"], ["jazz", "음악가"]]
 const INK := Color(0.0275, 0.0235, 0.0275)
 const ORANGE := Color(0.9882, 0.3137, 0.0)
@@ -182,7 +182,7 @@ func _refresh_preview() -> void:
 	else:
 		_rank_lbl.visible = true
 		var idx := clampi(_lv - 1, 0, 4)
-		_rank_lbl.text = GameState.RANK_LABELS[idx]   # 「」괄호는 DoHyeon에 없어 색으로만 구분
+		_rank_lbl.text = GameState.RANK_LABELS[idx]   # 등급 라벨(색으로 구분)
 		_rank_lbl.add_theme_color_override("font_color", GameState.rank_colors[idx])
 
 

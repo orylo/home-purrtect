@@ -1,5 +1,5 @@
 extends Control
-const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 ## 하단 HUD (단일 행 — 왼→오):
 ##   아이템1~3(키 1 2 3) / 동료(키 4) / 스킬1~4(키 U I O P) / 근접공격(K) / 원거리공격(L)
 ##   좌하단: 가상 조이스틱(joystick.gd)

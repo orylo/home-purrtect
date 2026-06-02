@@ -5,7 +5,7 @@ extends Control
 ##   하단: [전투 준비](좌) / [맵]·[출격 ▶](우)
 ## 작동: [출격]→전투 / [전투 준비]→직업선택. 나머지는 "준비중"(각 시스템 단계에서 연결).
 
-const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)

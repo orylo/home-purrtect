@@ -14,7 +14,7 @@ extends CharacterBody2D
 
 const POP := preload("res://scenes/pop_effect.tscn")
 const ENEMY_BULLET := preload("res://scenes/enemy_bullet.tscn")
-const ENEMY_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const ENEMY_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const DMG_POP_DUR := 0.8
 const AIR_HEIGHT := 230.0   # 공중 적이 떠 있는 높이(px)
 

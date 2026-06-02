@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://d3bbsufkggbk6"
-path="res://.godot/imported/DoHyeon-Regular.ttf-199d7fec024e3023c65f7d36e6649216.fontdata"
+uid="uid://b4q5fsir2stdu"
+path="res://.godot/imported/Pretendard-Regular.ttf-0f624144cf3ff8c63a5a657b06f3a7c4.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/DoHyeon-Regular.ttf"
-dest_files=["res://.godot/imported/DoHyeon-Regular.ttf-199d7fec024e3023c65f7d36e6649216.fontdata"]
+source_file="res://assets/fonts/Pretendard-Regular.ttf"
+dest_files=["res://.godot/imported/Pretendard-Regular.ttf-0f624144cf3ff8c63a5a657b06f3a7c4.fontdata"]
 
 [params]
 

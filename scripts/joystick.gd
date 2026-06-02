@@ -1,5 +1,5 @@
 extends Control
-const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 ## 가상 조이스틱 (왼손) — 모바일 이동 + 점프
 ##
 ## · 화면 왼쪽-아래 영역을 누르면 그 자리에 조이스틱이 생긴다(동적).

@@ -3,7 +3,7 @@ extends CanvasLayer
 ##   좌: ♥ 체력 + 숫자 / 우: 웨이브·남은 적 + 일시정지[II]
 
 # 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
-const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 
 @onready var hp_bar: ProgressBar = $HPBar
 @onready var hp_value: Label = $HPBar/HPValue
@@ -48,7 +48,7 @@ func _ready() -> void:
 	_build_coin_label()
 
 
-## 상단 코인 표시 — DoHyeon에 동전 이모지가 없어 금색 "코인 N"으로(숫자는 항상 렌더)
+## 상단 코인 표시 — 동전 이모지 대신 금색 "코인 N"으로(숫자는 항상 렌더)
 func _build_coin_label() -> void:
 	coin_label = Label.new()
 	coin_label.add_theme_font_override("font", UI_FONT)

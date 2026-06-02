@@ -3,7 +3,7 @@ extends Control
 ##   [레벨업] 직업 Lv↑ / [소모품] 붕대·멸치·폭죽 / [전리품 매입] 재료 팔기 / [제작] 메이드·음악가
 ##   진입: 홈 [맥스 상점]. 나가기: [← 홈].
 
-const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)

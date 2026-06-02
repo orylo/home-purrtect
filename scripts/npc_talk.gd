@@ -3,7 +3,7 @@ extends Control
 ##   서브클래스가 _start()를 오버라이드해 대화 흐름을 짠다. (pearl.gd / maxtalk.gd)
 ##   API: portrait(색,표정) / say(이름,색,대사) / choices([[라벨,Callable]...]) / go(씬경로)
 
-const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const FIG := preload("res://scripts/npc_figure.gd")
 

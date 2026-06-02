@@ -8,7 +8,7 @@ const BUILD := "0.29"
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
 func _ready() -> void:
-	var f := load("res://assets/fonts/DoHyeon-Regular.ttf")
+	var f := load("res://assets/fonts/Pretendard-Regular.ttf")
 	if f:
 		ThemeDB.fallback_font = f
 

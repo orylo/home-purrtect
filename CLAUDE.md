@@ -56,7 +56,7 @@ home-purrtect/
 │  └─ pop_effect.tscn       # 처치 "펑!" 이펙트
 ├─ scripts/                 # .gd (씬별 스크립트 + 오토로드)
 ├─ assets/
-│  ├─ fonts/                # DoHyeon-Regular.ttf (웹 한글 검증된 폰트)
+│  ├─ fonts/                # Pretendard-Regular.ttf (깔끔·중립 한글 폰트, 웹 검증·TTF)
 │  ├─ sprites/cheese/       # 직업별 치즈 SpriteFrames (base/sheriff/maid/jazz)
 │  ├─ sprites/enemies/      # 적 스프라이트
 │  ├─ backgrounds/          # 스테이지 배경(1920x1080 기준)
@@ -112,8 +112,10 @@ G=/Applications/Godot.app/Contents/MacOS/Godot
 
 ## 기술 메모 (함정 주의)
 - 엔진 **Godot 4.6.3**, GDScript. 렌더 `gl_compatibility`(모바일 호환).
-- **웹 한글 깨짐 방지**: 모든 텍스트에 **DoHyeon 폰트를 직접 지정**(라벨 `theme_override_fonts`, 코드 `draw_string`은 `preload`, gui custom_font). 테마 기본 폰트/`ThemeDB.fallback_font`/`get_theme_default_font()`는 웹에서 한글 안 나옴. **OTF는 웹에서 깨짐 → TTF만.**
-  - DoHyeon에 없는 글자: `「」 · — …` (대체 표기) / 있는 글자: `♥ ▶`.
+- **폰트 = `Pretendard-Regular.ttf`** (깔끔·중립 산세리프. 도현체가 캐릭터 너무 강해 2026-06-02 교체). 출처: jsDelivr `npm/pretendard@1.3.9/dist/public/static/alternative/Pretendard-Regular.ttf`(표준 static은 OTF뿐 → TTF는 alternative 폴더).
+- **웹 한글 깨짐 방지(원리)**: Godot은 **임베드된 폰트를 자체 래스터화**(브라우저 폰트 무관) → 프로젝트에 든 유효한 TTF를 직접 지정하면 어느 브라우저에서도 안 깨짐. 모든 텍스트에 **폰트 직접 지정**(라벨 `theme_override_fonts`, 코드 `draw_string`은 `preload(...Pretendard...)`, project.godot `gui/theme/custom_font`, `ThemeDB.fallback_font`). **OTF는 웹에서 깨진 사례 있어 → TTF만 사용.**
+  - 폰트 교체 절차: 새 TTF를 `assets/fonts/`에 넣고 → `Godot --headless --import .` 로 `.import` 생성 → `DoHyeon-Regular.ttf` 경로 문자열을 전 파일에서 새 파일명으로 일괄 치환(.tscn/.tres ext_resource는 path만 참조, uid 없음) → 씬 로드 검증.
+  - Pretendard는 `「」 · — … ♥ ▶` 등 대부분 글자 포함(도현체보다 커버리지 넓음).
 - **DEV 게이트**: `GameState.is_dev()`(현재 `const DEV := true`) — 출시 빌드에선 false로 dev 메뉴·🐞 오버레이·치트 전부 숨김.
 - 좌표: 적·치즈는 발이 원점(`Layout.ground_y()`), 몸은 위(-y)로 그림. 공중 적은 시각 높이만 위로 올리고 충돌(관문)은 바닥선 유지.
 - `Date.now()`/`randf` 등 시간·난수는 런타임에선 자유롭게 쓰되, 웨이브/적 정의 같은 데이터는 상수로.

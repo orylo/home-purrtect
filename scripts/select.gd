@@ -66,7 +66,7 @@ func _make_pill(c: Color, bw: float = 0.0, bc: Color = Color(1, 1, 1, 1)) -> Sty
 
 func _ready() -> void:
 	$Build.text = GameState.BUILD + " ver."
-	_head_font = load("res://assets/fonts/DoHyeon-Regular.ttf")
+	_head_font = load("res://assets/fonts/Pretendard-Regular.ttf")
 	_pill_normal = _make_pill(ORANGE)
 	_pill_selected = _make_pill(ORANGE, 5.0, Color(1, 1, 1, 1))   # 선택 = 흰 굵은 테두리
 	_pill_disabled = _make_pill(Color(0.80, 0.52, 0.40))         # 잠김(흐린 오렌지)

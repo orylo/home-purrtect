@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/start.gd" id="1_start"]
 [ext_resource type="Texture2D" path="res://assets/ui/title.jpg" id="2_title"]
-[ext_resource type="FontFile" path="res://assets/fonts/DoHyeon-Regular.ttf" id="3_head"]
+[ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Regular.ttf" id="3_head"]
 
 [sub_resource type="StyleBoxFlat" id="OrangePill"]
 content_margin_left = 24.0
