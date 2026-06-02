@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cnto48yydyhl4"
-path="res://.godot/imported/7.png-6ab34333ee5a5f6eb739ced32debc95b.ctex"
+uid="uid://dfn6wvrbbnajg"
+path="res://.godot/imported/7.png-a904a4eba8a4b312413832493f11c5af.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/fx/fx_generic_a/7.png"
-dest_files=["res://.godot/imported/7.png-6ab34333ee5a5f6eb739ced32debc95b.ctex"]
+source_file="res://assets/fx/slime_drip/7.png"
+dest_files=["res://.godot/imported/7.png-a904a4eba8a4b312413832493f11c5af.ctex"]
 
 [params]
 

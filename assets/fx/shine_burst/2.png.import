@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://o0t6v78racd8"
-path="res://.godot/imported/0.png-4eae09293ee2f6619e8f00725fe6f359.ctex"
+uid="uid://dh4q6p7ytgqow"
+path="res://.godot/imported/2.png-7568d718cccb52cf2c8ce4787cd7ff09.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/fx/fx_generic_a/0.png"
-dest_files=["res://.godot/imported/0.png-4eae09293ee2f6619e8f00725fe6f359.ctex"]
+source_file="res://assets/fx/shine_burst/2.png"
+dest_files=["res://.godot/imported/2.png-7568d718cccb52cf2c8ce4787cd7ff09.ctex"]
 
 [params]
 
