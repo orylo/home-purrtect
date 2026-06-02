@@ -65,6 +65,45 @@ const STAGE_WAVES := {
 }
 
 
+## --- 전리품(재료) 드랍 (시스템밸런스 §5.2) ---
+## 쥐 = 티어별 털(30%) + 행동별 장비(15%) / 비-쥐 = 부위(15%) / 전 몬스터 공통 보석(2% 별도 굴림).
+const DROP_TABLE := {
+	"gray":          [["fur_gray", 0.30]],
+	"gray_roller":   [["fur_gray", 0.30], ["wheel", 0.15]],
+	"gray_thrower":  [["fur_gray", 0.30], ["sack", 0.15]],
+	"black":         [["fur_black", 0.30]],
+	"black_roller":  [["fur_black", 0.30], ["wheel", 0.15]],
+	"black_thrower": [["fur_black", 0.30], ["sack", 0.15]],
+	"bat":           [["bat_wing", 0.15]],
+	"sparrow":       [["sparrow_feather", 0.15]],
+	"bee":           [["bee_sting", 0.15]],
+	"spider":        [["spider_silk", 0.15]],
+	# 보스는 재료 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 몬스터 공통 적용.
+}
+const GEM_CHANCE := 0.02
+## 보석 종류 비중(§5.5): 합 100. 조약돌 60 / 자수정 25 / 사파이어 10 / 루비 4 / 다이아 1
+const GEM_WEIGHTS := [["gem_pebble", 60], ["gem_amethyst", 25], ["gem_sapphire", 10], ["gem_ruby", 4], ["gem_diamond", 1]]
+
+## 적 처치 시 떨군 재료 id 배열 반환(런타임 난수)
+func roll_drops(id: String) -> Array:
+	var out: Array = []
+	for entry in DROP_TABLE.get(id, []):
+		if randf() < float(entry[1]):
+			out.append(String(entry[0]))
+	if randf() < GEM_CHANCE:
+		out.append(_roll_gem())
+	return out
+
+func _roll_gem() -> String:
+	var r := randi() % 100
+	var acc := 0
+	for w in GEM_WEIGHTS:
+		acc += int(w[1])
+		if r < acc:
+			return String(w[0])
+	return "gem_pebble"
+
+
 ## 스테이지 번호 → 웨이브 구성 (없으면 회색쥐 기본)
 func waves_for(stage: int) -> Array:
 	return STAGE_WAVES.get(stage, [[["gray", 3]], [["gray", 4]]])
@@ -73,4 +112,5 @@ func waves_for(stage: int) -> Array:
 func def_of(id: String) -> Dictionary:
 	var d: Dictionary = ENEMY_DEFS.get(id, ENEMY_DEFS["gray"]).duplicate()
 	d["coin"] = ENEMY_COIN.get(id, 2)   # 처치 코인 주입(원본 const는 안 건드림)
+	d["id"] = id                         # 전리품 드랍용 id 주입
 	return d

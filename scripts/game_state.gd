@@ -82,6 +82,80 @@ func buy_consumable(id: String) -> bool:
 		save_game()
 	return true
 
+## --- 전리품(재료) 인벤토리 (드랍·매입·제작, 시스템밸런스 §5.2) ---
+## sell=맥스 매입가(§5.2-C). 표시 순서대로 MAT_ORDER.
+const MATERIALS := {
+	"fur_gray":        {"name": "회색쥐 털",   "sell": 2},
+	"fur_black":       {"name": "검은쥐 털",   "sell": 2},
+	"wheel":           {"name": "롤러 바퀴",   "sell": 3},
+	"sack":            {"name": "포대 조각",   "sell": 3},
+	"bat_wing":        {"name": "박쥐 날개",   "sell": 3},
+	"sparrow_feather": {"name": "참새 깃털",   "sell": 3},
+	"bee_sting":       {"name": "벌침",        "sell": 3},
+	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
+	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 10},
+	"gem_amethyst":    {"name": "자수정",      "sell": 40},
+	"gem_sapphire":    {"name": "사파이어",    "sell": 100},
+	"gem_ruby":        {"name": "루비",        "sell": 250},
+	"gem_diamond":     {"name": "다이아몬드",  "sell": 600},
+}
+const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "bee_sting", "spider_silk", "gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]
+var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
+
+func add_material(id: String, n: int = 1) -> void:
+	materials[id] = int(materials.get(id, 0)) + n
+
+func mat_count(id: String) -> int:
+	return int(materials.get(id, 0))
+
+func sell_material(id: String, n: int = 1) -> int:
+	## n개 판매 → 얻은 코인 반환(보유보다 많으면 보유만큼). n<0 = 전량.
+	if not MATERIALS.has(id):
+		return 0
+	var have := mat_count(id)
+	if n < 0:
+		n = have
+	n = clampi(n, 0, have)
+	if n <= 0:
+		return 0
+	var gain := n * int(MATERIALS[id]["sell"])
+	materials[id] = have - n
+	coins += gain
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return gain
+
+## --- 직업 제작 (상점, 시스템밸런스 §5.2-B) ---
+## 메이드 = 회색쥐 털×15 + 포대 조각×3 + 코인500 / 음악가 = 회색쥐 털×15 + 롤러 바퀴×3 + 코인500
+const CRAFT_RECIPES := {
+	"maid": {"name": "메이드", "coin": 500, "mats": {"fur_gray": 15, "sack": 3}},
+	"jazz": {"name": "음악가", "coin": 500, "mats": {"fur_gray": 15, "wheel": 3}},
+}
+
+func can_craft_job(job: String) -> bool:
+	if is_job_unlocked(job) or not CRAFT_RECIPES.has(job):
+		return false
+	var r: Dictionary = CRAFT_RECIPES[job]
+	if coins < int(r["coin"]):
+		return false
+	for mid in r["mats"]:
+		if mat_count(mid) < int(r["mats"][mid]):
+			return false
+	return true
+
+func craft_job(job: String) -> bool:
+	if not can_craft_job(job):
+		return false
+	var r: Dictionary = CRAFT_RECIPES[job]
+	coins -= int(r["coin"])
+	for mid in r["mats"]:
+		materials[mid] = mat_count(mid) - int(r["mats"][mid])
+	if not unlocked_jobs.has(job):
+		unlocked_jobs.append(job)
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -150,6 +224,7 @@ func reset_progress() -> void:
 	coins = 0
 	job_level = {"base": 1, "sheriff": 1, "maid": 1, "jazz": 1}
 	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
+	materials = {}
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -246,6 +321,7 @@ func save_game() -> void:
 		"selected_job": selected_job,   # 마지막 출격 세팅(로드맵 3단계)
 		"job_level": job_level,         # 직업별 Lv(상점 레벨업, 로드맵 4단계)
 		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
+		"materials": materials,         # 전리품(재료) 보유(드랍·매입·제작, 로드맵 4단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -291,6 +367,13 @@ func load_game() -> void:
 		if typeof(inv) == TYPE_DICTIONARY:
 			for k in inventory.keys():
 				inventory[k] = maxi(0, int(inv.get(k, 0)))
+		# 전리품(재료) 보유 복원
+		materials = {}
+		var mat = data.get("materials", {})
+		if typeof(mat) == TYPE_DICTIONARY:
+			for k in mat.keys():
+				if MATERIALS.has(k):
+					materials[k] = maxi(0, int(mat[k]))
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

@@ -1,37 +1,49 @@
 extends Control
-## 맥스의 상점 (로드맵 4단계) — 코인을 쓰는 곳.
-##   첫 조각: [레벨업 구매] (선택 직업 Lv↑, 코인 차감, 세이브).
-##   소모품·전리품 매입·직업 제작은 다음 조각에서 연결(자리 안내만).
-## 진입: 홈 [맥스 상점]. 나가기: [← 홈].
+## 맥스의 상점 (로드맵 4단계) — 코인을 쓰는 곳. 탭 구조.
+##   [레벨업] 직업 Lv↑ / [소모품] 붕대·멸치·폭죽 / [전리품 매입] 재료 팔기 / [제작] 메이드·음악가
+##   진입: 홈 [맥스 상점]. 나가기: [← 홈].
 
 const FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)
 const GOLD := Color(1.0, 0.82, 0.2)
-
 const ITEM_ORDER := ["bandage", "anchovy", "firecracker"]
+const TABS := [
+	{"id": "level", "name": "레벨업"},
+	{"id": "item", "name": "소모품"},
+	{"id": "sell", "name": "전리품 매입"},
+	{"id": "craft", "name": "직업 제작"},
+]
 
 var _coin_lbl: Label
+var _tab := "level"
+var _tab_btns := {}
+var _panes := {}        # tab id -> 콘텐츠 Control
+# 레벨업 탭
 var _job_lbl: Label
 var _lv_lbl: Label
 var _buy_btn: Button
-var _inv_lbls := {}    # 소모품 id -> 보유 수 Label
-var _item_btns := {}   # 소모품 id -> 구매 Button
+# 소모품 탭
+var _inv_lbls := {}
+var _item_btns := {}
+# 동적 탭 컨테이너
+var _sell_box: VBoxContainer
+var _craft_box: VBoxContainer
 var _toast: Label
 var _toast_t := 0.0
+var _content_rect: Rect2
 
 
 func _ready() -> void:
-	GameState.mode = GameState.mode if GameState.mode == "dev" else "player"
 	_build()
-	_refresh()
+	_set_tab("level")
 
 
 func _build() -> void:
 	var vp := get_viewport().get_visible_rect().size
+	_content_rect = Rect2(Vector2(vp.x * 0.5 - 420, 180), Vector2(840, vp.y - 320))
 
-	# 배경(어둡게 깐 저택)
 	var bg := TextureRect.new()
 	bg.texture = BG
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -39,78 +51,256 @@ func _build() -> void:
 	bg.modulate = Color(0.5, 0.5, 0.55)
 	add_child(bg)
 
-	# 상단: 제목 + 코인
 	var title := _text("맥스의 상점", 40, Color(1, 1, 1))
 	title.position = Vector2(40, 24)
 	add_child(title)
 	_coin_lbl = _text("", 30, GOLD)
-	_coin_lbl.position = Vector2(vp.x - 320, 30)
+	_coin_lbl.position = Vector2(vp.x - 340, 30)
 	_coin_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_coin_lbl.size = Vector2(280, 40)
+	_coin_lbl.size = Vector2(300, 40)
 	add_child(_coin_lbl)
 
-	# 레벨업 카드(가운데)
-	var card := Panel.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.10, 0.10, 0.14, 0.92)
-	sb.set_corner_radius_all(20)
-	sb.set_border_width_all(3)
-	sb.border_color = Color(1, 1, 1, 0.25)
-	card.add_theme_stylebox_override("panel", sb)
-	card.position = Vector2(vp.x * 0.5 - 380, vp.y * 0.16)
-	card.size = Vector2(760, 280)
-	add_child(card)
+	_build_tabbar(vp)
 
-	var head := _text("직업 레벨업", 32, ORANGE)
-	head.position = Vector2(36, 24)
-	card.add_child(head)
-	_job_lbl = _text("", 30, Color(1, 1, 1))
-	_job_lbl.position = Vector2(36, 84)
-	card.add_child(_job_lbl)
-	_lv_lbl = _text("", 26, Color(0.85, 0.85, 0.9))
-	_lv_lbl.position = Vector2(36, 134)
-	card.add_child(_lv_lbl)
+	# 콘텐츠 패널(공통 배경) + 각 탭 컨테이너
+	var frame := Panel.new()
+	var fsb := StyleBoxFlat.new()
+	fsb.bg_color = Color(0.08, 0.08, 0.11, 0.92)
+	fsb.set_corner_radius_all(20)
+	fsb.set_border_width_all(3)
+	fsb.border_color = Color(1, 1, 1, 0.22)
+	frame.add_theme_stylebox_override("panel", fsb)
+	frame.position = _content_rect.position - Vector2(20, 20)
+	frame.size = _content_rect.size + Vector2(40, 40)
+	add_child(frame)
 
-	_buy_btn = Button.new()
-	_buy_btn.position = Vector2(36, 188)
-	_buy_btn.custom_minimum_size = Vector2(688, 64)
-	_buy_btn.size = Vector2(688, 64)
-	_style_btn(_buy_btn, ORANGE, 30)
-	_buy_btn.pressed.connect(_on_buy_levelup)
-	card.add_child(_buy_btn)
+	_build_level_pane()
+	_build_item_pane()
+	_build_sell_pane()
+	_build_craft_pane()
 
-	# 소모품 구매 섹션
-	var sec := _text("소모품 구매", 30, ORANGE)
-	sec.position = Vector2(vp.x * 0.5 - 390, vp.y * 0.16 + 300)
-	add_child(sec)
-	var iy := vp.y * 0.16 + 348
-	for i in range(ITEM_ORDER.size()):
-		_item_card(ITEM_ORDER[i], Vector2(vp.x * 0.5 - 390 + i * 270, iy))
-
-	# 전리품 매입·직업 제작은 다음 조각(자리 안내만)
-	var soon := _text("전리품 매입 · 직업 제작 — 다음 조각에서", 22, Color(1, 1, 1, 0.7))
-	soon.position = Vector2(vp.x * 0.5 - 390, iy + 210)
-	add_child(soon)
-
-	# 하단: 홈
 	_solid_btn("← 홈", Vector2(40, vp.y - 112), Vector2(200, 80), DARK, 30,
 			func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 
-	# 토스트
 	_toast = _text("", 30, Color(1, 1, 1))
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast.size = Vector2(vp.x, 50)
-	_toast.position = Vector2(0, vp.y * 0.16)
+	_toast.position = Vector2(0, vp.y - 170)
 	_toast.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	_toast.add_theme_constant_override("outline_size", 5)
 	_toast.visible = false
 	add_child(_toast)
 
 
-## 코인·직업·레벨·버튼 상태 갱신
+func _build_tabbar(vp: Vector2) -> void:
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 12)
+	bar.position = Vector2(vp.x * 0.5 - 420, 100)
+	add_child(bar)
+	for t in TABS:
+		var b := Button.new()
+		b.text = t["name"]
+		b.custom_minimum_size = Vector2(204, 56)
+		_font(b, 28)
+		b.pressed.connect(_set_tab.bind(t["id"]))
+		bar.add_child(b)
+		_tab_btns[t["id"]] = b
+
+
+func _new_pane(id: String) -> Control:
+	var p := Control.new()
+	p.position = _content_rect.position
+	p.size = _content_rect.size
+	p.visible = false
+	add_child(p)
+	_panes[id] = p
+	return p
+
+
+# --- 레벨업 탭 ---
+func _build_level_pane() -> void:
+	var p := _new_pane("level")
+	var head := _text("직업 레벨업", 32, ORANGE)
+	head.position = Vector2(20, 16)
+	p.add_child(head)
+	_job_lbl = _text("", 30, Color(1, 1, 1))
+	_job_lbl.position = Vector2(20, 78)
+	p.add_child(_job_lbl)
+	_lv_lbl = _text("", 26, Color(0.85, 0.85, 0.9))
+	_lv_lbl.position = Vector2(20, 128)
+	p.add_child(_lv_lbl)
+	_buy_btn = Button.new()
+	_buy_btn.position = Vector2(20, 196)
+	_buy_btn.custom_minimum_size = Vector2(800, 72)
+	_font(_buy_btn, 32)
+	_btn_colors(_buy_btn, ORANGE)
+	_buy_btn.pressed.connect(_on_buy_levelup)
+	p.add_child(_buy_btn)
+
+
+# --- 소모품 탭 ---
+func _build_item_pane() -> void:
+	var p := _new_pane("item")
+	for i in range(ITEM_ORDER.size()):
+		_item_card(p, ITEM_ORDER[i], Vector2(20 + i * 270, 20))
+
+
+func _item_card(parent: Control, id: String, pos: Vector2) -> void:
+	var def: Dictionary = GameState.CONSUMABLES.get(id, {})
+	var card := Panel.new()
+	card.add_theme_stylebox_override("panel", _card_sb())
+	card.position = pos
+	card.size = Vector2(250, 200)
+	parent.add_child(card)
+	var nm := _text(String(def.get("name", id)), 28, Color(1, 1, 1))
+	nm.position = Vector2(16, 14)
+	card.add_child(nm)
+	var ds := _text(String(def.get("desc", "")), 20, Color(0.8, 0.85, 0.9))
+	ds.position = Vector2(16, 54)
+	card.add_child(ds)
+	var inv := _text("", 22, GOLD)
+	inv.position = Vector2(16, 92)
+	card.add_child(inv)
+	_inv_lbls[id] = inv
+	var b := Button.new()
+	b.position = Vector2(16, 130)
+	b.custom_minimum_size = Vector2(218, 54)
+	_font(b, 26)
+	_btn_colors(b, ORANGE)
+	b.pressed.connect(_on_buy_consumable.bind(id))
+	card.add_child(b)
+	_item_btns[id] = b
+
+
+# --- 전리품 매입 탭(동적) ---
+func _build_sell_pane() -> void:
+	var p := _new_pane("sell")
+	var head := _text("전리품 매입 (팔아서 코인)", 30, ORANGE)
+	head.position = Vector2(20, 12)
+	p.add_child(head)
+	var sc := ScrollContainer.new()
+	sc.position = Vector2(20, 64)
+	sc.size = Vector2(800, _content_rect.size.y - 80)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	p.add_child(sc)
+	_sell_box = VBoxContainer.new()
+	_sell_box.add_theme_constant_override("separation", 8)
+	_sell_box.custom_minimum_size = Vector2(780, 0)
+	sc.add_child(_sell_box)
+
+
+func _rebuild_sell() -> void:
+	for c in _sell_box.get_children():
+		c.queue_free()
+	var any := false
+	for id in GameState.MAT_ORDER:
+		var n: int = GameState.mat_count(id)
+		if n <= 0:
+			continue
+		any = true
+		var def: Dictionary = GameState.MATERIALS[id]
+		var row := Panel.new()
+		row.add_theme_stylebox_override("panel", _card_sb())
+		row.custom_minimum_size = Vector2(770, 64)
+		_sell_box.add_child(row)
+		var lbl := _text("%s  ×%d   (개당 %d코인)" % [String(def["name"]), n, int(def["sell"])], 24, Color(1, 1, 1))
+		lbl.position = Vector2(16, 16)
+		row.add_child(lbl)
+		var b1 := Button.new()
+		b1.position = Vector2(530, 8)
+		b1.custom_minimum_size = Vector2(110, 48)
+		_font(b1, 22); _btn_colors(b1, ORANGE)
+		b1.text = "팔기"
+		b1.pressed.connect(_on_sell.bind(id, 1))
+		row.add_child(b1)
+		var b2 := Button.new()
+		b2.position = Vector2(648, 8)
+		b2.custom_minimum_size = Vector2(110, 48)
+		_font(b2, 22); _btn_colors(b2, Color(0.35, 0.3, 0.2))
+		b2.text = "전량"
+		b2.pressed.connect(_on_sell.bind(id, -1))
+		row.add_child(b2)
+	if not any:
+		var empty := _text("팔 전리품이 없어요. 전투에서 적을 처치하면 모입니다.", 24, Color(1, 1, 1, 0.7))
+		_sell_box.add_child(empty)
+
+
+# --- 직업 제작 탭(동적) ---
+func _build_craft_pane() -> void:
+	var p := _new_pane("craft")
+	var head := _text("직업 제작 (재료 + 코인)", 30, ORANGE)
+	head.position = Vector2(20, 12)
+	p.add_child(head)
+	_craft_box = VBoxContainer.new()
+	_craft_box.add_theme_constant_override("separation", 16)
+	_craft_box.position = Vector2(20, 64)
+	_craft_box.custom_minimum_size = Vector2(800, 0)
+	p.add_child(_craft_box)
+
+
+func _rebuild_craft() -> void:
+	for c in _craft_box.get_children():
+		c.queue_free()
+	for job in GameState.CRAFT_RECIPES:
+		var r: Dictionary = GameState.CRAFT_RECIPES[job]
+		var card := Panel.new()
+		card.add_theme_stylebox_override("panel", _card_sb())
+		card.custom_minimum_size = Vector2(800, 150)
+		_craft_box.add_child(card)
+		var nm := _text(String(r["name"]), 28, Color(1, 1, 1))
+		nm.position = Vector2(16, 12)
+		card.add_child(nm)
+		# 재료 요구 + 보유
+		var parts: Array = []
+		for mid in r["mats"]:
+			var need: int = int(r["mats"][mid])
+			var have: int = GameState.mat_count(mid)
+			parts.append("%s %d/%d" % [String(GameState.MATERIALS[mid]["name"]), have, need])
+		parts.append("코인 %d/%d" % [GameState.coins, int(r["coin"])])
+		var req := _text("  ·  ".join(parts), 22, Color(0.85, 0.88, 0.95))
+		req.position = Vector2(16, 56)
+		card.add_child(req)
+		var b := Button.new()
+		b.position = Vector2(16, 92)
+		b.custom_minimum_size = Vector2(768, 48)
+		_font(b, 26)
+		if GameState.is_job_unlocked(job):
+			_btn_colors(b, Color(0.3, 0.4, 0.3))
+			b.text = "이미 보유한 직업"
+			b.disabled = true
+		else:
+			_btn_colors(b, ORANGE)
+			b.text = "제작"
+			b.disabled = not GameState.can_craft_job(job)
+			b.pressed.connect(_on_craft.bind(job))
+		card.add_child(b)
+
+
+# --- 탭 전환 ---
+func _set_tab(tab: String) -> void:
+	_tab = tab
+	for id in _tab_btns:
+		var on: bool = (id == tab)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = ORANGE if on else Color(0.6, 0.6, 0.62, 0.6)
+		sb.set_corner_radius_all(14)
+		if on:
+			sb.set_border_width_all(3); sb.border_color = Color(1, 1, 1, 0.9)
+		for st in ["normal", "hover", "pressed", "focus"]:
+			_tab_btns[id].add_theme_stylebox_override(st, sb)
+	for id in _panes:
+		_panes[id].visible = (id == tab)
+	if tab == "sell":
+		_rebuild_sell()
+	elif tab == "craft":
+		_rebuild_craft()
+	_refresh()
+
+
+# --- 갱신(정적 탭) ---
 func _refresh() -> void:
-	var job: String = GameState.selected_job
 	_coin_lbl.text = "코인 " + _commafy(GameState.coins)
+	var job: String = GameState.selected_job
 	var lv := int(GameState.job_level.get(job, 1))
 	_job_lbl.text = "%s   ·   %s" % [GameState.job_title(job), GameState.rank_label(job)]
 	var cost := GameState.levelup_cost(job)
@@ -120,71 +310,45 @@ func _refresh() -> void:
 		_buy_btn.disabled = true
 	else:
 		var next_mult: float = GameState.LV_MULT[clampi(lv, 0, 4)]
-		_lv_lbl.text = "Lv %d → Lv %d   (전투력 배율 ×%.1f → ×%.1f)" % [
-				lv, lv + 1, GameState.level_mult(job), next_mult]
+		_lv_lbl.text = "Lv %d → Lv %d   (전투력 배율 ×%.1f → ×%.1f)" % [lv, lv + 1, GameState.level_mult(job), next_mult]
 		_buy_btn.text = "레벨업  —  %s 코인" % _commafy(cost)
 		_buy_btn.disabled = not GameState.can_levelup(job)
-
-	# 소모품 카드 갱신
 	for id in _inv_lbls.keys():
-		var price: int = GameState.consumable_price(id)
 		_inv_lbls[id].text = "보유 %d" % int(GameState.inventory.get(id, 0))
-		_item_btns[id].text = "구매 (%d)" % price
+		_item_btns[id].text = "구매 (%d)" % GameState.consumable_price(id)
 		_item_btns[id].disabled = not GameState.can_buy_consumable(id)
 
 
-## 소모품 카드 1개 (이름·효과·가격·보유·구매버튼)
-func _item_card(id: String, pos: Vector2) -> void:
-	var def: Dictionary = GameState.CONSUMABLES.get(id, {})
-	var card := Panel.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.10, 0.10, 0.14, 0.92)
-	sb.set_corner_radius_all(16)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(1, 1, 1, 0.22)
-	card.add_theme_stylebox_override("panel", sb)
-	card.position = pos
-	card.size = Vector2(240, 188)
-	add_child(card)
-
-	var nm := _text(String(def.get("name", id)), 26, Color(1, 1, 1))
-	nm.position = Vector2(16, 12)
-	card.add_child(nm)
-	var ds := _text(String(def.get("desc", "")), 20, Color(0.8, 0.85, 0.9))
-	ds.position = Vector2(16, 50)
-	card.add_child(ds)
-	var inv := _text("", 22, GOLD)
-	inv.position = Vector2(16, 86)
-	card.add_child(inv)
-	_inv_lbls[id] = inv
-
-	var b := Button.new()
-	b.position = Vector2(16, 124)
-	b.custom_minimum_size = Vector2(208, 52)
-	b.size = Vector2(208, 52)
-	_style_btn(b, ORANGE, 26)
-	b.pressed.connect(_on_buy_consumable.bind(id))
-	card.add_child(b)
-	_item_btns[id] = b
-
-
-func _on_buy_consumable(id: String) -> void:
-	if not GameState.can_buy_consumable(id):
-		_toast_msg("코인 부족 (%s 코인)" % _commafy(GameState.consumable_price(id)))
-		return
-	if GameState.buy_consumable(id):
-		_toast_msg("%s 구매!" % String(GameState.CONSUMABLES[id]["name"]))
-		_refresh()
-
-
+# --- 버튼 핸들러 ---
 func _on_buy_levelup() -> void:
 	var job: String = GameState.selected_job
-	if not GameState.can_levelup(job):
-		_toast_msg("코인이 부족해요 (%s 필요)" % _commafy(GameState.levelup_cost(job)))
-		return
 	if GameState.do_levelup(job):
 		_toast_msg("레벨업! %s" % GameState.job_title(job))
 		_refresh()
+	else:
+		_toast_msg("코인이 부족해요 (%s 필요)" % _commafy(GameState.levelup_cost(job)))
+
+func _on_buy_consumable(id: String) -> void:
+	if GameState.buy_consumable(id):
+		_toast_msg("%s 구매!" % String(GameState.CONSUMABLES[id]["name"]))
+		_refresh()
+	else:
+		_toast_msg("코인 부족 (%s 코인)" % _commafy(GameState.consumable_price(id)))
+
+func _on_sell(id: String, n: int) -> void:
+	var gain := GameState.sell_material(id, n)
+	if gain > 0:
+		_toast_msg("+%s 코인" % _commafy(gain))
+		_rebuild_sell()
+		_refresh()
+
+func _on_craft(job: String) -> void:
+	if GameState.craft_job(job):
+		_toast_msg("%s 제작 완료! 전투 준비에서 선택 가능" % String(GameState.CRAFT_RECIPES[job]["name"]))
+		_rebuild_craft()
+		_refresh()
+	else:
+		_toast_msg("재료나 코인이 부족해요")
 
 
 func _process(delta: float) -> void:
@@ -193,13 +357,12 @@ func _process(delta: float) -> void:
 		if _toast_t <= 0.0 and _toast:
 			_toast.visible = false
 
-
 func _toast_msg(msg: String) -> void:
 	if _toast == null:
 		return
 	_toast.text = msg
 	_toast.visible = true
-	_toast_t = 1.6
+	_toast_t = 1.8
 
 
 # --- helpers ---
@@ -213,24 +376,32 @@ func _text(s: String, fs: int, col: Color) -> Label:
 	l.add_theme_constant_override("outline_size", 4)
 	return l
 
-
-func _style_btn(b: Button, bg: Color, fs: int) -> void:
+func _font(b: Button, fs: int) -> void:
 	b.add_theme_font_override("font", FONT)
 	b.add_theme_font_size_override("font_size", fs)
 	b.add_theme_color_override("font_color", Color(1, 1, 1))
 	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	b.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.6))
+	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.55))
+
+func _btn_colors(b: Button, bg: Color) -> void:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
-	sb.set_corner_radius_all(16)
+	sb.set_corner_radius_all(14)
 	var sbd := StyleBoxFlat.new()
-	sbd.bg_color = Color(0.4, 0.4, 0.42)   # 비활성(코인 부족/최고레벨)
-	sbd.set_corner_radius_all(16)
+	sbd.bg_color = Color(0.4, 0.4, 0.42)
+	sbd.set_corner_radius_all(14)
 	for st in ["normal", "hover", "pressed", "focus"]:
 		b.add_theme_stylebox_override(st, sb)
 	b.add_theme_stylebox_override("disabled", sbd)
 
+func _card_sb() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.13, 0.17, 0.95)
+	sb.set_corner_radius_all(14)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(1, 1, 1, 0.18)
+	return sb
 
 func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn: Callable) -> void:
 	var b := Button.new()
@@ -238,7 +409,7 @@ func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz
-	_style_btn(b, bg, fs)
+	_font(b, fs)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
 	sb.set_corner_radius_all(18)
@@ -248,7 +419,6 @@ func _solid_btn(label: String, pos: Vector2, sz: Vector2, bg: Color, fs: int, fn
 		b.add_theme_stylebox_override(st, sb)
 	b.pressed.connect(fn)
 	add_child(b)
-
 
 func _commafy(n: int) -> String:
 	var s := str(n)
