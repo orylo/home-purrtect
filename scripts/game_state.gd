@@ -3,7 +3,7 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.25"
+const BUILD := "0.26"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -158,6 +158,109 @@ func craft_job(job: String) -> bool:
 		save_game()
 	return true
 
+## --- 스킬 시스템 (로드맵 5단계, 시스템밸런스 §4.2·§2.4·§2.2) ---
+## order: 1번째(1-9,250) / 2번째(1-15,500) / 3번째(2막 라쿤,1000·Lv3 슬롯)
+## scaled: 데미지·수치가 Lv 배율(§2.2)을 받는지. cd: 쿨타임(초). base: Lv1 수치값.
+## kind: 전투 발동 종류(combat). dur/pct 등은 Lv 불변(§규칙C).
+const SKILLS := {
+	# 보안관: 제어 / 생존 / 광역딜
+	"warn_shot": {"job": "sheriff", "name": "경고 사격", "order": 1, "cd": 10.0, "price": 250,  "scaled": false, "kind": "stagger", "dur": 2.5, "desc": "다가오는 적 2~3초 멈칫 + 살짝 밀기"},
+	"shield":    {"job": "sheriff", "name": "방패 자세", "order": 2, "cd": 18.0, "price": 500,  "scaled": false, "kind": "guard",   "dur": 4.0, "pct": 0.40, "desc": "4초 받는 피해 40%↓"},
+	"support":   {"job": "sheriff", "name": "지원 요청", "order": 3, "cd": 35.0, "price": 1000, "scaled": true,  "kind": "barrage", "base": 60.0, "delay": 1.0, "desc": "1초 후 화면 전체 60×Lv"},
+	# 메이드: 넉백딜 / 바닥제어 / 원거리광역
+	"sweep":     {"job": "maid", "name": "대청소", "order": 1, "cd": 12.0, "price": 250,  "scaled": true,  "kind": "knockback", "base": 30.0, "desc": "광역 강제 넉백 + 30×Lv"},
+	"wax":       {"job": "maid", "name": "왁스칠", "order": 2, "cd": 16.0, "price": 500,  "scaled": false, "kind": "slowfield", "dur": 4.0, "pct": 0.60, "desc": "4초 미끄럼 장판, 이속 60%↓"},
+	"plates":    {"job": "maid", "name": "접시 폭풍", "order": 3, "cd": 30.0, "price": 1000, "scaled": true,  "kind": "platestorm", "base": 25.0, "desc": "접시 난사, 각 25×Lv"},
+	# 음악가: 광역딜 / 스턴 / 자가버프
+	"discord":   {"job": "jazz", "name": "불협화음", "order": 1, "cd": 10.0, "price": 250,  "scaled": true,  "kind": "aoe_slow", "base": 35.0, "slow_dur": 1.5, "desc": "광역 35×Lv + 1.5초 둔화"},
+	"lullaby":   {"job": "jazz", "name": "자장가", "order": 2, "cd": 20.0, "price": 500,  "scaled": false, "kind": "stun", "dur": 2.0, "desc": "범위 2초 스턴"},
+	"encore":    {"job": "jazz", "name": "앵콜", "order": 3, "cd": 30.0, "price": 1000, "scaled": false, "kind": "selfbuff", "dur": 6.0, "aspd": 0.40, "mspd": 0.20, "desc": "6초 공속+40%·이속+20%"},
+}
+var owned_skills: Array = []                                  # 보유 스킬 id
+var equipped_skills := {"sheriff": [], "maid": [], "jazz": []}  # job -> 장착 슬롯 배열
+
+## 현재 직업×Lv 활성 슬롯 수(§2.2): 맨몸 0 / Lv1·2 2 / Lv3·4 3 / Lv5 4
+func skill_slots(job: String = "") -> int:
+	var j := job if job != "" else selected_job
+	if j == "base":
+		return 0
+	var lv := int(job_level.get(j, 1))
+	if lv >= 5:
+		return 4
+	if lv >= 3:
+		return 3
+	return 2
+
+func owns_skill(id: String) -> bool:
+	return owned_skills.has(id)
+
+## 1막 구매 가능: 보유 직업 스킬 + 미보유 + order≤2(3번째는 2막) + 코인 충분
+func can_buy_skill(id: String) -> bool:
+	if not SKILLS.has(id) or owns_skill(id):
+		return false
+	var s: Dictionary = SKILLS[id]
+	if not is_job_unlocked(s["job"]):
+		return false
+	if int(s["order"]) >= 3:
+		return false   # 3번째 스킬 = 2막 라쿤(미판매)
+	return coins >= int(s["price"])
+
+func buy_skill(id: String) -> bool:
+	if not can_buy_skill(id):
+		return false
+	coins -= int(SKILLS[id]["price"])
+	owned_skills.append(id)
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
+## 직업의 보유 스킬 id 목록
+func owned_for(job: String) -> Array:
+	var out: Array = []
+	for id in owned_skills:
+		if SKILLS.has(id) and SKILLS[id]["job"] == job:
+			out.append(id)
+	return out
+
+## 직업의 장착 스킬(활성 슬롯 수로 자른 것)
+func equipped_for(job: String) -> Array:
+	var arr: Array = equipped_skills.get(job, [])
+	var n := skill_slots(job)
+	return arr.slice(0, n) if arr.size() > n else arr
+
+func is_equipped(job: String, id: String) -> bool:
+	return equipped_for(job).has(id)
+
+func equip_skill(job: String, id: String) -> bool:
+	if not owns_skill(id) or SKILLS.get(id, {}).get("job", "") != job:
+		return false
+	var arr: Array = equipped_skills.get(job, [])
+	if arr.has(id):
+		return true
+	if arr.size() >= skill_slots(job):
+		return false
+	arr.append(id)
+	equipped_skills[job] = arr
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
+func unequip_skill(job: String, id: String) -> bool:
+	var arr: Array = equipped_skills.get(job, [])
+	arr.erase(id)
+	equipped_skills[job] = arr
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return true
+
+## 스킬 수치(데미지/회복 등) — scaled면 §2.2 Lv 배율 곱함
+func skill_value(id: String) -> float:
+	var s: Dictionary = SKILLS.get(id, {})
+	var v := float(s.get("base", 0.0))
+	if bool(s.get("scaled", false)):
+		v *= level_mult(String(s.get("job", "")))
+	return v
+
 ## 선택 직업: "base"(맨몸) / "sheriff"(보안관) / "maid"(메이드) / "jazz"(음악가)
 var selected_job: String = "base"
 
@@ -228,6 +331,8 @@ func reset_progress() -> void:
 	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
 	materials = {}
 	item_slots = ["", "", ""]
+	owned_skills = []
+	equipped_skills = {"sheriff": [], "maid": [], "jazz": []}
 
 ## 직업별 기본 스탯 + 크리티컬
 ##  hp=체력 / ranged=원거리 / near=근거리 / atk_spd=공격속도 / move=이동배율
@@ -326,6 +431,8 @@ func save_game() -> void:
 		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
 		"materials": materials,         # 전리품(재료) 보유(드랍·매입·제작, 로드맵 4단계)
 		"item_slots": item_slots,       # 소모품 슬롯 배치(로드맵 4단계)
+		"owned_skills": owned_skills,   # 보유 스킬(로드맵 5단계)
+		"equipped_skills": equipped_skills,  # 장착 스킬(로드맵 5단계)
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -384,6 +491,23 @@ func load_game() -> void:
 			for i in range(3):
 				var v := String(slots[i]) if i < slots.size() else ""
 				item_slots[i] = v if CONSUMABLES.has(v) else ""
+		# 스킬 보유·장착 복원
+		owned_skills = []
+		var osk = data.get("owned_skills", [])
+		if typeof(osk) == TYPE_ARRAY:
+			for s in osk:
+				if SKILLS.has(String(s)) and not owned_skills.has(String(s)):
+					owned_skills.append(String(s))
+		equipped_skills = {"sheriff": [], "maid": [], "jazz": []}
+		var esk = data.get("equipped_skills", {})
+		if typeof(esk) == TYPE_DICTIONARY:
+			for j in equipped_skills.keys():
+				var arr = esk.get(j, [])
+				if typeof(arr) == TYPE_ARRAY:
+					for s in arr:
+						var sid := String(s)
+						if SKILLS.has(sid) and SKILLS[sid]["job"] == j and owned_skills.has(sid):
+							equipped_skills[j].append(sid)
 
 func reset_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):

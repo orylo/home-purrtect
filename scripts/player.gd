@@ -105,6 +105,11 @@ var _poison_tick: float = 0.0    # 다음 독 틱까지
 var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
 var _atk_buff_t: float = 0.0     # 말린 멸치: 공격력 버프 남은 시간
 const ATK_BUFF_MULT := 1.5       # 말린 멸치: +50%
+var _guard_t: float = 0.0        # 방패 자세: 피해감소 남은 시간
+var _guard_pct: float = 0.0      # 방패 자세: 피해감소율(예 0.40)
+var _encore_t: float = 0.0       # 앵콜: 공속+40%·이속+20% 남은 시간
+const ENCORE_ASPD := 1.4
+const ENCORE_MSPD := 1.2
 var _hurt_popups: Array = []     # 치즈가 받은 데미지 숫자(머리 위로 상승+페이드)
 const HURT_POP_DUR := 0.8
 # 눕기 그림자 크기는 현재 sit 스프라이트 프레임에 직접 맞춘다(_draw 참고)
@@ -211,6 +216,10 @@ func _physics_process(delta: float) -> void:
 		_slow_timer -= delta
 	if _atk_buff_t > 0.0:
 		_atk_buff_t -= delta
+	if _guard_t > 0.0:
+		_guard_t -= delta
+	if _encore_t > 0.0:
+		_encore_t -= delta
 
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction == 0.0:
@@ -251,7 +260,8 @@ func _physics_process(delta: float) -> void:
 		direction = 0.0
 
 	var slow_factor := 0.5 if _slow_timer > 0.0 else 1.0   # 둔화 시 절반 속도
-	velocity.x = direction * base_speed * move_multiplier * slow_factor
+	var encore_m := ENCORE_MSPD if _encore_t > 0.0 else 1.0   # 앵콜 이속 버프
+	velocity.x = direction * base_speed * move_multiplier * slow_factor * encore_m
 
 	# --- 점프 상태머신: 준비(땅) → 도약 → 체공(느리게) → 착지(빠르게) ---
 	var want_jump := Input.is_action_just_pressed("jump")
@@ -384,7 +394,7 @@ func _handle_attack() -> void:
 	var want_ranged := Touch.ranged_held or Input.is_action_pressed("attack")   # L = 원거리
 	if not (want_melee or want_ranged):
 		return
-	_fire_timer = attack_interval
+	_fire_timer = attack_interval / (ENCORE_ASPD if _encore_t > 0.0 else 1.0)   # 앵콜 공속 버프
 	_attack_fired = false              # 새 공격 시작 → 준비동작 빠른 속도부터
 	if want_melee:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
@@ -528,6 +538,8 @@ func take_damage(amount: float) -> void:
 		return
 	if GameState.cheats.get("godmode", false):   # 개발자 치트: 무적
 		return
+	if _guard_t > 0.0:
+		amount *= (1.0 - _guard_pct)   # 방패 자세: 피해 감소
 	if amount >= 1.0:
 		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})   # 받은 데미지 숫자
 	health -= amount
@@ -564,6 +576,20 @@ func aoe_damage(amount: float) -> void:
 			continue
 		if e.has_method("take_damage"):
 			e.take_damage(amount, 0.0, 0.0, false)
+
+## --- 스킬 자가 효과 (로드맵 5단계) ---
+## 방패 자세: dur초 동안 받는 피해 pct만큼 감소
+func apply_guard(dur: float, pct: float) -> void:
+	if _dead:
+		return
+	_guard_t = maxf(_guard_t, dur)
+	_guard_pct = pct
+
+## 앵콜: dur초 동안 공속+40%·이속+20%
+func apply_encore(dur: float) -> void:
+	if _dead:
+		return
+	_encore_t = maxf(_encore_t, dur)
 
 
 ## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)

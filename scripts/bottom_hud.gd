@@ -8,6 +8,12 @@ const UI_FONT := preload("res://assets/fonts/DoHyeon-Regular.ttf")
 
 ## 소모품 짧은 이름(아이템칸 표시용)
 const SHORT := {"bandage": "붕대", "anchovy": "멸치", "firecracker": "폭죽"}
+## 스킬 짧은 이름(스킬칸 표시용)
+const SKILL_SHORT := {
+	"warn_shot": "경고", "shield": "방패", "support": "지원",
+	"sweep": "대청소", "wax": "왁스", "plates": "접시",
+	"discord": "불협", "lullaby": "자장", "encore": "앵콜",
+}
 
 const FILL := Color(0, 0, 0, 0.40)        # 평소(검정 반투명)
 const FILL_ON := Color(1, 1, 1, 0.45)     # 눌림(밝게)
@@ -45,11 +51,25 @@ func _draw() -> void:
 	_circle(L["companion"], Layout.ACT_R, Input.is_key_pressed(KEY_4))
 	_label(font, 28, "동료", L["companion"])
 
-	# 스킬 1~4 (원, 키 U I O P)
+	# 스킬 1~4 — 장착 슬롯(현재 직업×Lv)대로 표시. 비활성 슬롯은 어둡게, 쿨 중엔 남은 초.
 	var skills: Array = L["skills"]
+	var sbtn := get_parent().get_node_or_null("SkillButton")
+	var equipped: Array = GameState.equipped_for(GameState.selected_job)
+	var nslots: int = GameState.skill_slots(GameState.selected_job)
 	for k in skills.size():
+		var active: bool = k < nslots and k < equipped.size()
+		if not active:
+			draw_circle(skills[k], Layout.SKILL_BTN_R, Color(0, 0, 0, 0.22))
+			draw_arc(skills[k], Layout.SKILL_BTN_R, 0.0, TAU, 48, Color(1, 1, 1, 0.22), 2.0, true)
+			continue
+		var sid: String = equipped[k]
+		var cd: float = sbtn.cd_left(k) if sbtn else 0.0
 		_circle(skills[k], Layout.SKILL_BTN_R, Input.is_action_pressed("skill_%d" % (k + 1)))
-		_label(font, 20, "스킬" + str(k + 1), skills[k])
+		if cd > 0.0:
+			draw_circle(skills[k], Layout.SKILL_BTN_R, Color(0, 0, 0, 0.5))   # 쿨 중 어둡게
+			_label(font, 30, str(int(ceil(cd))), skills[k])
+		else:
+			_label(font, 20, SKILL_SHORT.get(sid, "?"), skills[k])
 
 	# 근접공격(K) / 원거리공격(L)
 	_circle(L["melee"], Layout.ACT_R, Touch.melee_held or Input.is_key_pressed(KEY_K))

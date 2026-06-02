@@ -11,6 +11,7 @@ const GOLD := Color(1.0, 0.82, 0.2)
 const ITEM_ORDER := ["bandage", "anchovy", "firecracker"]
 const TABS := [
 	{"id": "level", "name": "레벨업"},
+	{"id": "skill", "name": "스킬"},
 	{"id": "item", "name": "소모품"},
 	{"id": "sell", "name": "전리품 매입"},
 	{"id": "craft", "name": "직업 제작"},
@@ -30,6 +31,7 @@ var _item_btns := {}
 # 동적 탭 컨테이너
 var _sell_box: VBoxContainer
 var _craft_box: VBoxContainer
+var _skill_box: VBoxContainer
 var _toast: Label
 var _toast_t := 0.0
 var _content_rect: Rect2
@@ -75,6 +77,7 @@ func _build() -> void:
 	add_child(frame)
 
 	_build_level_pane()
+	_build_skill_pane()
 	_build_item_pane()
 	_build_sell_pane()
 	_build_craft_pane()
@@ -93,15 +96,19 @@ func _build() -> void:
 
 
 func _build_tabbar(vp: Vector2) -> void:
+	var n := TABS.size()
+	var sep := 10
+	var bw := 162
+	var total := n * bw + (n - 1) * sep
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 12)
-	bar.position = Vector2(vp.x * 0.5 - 420, 100)
+	bar.add_theme_constant_override("separation", sep)
+	bar.position = Vector2(vp.x * 0.5 - total * 0.5, 100)
 	add_child(bar)
 	for t in TABS:
 		var b := Button.new()
 		b.text = t["name"]
-		b.custom_minimum_size = Vector2(204, 56)
-		_font(b, 28)
+		b.custom_minimum_size = Vector2(bw, 56)
+		_font(b, 26)
 		b.pressed.connect(_set_tab.bind(t["id"]))
 		bar.add_child(b)
 		_tab_btns[t["id"]] = b
@@ -225,6 +232,60 @@ func _rebuild_sell() -> void:
 		_sell_box.add_child(empty)
 
 
+# --- 스킬 탭(동적, 현재 선택 직업 기준) ---
+func _build_skill_pane() -> void:
+	var p := _new_pane("skill")
+	var head := _text("스킬 구매 (현재 직업 전용 · §4.2)", 30, ORANGE)
+	head.position = Vector2(20, 12)
+	p.add_child(head)
+	_skill_box = VBoxContainer.new()
+	_skill_box.add_theme_constant_override("separation", 12)
+	_skill_box.position = Vector2(20, 60)
+	_skill_box.custom_minimum_size = Vector2(800, 0)
+	p.add_child(_skill_box)
+
+
+func _rebuild_skill() -> void:
+	for c in _skill_box.get_children():
+		c.queue_free()
+	var job: String = GameState.selected_job
+	if job == "base":
+		var none := _text("맨몸(길냥이)은 구매 스킬이 없어요. 고유기 '냥냥펀치'만 (§4.1)\n전투 준비에서 직업을 골라 보세요.", 24, Color(1, 1, 1, 0.8))
+		_skill_box.add_child(none)
+		return
+	# 해당 직업 스킬 3개를 order 순으로
+	var ids: Array = []
+	for sid in GameState.SKILLS:
+		if GameState.SKILLS[sid]["job"] == job:
+			ids.append(sid)
+	ids.sort_custom(func(a, b): return int(GameState.SKILLS[a]["order"]) < int(GameState.SKILLS[b]["order"]))
+	for sid in ids:
+		var s: Dictionary = GameState.SKILLS[sid]
+		var card := Panel.new()
+		card.add_theme_stylebox_override("panel", _card_sb())
+		card.custom_minimum_size = Vector2(800, 116)
+		_skill_box.add_child(card)
+		var nm := _text("%d번째  %s   (CD %ds)" % [int(s["order"]), String(s["name"]), int(s["cd"])], 26, Color(1, 1, 1))
+		nm.position = Vector2(16, 10)
+		card.add_child(nm)
+		var ds := _text(String(s["desc"]), 21, Color(0.82, 0.88, 0.95))
+		ds.position = Vector2(16, 50)
+		card.add_child(ds)
+		var b := Button.new()
+		b.position = Vector2(560, 30)
+		b.custom_minimum_size = Vector2(224, 56)
+		_font(b, 24)
+		if GameState.owns_skill(sid):
+			_btn_colors(b, Color(0.3, 0.4, 0.3)); b.text = "보유 완료"; b.disabled = true
+		elif int(s["order"]) >= 3:
+			_btn_colors(b, Color(0.35, 0.3, 0.45)); b.text = "2막 라쿤"; b.disabled = true
+		else:
+			_btn_colors(b, ORANGE); b.text = "구매 (%d)" % int(s["price"])
+			b.disabled = not GameState.can_buy_skill(sid)
+			b.pressed.connect(_on_buy_skill.bind(sid))
+		card.add_child(b)
+
+
 # --- 직업 제작 탭(동적) ---
 func _build_craft_pane() -> void:
 	var p := _new_pane("craft")
@@ -294,6 +355,8 @@ func _set_tab(tab: String) -> void:
 		_rebuild_sell()
 	elif tab == "craft":
 		_rebuild_craft()
+	elif tab == "skill":
+		_rebuild_skill()
 	_refresh()
 
 
@@ -341,6 +404,15 @@ func _on_sell(id: String, n: int) -> void:
 		_toast_msg("+%s 코인" % _commafy(gain))
 		_rebuild_sell()
 		_refresh()
+
+func _on_buy_skill(sid: String) -> void:
+	if GameState.buy_skill(sid):
+		_toast_msg("%s 구매! 전투 준비에서 장착" % String(GameState.SKILLS[sid]["name"]))
+		_rebuild_skill()
+		_refresh()
+	else:
+		_toast_msg("코인이 부족해요 (%d)" % int(GameState.SKILLS[sid]["price"]))
+
 
 func _on_craft(job: String) -> void:
 	if GameState.craft_job(job):

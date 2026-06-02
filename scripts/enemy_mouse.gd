@@ -48,6 +48,8 @@ var _flash: float = 0.0
 var _flash_crit: bool = false
 var _knockback: float = 0.0
 var _stun_timer: float = 0.0
+var _eslow_timer: float = 0.0    # 스킬 둔화(왁스칠·불협화음 등) 남은 시간
+var _eslow_factor: float = 1.0   # 둔화 시 이동 배율
 var _lunge: float = 0.0        # 근접 찌르기 모션 타이머
 var _dive: float = 0.0         # 참새 급강하(공격 때 내려갔다 올라옴) 타이머
 const DIVE_DUR := 0.5
@@ -128,6 +130,8 @@ func _physics_process(delta: float) -> void:
 	var stunned := _stun_timer > 0.0
 	if stunned:
 		_stun_timer -= delta
+	if _eslow_timer > 0.0:
+		_eslow_timer -= delta
 	if _lunge > 0.0:
 		_lunge -= delta
 	if _dive > 0.0:
@@ -158,7 +162,7 @@ func _physics_process(delta: float) -> void:
 			if ranged and not _air and _atk_range > 0.0 and dist <= _atk_range:
 				base_vx = 0.0
 			else:
-				base_vx = -move_speed
+				base_vx = -move_speed * (_eslow_factor if _eslow_timer > 0.0 else 1.0)
 	_knockback = move_toward(_knockback, 0.0, 420.0 * delta)
 	velocity.x = base_vx + _knockback
 	velocity.y = 0.0
@@ -349,6 +353,20 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		Fx.request_shake(7.0 if crit else 3.0)
 		if _use_sprite:
 			anim.play("hit")
+
+
+## 스킬 둔화(이동 배율 factor로 dur초) — 왁스칠·불협화음
+func apply_slow(dur: float, factor: float) -> void:
+	if dead:
+		return
+	_eslow_timer = maxf(_eslow_timer, dur)
+	_eslow_factor = factor
+
+## 스킬 스턴(완전 정지 dur초) — 자장가. 데미지·넉백 없음
+func apply_stun(dur: float) -> void:
+	if dead:
+		return
+	_stun_timer = maxf(_stun_timer, dur)
 
 
 func _on_anim_finished() -> void:
