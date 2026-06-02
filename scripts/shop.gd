@@ -371,13 +371,17 @@ func _rebuild_craft() -> void:
 		b.position = Vector2(16, 92)
 		b.custom_minimum_size = Vector2(768, 48)
 		_font(b, 26)
-		if GameState.is_job_unlocked(job):
+		if GameState.owns_job(job):
 			_btn_colors(b, Color(0.3, 0.4, 0.3))
-			b.text = "이미 보유한 직업"
+			b.text = "이미 보유 (이름없는 등급)"
+			b.disabled = true
+		elif not GameState.is_job_unlocked(job):
+			_btn_colors(b, Color(0.3, 0.4, 0.3))
+			b.text = "1-7 상점 오픈 후 제작"
 			b.disabled = true
 		else:
 			_btn_colors(b, ORANGE)
-			b.text = "제작"
+			b.text = "제작 (이름없는 등급)"
 			b.disabled = not GameState.can_craft_job(job)
 			b.pressed.connect(_on_craft.bind(job))
 		card.add_child(b)
