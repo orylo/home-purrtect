@@ -126,7 +126,7 @@ func _refresh_list() -> void:
 			for j in JOB_ORDER:
 				for g in GameState.owned_grades.get(j, []):
 					_add_list_row("%s:%d" % [j, g], GameState.job_title(j, g),
-						(GameState.rank_label(g, j) if j != "base" else "맨몸"),
+						(GameState.rank_label(g, j) if j != "base" else "등급 없음"),
 						GameState.rank_color(g, j) if j != "base" else Design.PAPER_DEEP)
 		"ally":
 			if GameState.owned_companions.is_empty(): _add_empty("동료 없음 — 펄/상점에서 호루라기 입수")
@@ -210,12 +210,14 @@ func _detail_job() -> void:
 	var st: Dictionary = GameState.JOB_STATS[job]
 	var m: float = GameState.LV_MULT[clampi(g - 1, 0, 4)]
 	for ln in [
-		"♥ 체력  %d" % int(round(st["hp"] * m)),
-		"근접  %d      원거리  %d" % [int(round(st["near"] * m)), int(round(st["ranged"] * m))],
-		"공속  %.2f      이속  %.2f" % [st["atk_spd"], st["move"]],
-		"◆ 크리  %d%%" % int(st["crit"] * 100),
+		"체력  %d" % int(round(st["hp"] * m)),
+		"근접 공격력  %d" % int(round(st["near"] * m)),
+		"원거리 공격력  %d" % int(round(st["ranged"] * m)),
+		"공격 속도  %.2f" % st["atk_spd"],
+		"이동 속도  %.2f" % st["move"],
+		"치명타 확률  %d%%" % int(st["crit"] * 100),
 	]:
-		_detail.add_child(_dlabel(ln, "body", Design.INK, y)); y += 30
+		_detail.add_child(_dlabel(ln, "body", Design.INK, y)); y += 28
 	var equipped := (GameState.selected_job == job and GameState.equipped_grade == g)
 	_add_equip_btn("장착됨" if equipped else "장착", equipped, func():
 		GameState.selected_job = job
@@ -291,7 +293,7 @@ func _refresh_loadout() -> void:
 	var y := 18.0
 	var hdr := Design.label("내 장비", "title", Design.INK); hdr.position = Vector2(16, y); _loadout.add_child(hdr); y += 46
 	var jt := GameState.job_title(GameState.selected_job, GameState.equipped_grade)
-	var jr := (GameState.rank_label(GameState.equipped_grade, GameState.selected_job) if GameState.selected_job != "base" else "맨몸")
+	var jr := (GameState.rank_label(GameState.equipped_grade, GameState.selected_job) if GameState.selected_job != "base" else "등급 없음")
 	y = _equip_slot("직업", "%s · %s" % [jt, jr], GameState.rank_color(GameState.equipped_grade, GameState.selected_job), y)
 	var comp: String = GameState.equipped_companion
 	y = _equip_slot("동료 호루라기", (String(GameState.COMPANIONS[comp]["name"]) if comp != "" else "(빈 슬롯)"), Design.TEAL, y)
