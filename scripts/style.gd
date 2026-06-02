@@ -85,7 +85,7 @@ func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
 func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
-	sb.set_corner_radius_all(20)         # 둥근 사각(완전 알약은 베벨 림이 모서리 밖으로 삐져나와서 20으로)
+	sb.set_corner_radius_all(999)        # 큰 값 → 높이의 절반에 클램프 = 알약(design.md §3.5)
 	sb.set_border_width_all(OUTLINE_W)
 	sb.border_color = INK
 	sb.content_margin_left = float(GAP_LG)
@@ -132,6 +132,11 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 	b.add_theme_color_override("font_disabled_color", INK.lerp(PAPER_DEEP, 0.5))
 	# 베벨 림(상단 하이라이트 + 하단 음영) — icon 제외
 	_add_bevel(b, bg, kind != "icon")
+	# 알약 곡선에 맞춰 림 위치를 버튼 크기 변할 때마다 재계산(인셋=반지름)
+	if kind != "icon" and not b.has_meta("_bevel_hooked"):
+		b.set_meta("_bevel_hooked", true)
+		b.resized.connect(_relayout_bevel.bind(b))
+	_relayout_bevel.call_deferred(b)
 
 func button(text: String, kind: String = "secondary", fs: int = FS_TITLE) -> Button:
 	var b := Button.new()
@@ -148,15 +153,14 @@ func _add_bevel(b: Control, bg: Color, enabled: bool) -> void:
 			c.queue_free()
 	if not enabled:
 		return
-	# 상단 하이라이트 림 — 라운드(20) 모서리 안쪽으로 충분히 들여서(좌우 22px) 삐져나옴 방지
+	# 상단 하이라이트 림 (좌우 인셋은 _relayout_bevel에서 알약 반지름에 맞춰 설정)
 	var hi := Panel.new()
 	hi.name = "_bevelHi"
 	hi.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hi.anchor_left = 0.0; hi.anchor_right = 1.0; hi.anchor_top = 0.0; hi.anchor_bottom = 0.0
-	hi.offset_left = 22.0; hi.offset_right = -22.0; hi.offset_top = 7.0; hi.offset_bottom = 14.0
 	var hsb := StyleBoxFlat.new()
 	hsb.bg_color = Color(bg.lightened(0.5), 0.7)
-	hsb.set_corner_radius_all(4)
+	hsb.set_corner_radius_all(99)   # 알약 끝
 	hi.add_theme_stylebox_override("panel", hsb)
 	b.add_child(hi)
 	# 하단 음영 림
@@ -164,12 +168,30 @@ func _add_bevel(b: Control, bg: Color, enabled: bool) -> void:
 	lo.name = "_bevelLo"
 	lo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lo.anchor_left = 0.0; lo.anchor_right = 1.0; lo.anchor_top = 1.0; lo.anchor_bottom = 1.0
-	lo.offset_left = 24.0; lo.offset_right = -24.0; lo.offset_top = -14.0; lo.offset_bottom = -7.0
 	var lsb := StyleBoxFlat.new()
 	lsb.bg_color = Color(bg.darkened(0.28), 0.55)
-	lsb.set_corner_radius_all(3)
+	lsb.set_corner_radius_all(99)
 	lo.add_theme_stylebox_override("panel", lsb)
 	b.add_child(lo)
+
+
+## 알약 곡선 안에 림이 들어오도록 좌우 인셋 = 반지름(높이÷2)+여유 로 재배치.
+func _relayout_bevel(b: Control) -> void:
+	if not is_instance_valid(b):
+		return
+	var hi := b.get_node_or_null("_bevelHi")
+	var lo := b.get_node_or_null("_bevelLo")
+	var rad := b.size.y * 0.5
+	var inset := rad + 2.0
+	if hi:
+		hi.offset_left = inset; hi.offset_right = -inset
+		hi.offset_top = 7.0; hi.offset_bottom = 14.0
+		hi.visible = b.size.x > inset * 2.0 + 8.0
+	if lo:
+		var inl := inset + 2.0
+		lo.offset_left = inl; lo.offset_right = -inl
+		lo.offset_top = -14.0; lo.offset_bottom = -7.0
+		lo.visible = b.size.x > inl * 2.0 + 8.0
 
 
 # ──────────────────────────────────────────────────────────
