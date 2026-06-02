@@ -85,7 +85,7 @@ func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
 func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
-	sb.set_corner_radius_all(120)        # 큰 값 → 높이의 절반에 클램프 = 알약(§3.5)
+	sb.set_corner_radius_all(20)         # 둥근 사각(완전 알약은 베벨 림이 모서리 밖으로 삐져나와서 20으로)
 	sb.set_border_width_all(OUTLINE_W)
 	sb.border_color = INK
 	sb.content_margin_left = float(GAP_LG)
@@ -148,12 +148,12 @@ func _add_bevel(b: Control, bg: Color, enabled: bool) -> void:
 			c.queue_free()
 	if not enabled:
 		return
-	# 상단 하이라이트 림
+	# 상단 하이라이트 림 — 라운드(20) 모서리 안쪽으로 충분히 들여서(좌우 22px) 삐져나옴 방지
 	var hi := Panel.new()
 	hi.name = "_bevelHi"
 	hi.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hi.anchor_left = 0.0; hi.anchor_right = 1.0; hi.anchor_top = 0.0; hi.anchor_bottom = 0.0
-	hi.offset_left = 13.0; hi.offset_right = -13.0; hi.offset_top = 5.0; hi.offset_bottom = 12.0
+	hi.offset_left = 22.0; hi.offset_right = -22.0; hi.offset_top = 7.0; hi.offset_bottom = 14.0
 	var hsb := StyleBoxFlat.new()
 	hsb.bg_color = Color(bg.lightened(0.5), 0.7)
 	hsb.set_corner_radius_all(4)
@@ -164,7 +164,7 @@ func _add_bevel(b: Control, bg: Color, enabled: bool) -> void:
 	lo.name = "_bevelLo"
 	lo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lo.anchor_left = 0.0; lo.anchor_right = 1.0; lo.anchor_top = 1.0; lo.anchor_bottom = 1.0
-	lo.offset_left = 16.0; lo.offset_right = -16.0; lo.offset_top = -13.0; lo.offset_bottom = -6.0
+	lo.offset_left = 24.0; lo.offset_right = -24.0; lo.offset_top = -14.0; lo.offset_bottom = -7.0
 	var lsb := StyleBoxFlat.new()
 	lsb.bg_color = Color(bg.darkened(0.28), 0.55)
 	lsb.set_corner_radius_all(3)
