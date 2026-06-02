@@ -22,6 +22,7 @@ var max_range: float = 0.0         # straight: 0=무제한, >0=이 거리까지(
 var fade_start: float = 0.6        # 사거리의 이 비율부터 투명해지기 시작
 var wave_amp: float = 0.0          # 물결 진폭(px) — 0이면 직선
 var wave_freq: float = 0.0         # 물결 주파수(rad/px)
+var _trail: Array = []             # 음표 잔상용 과거 위치(글로벌)
 var damage: float = 8.0
 var knockback: float = 70.0
 var stun: float = 0.0
@@ -116,6 +117,10 @@ func _physics_process(delta: float) -> void:
 	if mode == "straight" and wave_amp > 0.0:
 		_dist += absf(_velocity.x) * delta
 		global_position.y = _base_y + sin(_dist * wave_freq) * wave_amp
+		if shape == "note":
+			_trail.append(global_position)
+			if _trail.size() > 9:
+				_trail.remove_at(0)
 		queue_redraw()
 
 	# 사거리 제한 + 끝에서 점점 투명(음악가)
@@ -261,8 +266,20 @@ func _draw_dot(a: float) -> void:
 
 
 func _draw_note(a: float, t: int) -> void:
-	var col := Color(1, 1, 1, a)
-	var edge := Color(0.12, 0.12, 0.15, a)
+	# 잔상(트레일) — 지나온 물결 경로에 금빛 글로우. 오래된 것일수록 흐리고 작게.
+	var n := _trail.size()
+	for i in n:
+		var age := float(i + 1) / float(n + 1)        # 0(오래)~1(최근)
+		var lp: Vector2 = _trail[i] - global_position  # 로컬 좌표
+		var ta := a * age * age
+		if ta > 0.03:
+			draw_circle(lp, 3.0 + 8.0 * age, Color(1.0, 0.86, 0.3, 0.22 * ta))   # 노란 헤일로
+			draw_circle(lp, 1.5 + 4.0 * age, Color(1.0, 1.0, 0.8, 0.7 * ta))     # 흰 코어
+	# 음표 본체 글로우(노랑→흰) + 따뜻한 흰색 채움 + 금빛 외곽
+	draw_circle(Vector2.ZERO, 18.0, Color(1.0, 0.80, 0.20, 0.16 * a))
+	draw_circle(Vector2.ZERO, 11.0, Color(1.0, 0.93, 0.55, 0.28 * a))
+	var col := Color(1.0, 0.99, 0.88, a)
+	var edge := Color(0.55, 0.40, 0.10, a)
 	match t:
 		1:
 			# 잇단음표(♫) — 머리 2개 + 기둥 2개 + 위쪽 빔(beam)
@@ -285,7 +302,7 @@ func _draw_note(a: float, t: int) -> void:
 
 
 func _note_head(c: Vector2, col: Color, edge: Color) -> void:
-	draw_circle(c, 10.0, Color(0.7, 0.85, 1.0, col.a * 0.16))   # 부드러운 글로우(음악적 푸른빛)
+	draw_circle(c, 11.0, Color(1.0, 0.9, 0.45, col.a * 0.22))   # 부드러운 금빛 글로우
 	draw_circle(c, 7.0, col)
 	draw_circle(c + Vector2(-2.2, -2.4), 2.6, Color(1, 1, 1, col.a))   # 광택 하이라이트
 	draw_arc(c, 7.0, 0.0, TAU, 18, edge, 1.5, true)
