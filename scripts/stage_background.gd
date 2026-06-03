@@ -22,6 +22,7 @@ var near_pieces: Array = []                  # 이번 판 근경 조각 [{corner
 
 const FAR_LIFT_MIN := 150.0                 # 원경(+안개) 올림 범위(px). 매 판 이 사이 랜덤.
 const FAR_LIFT_MAX := 400.0
+const FAR_LIFT_DEFAULT := 200.0             # 원경 고정 스테이지(FIXED_FAR)는 랜덤 대신 이 값으로 고정
 var _far_lift := 150.0                       # 이번 판 실제 올림값(_ready에서 랜덤). 지면·근경은 항상 바닥 고정.
 const FOG_COL := Color(0.97, 0.98, 1.0)    # 안개 색(거의 흰색 — 빈티지 망점)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
@@ -85,6 +86,7 @@ func _pick_backgrounds() -> void:
 	if far_texture == null:
 		if FIXED_FAR.has(key):
 			far_texture = _load_tex(FIXED_FAR[key])
+			_far_lift = FAR_LIFT_DEFAULT       # 고정 원경은 높이도 고정(랜덤 X)
 		else:
 			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)), [_last_far])
 			if far_texture != null:
