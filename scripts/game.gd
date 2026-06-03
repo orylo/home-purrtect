@@ -57,16 +57,19 @@ func _on_inscene_event() -> void:
 			await get_tree().process_frame
 	await get_tree().create_timer(0.35).timeout   # 도착 후 한 박자
 
-	# 2) 궤짝+치즈를 확대(카메라 줌인)
+	# 2) 궤짝+치즈를 확대(카메라 줌인). ★트리 일시정지 중이라 Tween은 안 돎 → 수동 lerp(process_frame는 pause에도 발신).
 	var cam := Camera2D.new()
 	cam.process_mode = Node.PROCESS_MODE_ALWAYS
 	var focus_x: float = (crate_x + (player as Node2D).global_position.x) * 0.5
 	cam.global_position = Vector2(focus_x, Layout.ground_y() - 110.0)
 	add_child(cam)
 	cam.make_current()
-	var zt := create_tween()
-	zt.tween_property(cam, "zoom", Vector2(2.3, 2.3), 1.0).set_trans(Tween.TRANS_SINE)
-	await zt.finished
+	var zt := 0.0
+	while zt < 1.0:
+		await get_tree().process_frame
+		zt = minf(zt + 1.0 / 50.0, 1.0)         # ~1초
+		var e := zt * zt * (3.0 - 2.0 * zt)     # smoothstep
+		cam.zoom = Vector2.ONE.lerp(Vector2(2.3, 2.3), e)
 
 	# 3) 컷씬(플레이스홀더) — 풀스크린 패널 + [확인]
 	await _play_placeholder_cutscene()
