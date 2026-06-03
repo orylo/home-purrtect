@@ -164,9 +164,26 @@ func _trumpet(dur := 0.30) -> PackedFloat32Array:
 	return s
 
 
+## 천둥 — 날카로운 크랙 + 깊은 저역 럼블(긴 감쇠).
+func _thunder() -> PackedFloat32Array:
+	var dur := 1.1
+	var n := int(RATE * dur)
+	var s := PackedFloat32Array(); s.resize(n)
+	var lp := 0.0
+	for i in n:
+		var t := float(i) / RATE
+		var white := randf() * 2.0 - 1.0
+		lp = lp * 0.968 + white * 0.032            # 저역 통과 → 럼블
+		var rumble := lp * exp(-t * 2.4) * 7.0
+		var crack := white * exp(-t * 42.0) * 0.7  # 초반 날카로운 크랙
+		s[i] = clampf((rumble + crack) * 0.5, -1.0, 1.0)
+	return s
+
+
 func _gen(name: String) -> AudioStreamWAV:
 	match name:
 		"trumpet": return _wav(_trumpet())                                      # 음악가 평타(트럼펫)
+		"thunder": return _wav(_thunder())                                      # 번개 천둥
 		"click": return _wav(_noise(0.045, 80.0, 0.5))                          # UI 틱
 		"pop":   return _wav(_add(_noise(0.12, 28.0, 0.7), _sweep(420, 120, 0.12, 22.0)))  # 처치 펑
 		"hit":   return _wav(_add(_noise(0.06, 55.0, 0.55), _sweep(180, 70, 0.07, 40.0)))  # 타격 퍽
