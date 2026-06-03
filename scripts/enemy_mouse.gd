@@ -49,6 +49,14 @@ const ATK_RELEASE := {
 }
 # 사거리 안에서 attack 사이클을 루프하며 연속발사(발사=ATK_RELEASE 프레임).
 const LOOP_SHOOTERS := ["gray_thrower", "black_thrower", "spider", "bee"]
+# 발사 프레임에서 탄환 생성 위치(스프라이트 중심 기준 프레임px). 손/침/복부/입.
+const EMIT_OFFSET := {
+	"gray_thrower":  Vector2(-118, 0),    # 던지는 손
+	"black_thrower": Vector2(-118, 0),
+	"bee":           Vector2(-110, 72),   # 엉덩이 침(좌하단)
+	"spider":        Vector2(55, -12),    # 복부(엉덩이, 우후방)
+	"bat":           Vector2(-51, -15),   # 입(좌)
+}
 # 공중 상하진동: c=평균 높이(px,위로) / a=진폭 / s=각속도. 최저점(바닥)=c-a.
 const AIR_BOB := {
 	"bat":     {"c": 221.0, "a": 120.0, "s": 1.6},   # 폭 큼: 최저점=치즈 얼굴 높이
@@ -383,18 +391,17 @@ func _fire_projectile() -> void:
 	elif _id == "bee":
 		b.shape = "cone"           # 벌 = 원뿔 독침
 
-	# 박쥐: 현재 비행 높이(최저점=치즈 얼굴)에서 수평 음파. 서면 맞고 앉으면 회피.
+	# 박쥐: 입 위치(현재 비행 높이=최저점이면 치즈 얼굴)에서 수평 음파. 서면 맞고 앉으면 회피.
 	if _high:
-		var by: float = anim.position.y    # 박쥐 현재 높이(진동 최저점에서 발사됨)
-		b.global_position = Vector2(global_position.x - 10.0, global_position.y + by)
-		b.hit_y_offset = by
+		var emit := _emit_pos()
+		b.global_position = emit
+		b.hit_y_offset = emit.y - global_position.y    # 음파가 지나는 높이(바닥 기준)
 		b.dodge_by_crouch = true
 		get_parent().add_child(b)
 		b.setup(Vector2(-460.0, 0.0), damage, _status, _bcolor, 0.0)   # 수평 직선
 		return
 
-	var oy: float = anim.position.y if (_air and _use_sprite) else (-90.0)
-	var origin := global_position + Vector2(-10, oy)
+	var origin := _emit_pos()
 	b.global_position = origin
 	get_parent().add_child(b)
 	var target := (player as Node2D).global_position + Vector2(0, -90)   # 치즈 몸통 겨냥
@@ -409,6 +416,23 @@ func _fire_projectile() -> void:
 	else:
 		var dir := (target - origin).normalized()
 		b.setup(dir * 520.0, damage, _status, _bcolor, 0.0)                   # 직선
+
+
+## 탄환 생성 위치(월드). 스프라이트 부위(EMIT_OFFSET) 기준, 없으면 폴백.
+func _emit_pos() -> Vector2:
+	var base := global_position + anim.position    # 스프라이트 중심(공중=진동 반영)
+	if _use_sprite and EMIT_OFFSET.has(_id):
+		var off: Vector2 = EMIT_OFFSET[_id] * anim.scale.x
+		if anim.flip_h:
+			off.x = -off.x
+		return base + off
+	var oy: float = anim.position.y if (_air and _use_sprite) else -90.0
+	return global_position + Vector2(-10, oy)
+
+
+## 치즈 지상 근접이 닿는지 판단용: 현재 떠 있는 높이(px, 양수). 낮을수록 지상에서 타격 가능.
+func air_height_now() -> float:
+	return _air_raise()
 
 
 ## 공중 적의 현재 떠 있는 높이(px, 양수). 진동 스프라이트는 실시간 높이, 그 외 폴백.

@@ -30,6 +30,7 @@ extends CharacterBody2D
 @export var near_damage: float = 12.0         # 맨몸 치즈 근거리공격력(할퀴기) 12
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
 @export var melee_range: float = 300.0        # 근접 사거리(이 안이면 근접). 조금 줄임
+const MELEE_AIR_REACH := 150.0                # 공중 적이 이 높이(px) 이하로 내려오면 지상 근접 타격 가능(그 위는 점프 필요)
 var melee_targets: int = 2                    # 근접 한 번에 때리는 최대 적 수(직업 스탯 melee_targets, 기본 2)
 @export var melee_hit_delay: float = 0.10     # 근접: 공격 시작 후 이만큼 뒤에 딜(빠른 모션에 맞춰 단축)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
@@ -458,9 +459,13 @@ func _melee_attack() -> void:
 			continue
 		if e.has_method("is_dead") and e.is_dead():
 			continue
-		# 지상 근접은 공중 적 못 때림 — 점프(공중)해서 높이 맞춰야 타격
+		# 지상 근접: 공중 적이 충분히 낮게 내려와 있으면 타격 가능, 높으면 점프 필요.
 		if on_ground and e.has_method("is_air") and e.is_air():
-			continue
+			var hh := 9999.0
+			if e.has_method("air_height_now"):
+				hh = e.air_height_now()
+			if hh > MELEE_AIR_REACH:
+				continue
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d <= melee_range:
 			targets.append({"e": e, "d": d})
