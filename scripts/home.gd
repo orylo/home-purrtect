@@ -41,7 +41,7 @@ func _build() -> void:
 	add_child(stage)
 	_btn("가방", Vector2(vp.x - 296, 24), Vector2(120, 48), "paper", Design.FS_BODY, _show_bag)
 	_btn("설정", Vector2(vp.x - 160, 24), Vector2(120, 48), "paper", Design.FS_BODY,
-			func(): _toast_msg("설정 — 준비중"))
+			func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐")))
 
 	# NPC 진입점 (테스트 위해 상시 노출)
 	_btn("펄", Vector2(vp.x * 0.20, vp.y * 0.40), Vector2(128, 64), "cheese", Design.FS_TITLE,
