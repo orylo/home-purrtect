@@ -152,6 +152,13 @@ func _ready() -> void:
 
 	box.add_child(_dim("↑ 침입자 안 나옴. 게임 중 🐞로 직접 스폰", 16))
 
+	# 홈 화면(개발) — 전투 대신 홈으로. 홈의 DEV 도구로 코인·스테이지·전리품 조작.
+	var home_btn := Button.new()
+	home_btn.text = "홈 화면 (개발 도구)"
+	_font(home_btn, 24)
+	home_btn.pressed.connect(_on_home)
+	box.add_child(home_btn)
+
 	var back_btn := Button.new()
 	back_btn.text = "뒤로"
 	_font(back_btn, 22)
@@ -191,6 +198,12 @@ func _on_test() -> void:
 	_apply_settings()
 	GameState.sandbox = true   # 자동 웨이브 없음 — 🐞로 직접 스폰
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
+
+
+func _on_home() -> void:
+	_apply_settings()          # mode=dev + 직업/스테이지 등 반영
+	GameState.sandbox = false
+	get_tree().change_scene_to_file("res://scenes/home.tscn")
 
 
 func _apply_settings() -> void:

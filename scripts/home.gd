@@ -4,10 +4,12 @@ extends Control
 
 var _toast: Label
 var _toast_t := 0.0
+var _coin_lbl: Label   # 개발 도구에서 코인 즉시 갱신용
 
 
 func _ready() -> void:
-	GameState.mode = "player"
+	if GameState.mode != "dev":     # 개발 모드면 유지(홈에서 DEV 도구 사용)
+		GameState.mode = "player"
 	_build()
 
 
@@ -57,6 +59,11 @@ func _build() -> void:
 	coin.position = Vector2(leftmost - 240 - 16, E)
 	coin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(coin)
+	_coin_lbl = coin
+
+	# DEV 도구(개발 빌드 전용) — 좌상단 스테이지 플레이트 아래.
+	if GameState.is_dev():
+		_btn("DEV 도구", Vector2(E, E + 60.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
 
 	# ── 좌측 중앙: 펄·맥스 세로 스택(해금 게이팅) ──
 	var npc_sz := Vector2(160, 64)
@@ -176,6 +183,127 @@ func _toast_msg(msg: String) -> void:
 	_toast.text = msg
 	_toast.visible = true
 	_toast_t = 1.6
+
+
+# --- DEV 도구(홈에서 코인·스테이지·전리품 등 직접 조작, DEV 빌드 전용) ---
+func _rebuild() -> void:
+	for c in get_children():
+		remove_child(c)
+		c.queue_free()
+	_toast = null
+	_coin_lbl = null
+	_build()
+
+
+func _dev_add_coins(n: int) -> void:
+	GameState.coins += n
+	if is_instance_valid(_coin_lbl):
+		_coin_lbl.text = "코인 " + _commafy(GameState.coins)
+	_toast_msg("코인 +%s" % _commafy(n))
+
+
+func _dev_set_stage(n: int) -> void:
+	GameState.stage_minor = clampi(n, 1, 20)
+	GameState.cleared_stages = []
+	for s in range(1, GameState.stage_minor):   # 현재 스테이지 직전까지 클리어 처리(해금 반영)
+		GameState.cleared_stages.append(s)
+	GameState._check_stage_unlocks()             # 보안관/메이드/음악가 진행 해금 보강
+	_rebuild()                                   # 홈 갱신(버튼 노출·스테이지 표기)
+
+
+func _dev_add_materials() -> void:
+	for mid in GameState.MATERIALS:
+		GameState.add_material(mid, 20)
+	_toast_msg("전리품·보석 전부 +20")
+
+
+func _dev_add_consumables() -> void:
+	for id in GameState.CONSUMABLES:
+		GameState.inventory[id] = int(GameState.inventory.get(id, 0)) + 10
+	_toast_msg("소모품 전부 +10")
+
+
+func _dev_unlock_all() -> void:
+	for j in ["sheriff", "maid", "jazz"]:
+		if not GameState.unlocked_jobs.has(j):
+			GameState.unlocked_jobs.append(j)
+		GameState._add_grade(j, 1)
+	GameState.dev_grant_skills()
+	GameState.pearl_favor = maxi(GameState.pearl_favor, 50)
+	_toast_msg("직업·스킬·펄 호감도 해금")
+
+
+func _show_dev_panel() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	var ov := Control.new()
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(ov)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.add_child(dim)
+
+	var pw := 560.0
+	var ph := 470.0
+	var panel := Panel.new()
+	panel.add_theme_stylebox_override("panel", Design.panel_box())
+	panel.position = Vector2((vp.x - pw) * 0.5, (vp.y - ph) * 0.5)
+	panel.size = Vector2(pw, ph)
+	ov.add_child(panel)
+
+	var y := 20.0
+	var t := Design.label("개발 도구 (DEV)", "title", Design.INK)
+	t.position = Vector2(24, y); panel.add_child(t); y += 50.0
+
+	# 코인
+	var rowy := y
+	panel.add_child(_dev_lbl("코인", Vector2(24, rowy)))
+	_dev_pbtn(panel, "+1만", Vector2(120, rowy), func(): _dev_add_coins(10000))
+	_dev_pbtn(panel, "+10만", Vector2(232, rowy), func(): _dev_add_coins(100000))
+	_dev_pbtn(panel, "+100만", Vector2(360, rowy), func(): _dev_add_coins(1000000))
+	y += 64.0
+
+	# 스테이지
+	panel.add_child(_dev_lbl("스테이지 %d-%d" % [GameState.stage_major, GameState.stage_minor], Vector2(24, y)))
+	_dev_pbtn(panel, "◀ 이전", Vector2(220, y), func(): _dev_set_stage(GameState.stage_minor - 1))
+	_dev_pbtn(panel, "다음 ▶", Vector2(340, y), func(): _dev_set_stage(GameState.stage_minor + 1))
+	_dev_pbtn(panel, "막끝(20)", Vector2(460, y), func(): _dev_set_stage(20))
+	y += 64.0
+
+	_dev_wbtn(panel, "전리품·보석 전부 +20", Vector2(24, y), func(): _dev_add_materials())
+	y += 60.0
+	_dev_wbtn(panel, "소모품 전부 +10", Vector2(24, y), func(): _dev_add_consumables())
+	y += 60.0
+	_dev_wbtn(panel, "직업·스킬·펄 전부 해금", Vector2(24, y), func(): _dev_unlock_all())
+	y += 60.0
+
+	var close := Design.button("닫기", "secondary", Design.FS_BODY)
+	close.position = Vector2(pw - 140.0, ph - 60.0)
+	close.size = Vector2(116, 44)
+	close.custom_minimum_size = close.size
+	close.pressed.connect(func(): ov.queue_free())
+	panel.add_child(close)
+
+
+func _dev_lbl(t: String, pos: Vector2) -> Label:
+	var l := Design.label(t, "body", Design.INK)
+	l.position = pos
+	return l
+
+func _dev_pbtn(parent: Control, t: String, pos: Vector2, fn: Callable) -> void:
+	var b := Design.button(t, "paper", Design.FS_CAPTION)
+	b.position = pos
+	b.size = Vector2(108, 44); b.custom_minimum_size = b.size
+	b.pressed.connect(fn)
+	parent.add_child(b)
+
+func _dev_wbtn(parent: Control, t: String, pos: Vector2, fn: Callable) -> void:
+	var b := Design.button(t, "cheese", Design.FS_BODY)
+	b.position = pos
+	b.size = Vector2(280, 48); b.custom_minimum_size = b.size
+	b.pressed.connect(fn)
+	parent.add_child(b)
 
 
 # --- 실내 배경 플레이스홀더(벽/바닥 2톤 + 중앙 받침) ---
