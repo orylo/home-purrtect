@@ -34,9 +34,9 @@ const BLACK_IDS := ["black", "black_roller", "black_thrower"]   # 회색 프레�
 const DARK_SHADER := preload("res://assets/shaders/enemy_darken.gdshader")
 # 종류별 화면 크기 배율(쥐·투척쥐 제외하고 키움). 기본 1.0.
 const SIZE_MULT := {
-	"gray_roller": 1.28, "black_roller": 1.28,
-	"black": 1.18, "black_thrower": 1.12,
-	"bat": 1.35, "bee": 1.40, "sparrow": 1.32, "spider": 1.32,
+	"gray_roller": 1.28, "black_roller": 1.18,
+	"black": 1.05, "black_thrower": 0.93,   # 검은쥐 3종 ≈ 회색투척쥐 크기
+	"bat": 1.35, "bee": 1.40, "sparrow": 1.16, "spider": 1.32,
 }
 # 발 위치 미세조정(양수=아래로 내려 지면에 더 가깝게). fh*sc 비율.
 const FOOT_NUDGE := {"spider": 0.14}
@@ -84,6 +84,7 @@ var _windup: float = 0.0           # 공격 모션 후 실제 타격까지 남�
 var _windup_pending: bool = false
 var _windup_ranged: bool = false
 var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y(공중 다이브 계산용)
+var _size_mult: float = 1.0        # 화면 크기 배율(그림자 크기에도 반영)
 var _popups: Array = []
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -144,8 +145,8 @@ func _apply_def() -> void:
 			_has_idle = sf.has_animation("idle")
 			_has_attack = sf.has_animation("attack")
 			var fh: float = float(sf.get_frame_texture("walk", 0).get_height())
-			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0)   # 화면 표시 높이 = 몸크기 기준
-			sc *= float(SIZE_MULT.get(_id, 1.0))              # 종류별 크기 보정
+			_size_mult = float(SIZE_MULT.get(_id, 1.0))       # 종류별 크기 보정(그림자에도)
+			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0) * _size_mult
 			anim.scale = Vector2(sc, sc)
 			var nudge: float = float(FOOT_NUDGE.get(_id, 0.0)) * fh * sc
 			_sprite_foot_y = -fh * sc * 0.5 + nudge           # 발이 원점(+nudge=지면에 더 가깝게)
@@ -197,7 +198,7 @@ func _physics_process(delta: float) -> void:
 		if _phase_timer <= 0.0:
 			_walking = not _walking
 			_phase_timer = walk_time if _walking else stop_time
-			if _use_sprite and not _hit and not dead and anim.animation != "attack":
+			if _use_sprite and not _hit and not dead and not _windup_pending and anim.animation != "attack":
 				_play_move_anim()
 
 	var ranged := _kind == "lob" or _kind == "shoot"
@@ -261,18 +262,32 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-## 공격 트리거 — 모션만 먼저 재생하고 타격/발사는 와인드업 뒤로 미룬다.
+## attack 애니 길이(프레임수/속도). 없으면 기본값.
+func _attack_release_time(is_ranged: bool) -> float:
+	var fallback := WINDUP_RANGED if is_ranged else WINDUP_MELEE
+	if not (_use_sprite and _has_attack) or anim.sprite_frames == null:
+		return fallback
+	var n := anim.sprite_frames.get_frame_count("attack")
+	var spd := anim.sprite_frames.get_animation_speed("attack")
+	if n <= 0 or spd <= 0.0:
+		return fallback
+	var dur := float(n) / spd
+	return dur * (0.55 if is_ranged else 0.5)   # 모션 중반쯤에 발사/타격
+
+
+## 공격 트리거 — 모션을 먼저 재생하고 타격/발사는 와인드업 뒤로 미룬다.
 func _start_attack(is_ranged: bool) -> void:
 	_windup_pending = true
 	_windup_ranged = is_ranged
 	_lunge = 0.16
-	if _use_sprite and _has_attack and not _hit:
-		anim.play("attack")
 	if not is_ranged and _kind == "dive":
-		_dive = DIVE_DUR              # 참새: 급강하 시작
-		_windup = DIVE_DUR * 0.5      # 바닥에 닿는 순간(다이브 최저점)에 타격
+		# 참새: 먼저 급강하(walk/flap 유지) → 최저점에서 쪼기 모션+타격
+		_dive = DIVE_DUR
+		_windup = DIVE_DUR * 0.5
 	else:
-		_windup = WINDUP_RANGED if is_ranged else WINDUP_MELEE
+		if _use_sprite and _has_attack and not _hit:
+			anim.play("attack")
+		_windup = _attack_release_time(is_ranged)
 
 
 ## 와인드업 종료 — 실제 데미지/발사. 그 사이 죽거나 경직/스턴되면 취소.
@@ -282,7 +297,11 @@ func _resolve_attack() -> void:
 	if _windup_ranged:
 		if _atk_range > 0.0 and _dist_to_player() <= _atk_range * 1.2:
 			_fire_projectile()
-	elif _is_touching_player() or _kind == "dive":
+		return
+	# 근접
+	if _kind == "dive" and _use_sprite and _has_attack:
+		anim.play("attack")              # 참새: 바닥 도달 순간 쪼기 모션
+	if _is_touching_player() or _kind == "dive":
 		var player := get_tree().get_first_node_in_group("player")
 		if player and player.has_method("take_damage"):
 			player.take_damage(damage)
@@ -340,9 +359,9 @@ func _draw() -> void:
 	_draw_damage_popups()
 	if dead:
 		return
-	# 발밑 그림자
+	# 발밑 그림자 — 화면 크기 배율 반영(거미·투척쥐 등 큰 적은 그림자도 크게)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.28))
-	draw_circle(Vector2.ZERO, _body_r, Color(0, 0, 0, 0.3))
+	draw_circle(Vector2.ZERO, _body_r * _size_mult, Color(0, 0, 0, 0.3))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	# placeholder 몸 (스프라이트 안 쓰는 적)
@@ -474,7 +493,9 @@ func apply_stun(dur: float) -> void:
 
 ## 이동/정지 애니(idle 있으면 정지 시 idle, 아니면 walk).
 func _play_move_anim() -> void:
-	if _has_idle and not _walking:
+	# 원거리 적이 사거리 안에서 교전 중이면(멈춰 발사) 발사 사이에 idle 유지.
+	var engaged := (_kind == "lob" or _kind == "shoot") and _atk_range > 0.0 and _dist_to_player() <= _atk_range
+	if _has_idle and (not _walking or engaged):
 		if anim.animation != "idle":
 			anim.play("idle")
 	elif anim.animation != "walk":
