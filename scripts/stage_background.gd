@@ -51,8 +51,8 @@ const FIXED_GROUND := {
 }
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
-const SURF_FRAC := 0.70                      # 기본값(대부분 담장+길 구도에 맞음)
-const SURF_OFFSET := 100.0                   # 담장-지면 경계를 바닥선보다 이만큼 위로(=캐릭터가 경계보다 100px 아래 길에 섬)
+const SURF_FRAC := 0.70                      # 지면 이미지에서 '담장-지면 경계'의 세로 비율(기본)
+const GROUND_CROP_MAX := 200.0               # 발선을 길 중앙에 맞추려 키울 때 허용하는 좌우 크롭 상한(px)
 const GROUND_SURF := {                       # 예외 개별 보정: "파일명.png" → 비율
 	# 예) "g14.png": 0.66,
 }
@@ -218,16 +218,18 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _far_lift), Vector2(w, h)), false)
 
 
-## 지면(ground) — 이미지의 '서는 면(_ground_surf)'을 ground_y(기기마다 계산)에 정렬해 그린다.
-##   기본은 좌우폭=화면폭(가로맞춤). 단 지면선~화면바닥을 못 채우면 그만큼 키워(빈틈 방지) — 그땐 좌우가 살짝 넘쳐 크롭.
+## 지면(ground) — 하단 고정 + 발선(ground_y, 기기마다 계산)을 "길(경계~화면바닥) 구간 중앙"에 오게 키운다.
+##   길이 얇으면 많이 키워야 하므로 좌우 크롭은 GROUND_CROP_MAX까지만 허용(그 이상은 발선이 약간 위로).
 func _draw_ground(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
-	var anchor := Layout.ground_y() - SURF_OFFSET            # 담장-지면 경계를 둘 위치(바닥선보다 위)
-	var sc_w := (vis.x / t.x) * bg_zoom                       # 가로맞춤
-	var below := (1.0 - _ground_surf) * t.y                   # 서는 면 아래(길) 원본 높이
-	var sc_fill := ((vis.y - anchor) / below) if below > 1.0 else sc_w   # 경계~바닥을 채울 최소 배율
-	var sc := maxf(sc_w, sc_fill)
+	var gy := Layout.ground_y()
+	var below_frac := 1.0 - _ground_surf                     # 경계 아래(길)가 차지하는 비율
+	var sc_w := (vis.x / t.x) * bg_zoom                       # 가로맞춤(최소)
+	var sc := sc_w
+	if below_frac > 0.02:
+		var sc_center := 2.0 * (vis.y - gy) / (below_frac * t.y)   # 발선을 길 구간 중앙에 두는 배율
+		var sc_cap := (vis.x + 2.0 * GROUND_CROP_MAX) / t.x        # 크롭 상한 배율
+		sc = clampf(sc_center, sc_w, sc_cap)
 	var w := t.x * sc
 	var h := t.y * sc
-	var art_y := anchor - _ground_surf * h                   # 서는 면(경계)을 anchor에 정렬
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, art_y), Vector2(w, h)), false)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, vis.y - h), Vector2(w, h)), false)  # 하단 고정
