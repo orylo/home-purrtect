@@ -5,7 +5,7 @@ extends Node
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.54"
+const BUILD := "0.55"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -101,12 +101,18 @@ func dev_set_job(job: String, grade: int) -> void:
 
 ## --- 소모품 (상점 구매·보유, 시스템밸런스 §5.4) ---
 ## 전투 중 실제 사용은 다음 조각(소모품 탭·HUD). 지금은 "사서 보유"까지.
+## type: "food"(소모품 도감) / "toy"(장난감 도감) — 전투에선 동일 슬롯 일회용. 도감 분류용.
+## ※ 전투 중 실제 사용·휴대 최대 5개·쥐덫 설치 메커니즘은 [구현 대기](현재 구매·보유까지).
 const CONSUMABLES := {
-	"bandage":     {"name": "낡은 붕대", "price": 40, "desc": "체력 30 회복"},
-	"anchovy":     {"name": "말린 멸치", "price": 50, "desc": "8초 공격 +50%"},
-	"firecracker": {"name": "폭죽",      "price": 80, "desc": "광역 60 데미지"},
+	"bandage":     {"name": "낡은 붕대", "price": 40,  "type": "food", "desc": "체력 30 회복"},
+	"milk":        {"name": "우유",      "price": 75,  "type": "food", "desc": "체력 70 회복"},
+	"anchovy":     {"name": "말린 멸치", "price": 50,  "type": "food", "desc": "8초 공격 +50%"},
+	"firecracker": {"name": "폭죽",      "price": 80,  "type": "toy",  "desc": "광역 60 데미지"},
+	"bomb":        {"name": "폭탄",      "price": 150, "type": "toy",  "desc": "광역 120 데미지"},
+	"pepper":      {"name": "후추통",    "price": 70,  "type": "toy",  "desc": "5초 광역 둔화(피해 없음)"},
+	"mousetrap":   {"name": "쥐덫",      "price": 90,  "type": "toy",  "desc": "설치 — 밟은 적 3초 묶음"},
 }
-var inventory := {"bandage": 0, "anchovy": 0, "firecracker": 0}
+var inventory := {"bandage": 0, "milk": 0, "anchovy": 0, "firecracker": 0, "bomb": 0, "pepper": 0, "mousetrap": 0}
 ## 전투 준비 소모품 슬롯(종류만 저장, 양은 inventory 따라감) — 로드맵 4단계
 var item_slots := ["", "", ""]
 
@@ -554,7 +560,7 @@ func reset_progress() -> void:
 	equipped_grade = 1
 	owned_grades = {"base": [1]}
 	coins = 0
-	inventory = {"bandage": 0, "anchovy": 0, "firecracker": 0}
+	inventory = {"bandage": 0, "milk": 0, "anchovy": 0, "firecracker": 0, "bomb": 0, "pepper": 0, "mousetrap": 0}
 	materials = {}
 	item_slots = ["", "", ""]
 	owned_skills = []

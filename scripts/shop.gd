@@ -8,7 +8,7 @@ const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)
 const GOLD := Color(1.0, 0.82, 0.2)
-const ITEM_ORDER := ["bandage", "anchovy", "firecracker"]
+const ITEM_ORDER := ["bandage", "milk", "anchovy", "firecracker", "bomb", "pepper", "mousetrap"]
 const TABS := [
 	{"id": "level", "name": "레벨업"},
 	{"id": "skill", "name": "스킬"},
