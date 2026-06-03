@@ -10,12 +10,16 @@ const PRESETS := {
 	"shimmer": {"anim_speed": 0.60, "warp": 2.7, "drift": 0.00, "contrast": 1.7, "brightness": 0.35, "alpha": 0.40, "noise": 2.4},  # 아지랑이(제자리 일렁)
 	"storm":   {"anim_speed": 1.70, "warp": 2.9, "drift": 0.80, "contrast": 2.0, "brightness": 0.50, "alpha": 0.60, "noise": 2.7},  # 폭풍
 }
-## 일반 스테이지는 이 중 랜덤
+## 미배정 스테이지 폴백(랜덤)
 const NORMAL_POOL := ["calm", "fog", "windy", "shimmer"]
-## 스테이지 고정 날씨. 키="막-스테이지".
-const STAGE_WEATHER := {
-	"1-10": "storm",
-	"1-20": "storm",
+## 스테이지별 고정 하프톤 분위기(1막). 키="막-스테이지".
+##   회색쥐 전반(1-1~1-9): 맑음→바람→안개로 서서히 고조 → 1-10 펑거스 보스 폭풍.
+##   검은쥐 후반(1-11~1-19): 더 무겁게(안개·바람 반복) → 1-20 큰 뱀 보스 폭풍.
+const STAGE_HALFTONE := {
+	"1-1": "calm",    "1-2": "calm",    "1-3": "shimmer", "1-4": "windy",   "1-5": "fog",
+	"1-6": "windy",   "1-7": "shimmer", "1-8": "fog",     "1-9": "windy",   "1-10": "storm",
+	"1-11": "fog",    "1-12": "windy",  "1-13": "fog",    "1-14": "shimmer","1-15": "windy",
+	"1-16": "fog",    "1-17": "windy",  "1-18": "fog",    "1-19": "windy",  "1-20": "storm",
 }
 
 var _t := 0.0
@@ -28,7 +32,7 @@ func _ready() -> void:
 
 func _setup(m: ShaderMaterial) -> void:
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	var name: String = STAGE_WEATHER.get(key, NORMAL_POOL[randi() % NORMAL_POOL.size()])
+	var name: String = STAGE_HALFTONE.get(key, NORMAL_POOL[randi() % NORMAL_POOL.size()])
 	var p: Dictionary = PRESETS[name]
 	# drift 방향은 매 판 랜덤(왼/오) — 한쪽으로만 흐르지 않게
 	var dir := 1.0 if randf() < 0.5 else -1.0
