@@ -120,7 +120,7 @@ func _draw_wasd(c: Vector2, op: float) -> void:
 	var font := UI_FONT
 	if font == null:
 		return
-	var d := base_radius * 0.82   # 노브(노란 원) 바깥으로 밀어 겹침 방지
+	var d := base_radius * 0.72   # 노브와 바깥 테두리 사이 크림 띠에 위치
 	_key_label(font, c + Vector2(0.0, -d), "W", op)
 	_key_label(font, c + Vector2(0.0, d), "S", op)
 	_key_label(font, c + Vector2(-d, 0.0), "A", op)
