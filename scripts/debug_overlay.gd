@@ -52,8 +52,8 @@ func _build_ui() -> void:
 	_sec(left, "치트")
 	_btn(left, "코인 +1000", func(): GameState.coins += 1000)
 	_btn(left, "무적 토글", func(): GameState.cheats["godmode"] = not GameState.cheats.get("godmode", false))
-	_btn(left, "적 즉사 토글", func(): GameState.cheats["enemy_oneshot"] = not GameState.cheats.get("enemy_oneshot", false))
-	_btn(left, "적 전멸", _kill_all)
+	_btn(left, "침입자 즉사 토글", func(): GameState.cheats["enemy_oneshot"] = not GameState.cheats.get("enemy_oneshot", false))
+	_btn(left, "침입자 전멸", _kill_all)
 
 	_sec(left, "스킬/동료(전투 중)")
 	_btn(left, "스킬 지급+장착", func(): GameState.dev_grant_skills())
@@ -96,7 +96,7 @@ func _build_ui() -> void:
 		jgrid.add_child(jb)
 	right.add_child(jgrid)
 
-	_sec(right, "적 스폰")
+	_sec(right, "침입자 스폰")
 	var egrid := GridContainer.new()
 	egrid.columns = 2
 	for id in SPAWN_ORDER:

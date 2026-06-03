@@ -124,7 +124,7 @@ func _process(_delta: float) -> void:
 	if _wave_total == 0:
 		enemy_label.text = "준비 중..."
 	else:
-		enemy_label.text = "웨이브 %d/%d   남은 적 %d" % [_wave_cur, _wave_total, alive]
+		enemy_label.text = "웨이브 %d/%d   남은 침입자 %d" % [_wave_cur, _wave_total, alive]
 
 
 ## 스포너가 새 웨이브 시작 시 호출

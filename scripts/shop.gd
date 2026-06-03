@@ -224,7 +224,7 @@ func _rebuild_sell() -> void:
 		b2.pressed.connect(_on_sell.bind(id, -1))
 		row.add_child(b2)
 	if not any:
-		var empty := _text("팔 전리품이 없어요. 전투에서 적을 처치하면 모입니다.", 24, Color(1, 1, 1, 0.7))
+		var empty := _text("팔 전리품이 없어요. 전투에서 침입자를 처치하면 모입니다.", 24, Color(1, 1, 1, 0.7))
 		_sell_box.add_child(empty)
 
 

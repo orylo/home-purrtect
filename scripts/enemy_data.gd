@@ -76,7 +76,7 @@ const DROP_TABLE := {
 	"black_thrower": [["fur_black", 0.30], ["sack", 0.15]],
 	"bat":           [["bat_wing", 0.15]],
 	"sparrow":       [["sparrow_feather", 0.15]],
-	"bee":           [["bee_sting", 0.15]],
+	"bee":           [["honey_drop", 0.15]],
 	"spider":        [["spider_silk", 0.15]],
 	# 보스는 재료 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 몬스터 공통 적용.
 }

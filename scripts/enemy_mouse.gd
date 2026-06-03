@@ -103,7 +103,7 @@ func _apply_def() -> void:
 	_coin = int(def.get("coin", 0))
 	_id = String(def.get("id", ""))
 	_armor = float(def.get("armor", 0))
-	_ename = def.get("name", "적")
+	_ename = def.get("name", "침입자")
 	if _use_sprite and _color.v < 0.45:
 		_base_modulate = _color   # 검은쥐 = 쥐 스프라이트 어둡게
 	# 보스: 큰 덩치에 맞춰 히트박스(탄환 명중)를 몸 중심으로 확대

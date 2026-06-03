@@ -104,7 +104,7 @@ func _ready() -> void:
 	var cnt_row := HBoxContainer.new()
 	cnt_row.add_child(cnt)
 	cnt_row.add_child(cnt_lbl)
-	box.add_child(_row("적 수 배율", cnt_row))
+	box.add_child(_row("침입자 수 배율", cnt_row))
 
 	# 치트
 	var god := CheckBox.new()
@@ -112,7 +112,7 @@ func _ready() -> void:
 	_font(god, 24)
 	god.toggled.connect(func(p): _godmode = p)
 	var one := CheckBox.new()
-	one.text = "적 즉사"
+	one.text = "침입자 즉사"
 	_font(one, 24)
 	one.toggled.connect(func(p): _oneshot = p)
 	var cheat_row := HBoxContainer.new()
@@ -150,7 +150,7 @@ func _ready() -> void:
 	test_btn.pressed.connect(_on_test)
 	box.add_child(test_btn)
 
-	box.add_child(_dim("↑ 적 안 나옴. 게임 중 🐞로 직접 스폰", 16))
+	box.add_child(_dim("↑ 침입자 안 나옴. 게임 중 🐞로 직접 스폰", 16))
 
 	var back_btn := Button.new()
 	back_btn.text = "뒤로"

@@ -103,7 +103,7 @@ func _show_bag() -> void:
 			any_mat = true
 			vb.add_child(Design.label("   %s  ×%d" % [String(GameState.MATERIALS[id]["name"]), n], "body"))
 	if not any_mat:
-		vb.add_child(Design.label("   (없음 — 전투에서 적 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 — 전투에서 침입자 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	_bag_section(vb, "◆ 소모품")
 	var any_item := false
 	for id in ["bandage", "anchovy", "firecracker"]:

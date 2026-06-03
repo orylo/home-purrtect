@@ -5,7 +5,7 @@ extends Node
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.51"
+const BUILD := "0.52"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -134,7 +134,7 @@ const MATERIALS := {
 	"sack":            {"name": "포대 조각",   "sell": 3},
 	"bat_wing":        {"name": "박쥐 날개",   "sell": 3},
 	"sparrow_feather": {"name": "참새 깃털",   "sell": 3},
-	"bee_sting":       {"name": "벌침",        "sell": 3},
+	"honey_drop":      {"name": "벌꿀",        "sell": 3},
 	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
 	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 10},
 	"gem_amethyst":    {"name": "자수정",      "sell": 40},
@@ -142,7 +142,7 @@ const MATERIALS := {
 	"gem_ruby":        {"name": "루비",        "sell": 250},
 	"gem_diamond":     {"name": "다이아몬드",  "sell": 600},
 }
-const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "bee_sting", "spider_silk", "gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]
+const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "honey_drop", "spider_silk", "gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
 
@@ -226,7 +226,7 @@ func craft_job(job: String) -> bool:
 ## kind: 전투 발동 종류(combat). dur/pct 등은 Lv 불변(§규칙C).
 const SKILLS := {
 	# 보안관: 제어 / 생존 / 광역딜
-	"warn_shot": {"job": "sheriff", "name": "경고 사격", "order": 1, "cd": 10.0, "price": 250,  "scaled": false, "kind": "stagger", "dur": 2.5, "desc": "다가오는 적 2~3초 멈칫 + 살짝 밀기"},
+	"warn_shot": {"job": "sheriff", "name": "경고 사격", "order": 1, "cd": 10.0, "price": 250,  "scaled": false, "kind": "stagger", "dur": 2.5, "desc": "다가오는 침입자 2~3초 멈칫 + 살짝 밀기"},
 	"shield":    {"job": "sheriff", "name": "방패 자세", "order": 2, "cd": 18.0, "price": 500,  "scaled": false, "kind": "guard",   "dur": 4.0, "pct": 0.40, "desc": "4초 받는 피해 40%↓"},
 	"support":   {"job": "sheriff", "name": "지원 요청", "order": 3, "cd": 35.0, "price": 1000, "scaled": true,  "kind": "barrage", "base": 60.0, "delay": 1.0, "desc": "1초 후 화면 전체 60×Lv"},
 	# 메이드: 넉백딜 / 바닥제어 / 원거리광역
@@ -328,7 +328,7 @@ func skill_value(id: String) -> float:
 ## kind: 전투 발동 종류. meet: 만남 스테이지(1-13/1-16).
 const COMPANIONS := {
 	"dove":      {"name": "비둘기", "price": 300, "cd": 22.0, "meet": 13, "kind": "dove_bomb",  "dmg": 10.0, "slow_dur": 3.0, "slow_pct": 0.40, "desc": "전방 광역 똥 폭격 — 3초 둔화 40%↓ + 딜"},
-	"chihuahua": {"name": "치와와", "price": 500, "cd": 30.0, "meet": 16, "kind": "dog_charge", "dmg": 5.0,  "desc": "좌→우로 달리며 지상 적 전부 밀어냄"},
+	"chihuahua": {"name": "치와와", "price": 500, "cd": 30.0, "meet": 16, "kind": "dog_charge", "dmg": 5.0,  "desc": "좌→우로 달리며 지상 침입자 전부 밀어냄"},
 }
 const COMPANION_ORDER := ["dove", "chihuahua"]
 var owned_companions: Array = []      # 보유(호루라기 구매) 동료 id
