@@ -49,19 +49,22 @@ func _on_inscene_event() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	if player.has_method("set_event_idle"):
 		player.set_event_idle(true)
-	# 1) 치즈가 궤짝 위치까지 자동 도보(왼쪽이면 flip)
+	# 1) 치즈가 궤짝 "옆"까지 자동 도보 — 궤짝 위에 겹치지 않게 근접면에 서서 궤짝을 바라봄.
 	var crate_x: float = vp.x * CRATE_X_FRAC
+	var cat_x0: float = (player as Node2D).global_position.x
+	var stand_x: float = crate_x + (90.0 if cat_x0 > crate_x else -90.0)
 	if player.has_method("event_walk_to"):
-		player.event_walk_to(crate_x)
+		player.event_walk_to(stand_x)
 		while player.is_event_walking():
 			await get_tree().process_frame
 	await get_tree().create_timer(0.35).timeout   # 도착 후 한 박자
 
-	# 2) 궤짝+치즈를 확대(카메라 줌인). ★트리 일시정지 중이라 Tween은 안 돎 → 수동 lerp(process_frame는 pause에도 발신).
+	# 2) 치즈+궤짝이 한 화면에 들어오게 그 영역으로 카메라 줌인(치즈 확대 아님).
+	#    ★트리 일시정지 중이라 Tween은 안 돎 → 수동 lerp(process_frame는 pause에도 발신).
 	var cam := Camera2D.new()
 	cam.process_mode = Node.PROCESS_MODE_ALWAYS
-	var focus_x: float = (crate_x + (player as Node2D).global_position.x) * 0.5
-	cam.global_position = Vector2(focus_x, Layout.ground_y() - 110.0)
+	var focus_x: float = (crate_x + stand_x) * 0.5       # 궤짝과 치즈 사이를 잡아 둘 다 프레임에
+	cam.global_position = Vector2(focus_x, Layout.ground_y() - 150.0)
 	add_child(cam)
 	cam.make_current()
 	var zt := 0.0
@@ -69,7 +72,7 @@ func _on_inscene_event() -> void:
 		await get_tree().process_frame
 		zt = minf(zt + 1.0 / 50.0, 1.0)         # ~1초
 		var e := zt * zt * (3.0 - 2.0 * zt)     # smoothstep
-		cam.zoom = Vector2.ONE.lerp(Vector2(2.3, 2.3), e)
+		cam.zoom = Vector2.ONE.lerp(Vector2(1.6, 1.6), e)   # 적당히 줌인(화면 영역 줌, 1.6배)
 
 	# 3) 컷씬(플레이스홀더) — 풀스크린 패널 + [확인]
 	await _play_placeholder_cutscene()

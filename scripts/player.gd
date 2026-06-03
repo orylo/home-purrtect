@@ -227,7 +227,7 @@ func _physics_process(delta: float) -> void:
 			if absf(global_position.x - _event_walk_target) <= 6.0:
 				global_position.x = _event_walk_target
 				_event_walking = false
-				anim.flip_h = false
+				# flip 유지 — 걸어온 방향(=목표를 바라보는 방향) 그대로 둠
 		else:
 			velocity = Vector2.ZERO
 			_update_animation(0.0, delta)   # next="idle" → _tick_idle(1초 유지→재생→반복)
