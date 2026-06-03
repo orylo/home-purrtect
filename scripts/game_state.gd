@@ -2,6 +2,8 @@ extends Node
 ## 게임 전역 상태 (오토로드 "GameState") — 씬이 바뀌어도 유지.
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
+signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
+
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
 const BUILD := "0.50"
 

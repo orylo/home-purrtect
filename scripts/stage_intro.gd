@@ -1,9 +1,9 @@
 extends Node2D
-## 스테이지 인트로 이벤트 — 웨이브 시작 전 인게임 연출(컷씬 아님).
-##   · NPC가 화면 좌측에서 걸어 들어와 하단 대화창으로 말함(이름·얼굴·대사·선택지).
-##   · 연출 동안 상/하단 HUD 숨김 + 스포너 hold. 끝나면 NPC 퇴장 → HUD 복귀 → 웨이브 시작.
+## 스테이지 이벤트(인게임 연출). 두 종류:
+##   · 인트로: 웨이브 전, NPC가 화면 우측에서 "걸어서" 치즈와 대칭 위치까지 와서 대화(HUD 숨김).
+##   · 팝업(튜토리얼/도발): 트리거(예: 첫 처치) 시 게임 일시정지 + 화면 Dim + 대화창.
+##   대화 중에는 게임이 멈춰 조작이 실제로 막힌다(트리 paused). 본 노드/UI는 PROCESS_MODE_ALWAYS.
 ##   v1: 1-1에서 "회색쥐" 스프라이트를 펑거스 대역으로 사용.
-##   확장: INTRO에 "막-스테이지" 키로 {npc, name, beats:[{text, choices?}]} 추가.
 
 const MFRAMES := preload("res://assets/sprites/enemies/mouse/mouse_frames.tres")
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
@@ -15,26 +15,31 @@ const PAPER_DEEP := Color("E4CB95")
 const CHEESE := Color("F2B33D")
 const CHEESE_DEEP := Color("D4912A")
 
-const SPRITE_FOOT := 81.875   # enemy_mouse.tscn 기준: 발(원점)→스프라이트 중심 오프셋
+const SPRITE_FOOT := 81.875   # enemy_mouse 기준: 발(원점)→스프라이트 중심 오프셋
+const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) — 급하지 않게
 
-## 스테이지별 인트로 데이터
-const INTRO := {
+## 스테이지별 이벤트 데이터
+const EVENTS := {
 	"1-1": {
 		"npc": "gray",
 		"name": "펑거스",
-		"beats": [
+		"intro": [
 			{"text": "크크… 너, 잘 만났다!!"},
 			{"text": "내 졸병들이 널 가만두지 않을 거다."},
 			{"text": "그 집엔… 내가 다시 들어갈 거야.", "choices": ["덤벼 봐!", "무슨 소리야?"]},
 		],
+		"first_kill": [
+			{"text": "아닛! 내 졸병을 쓰러뜨리다니… 제법인걸?"},
+			{"text": "하지만 이건 어떨까!? 끝없이 보내주마!"},
+		],
 	},
 }
 
+var _data: Dictionary = {}
 var _spawner: Node = null
 var _hud: CanvasLayer = null
 var _npc: AnimatedSprite2D = null
 var _ui: CanvasLayer = null
-var _data: Dictionary = {}
 
 # UI 노드
 var _tap: Button = null
@@ -45,67 +50,110 @@ var _choices: HBoxContainer = null
 
 var _advance := false
 var _choice := -1
+var _busy := false           # 대화 진행 중(중복 트리거 방지)
+var _first_kill_done := false
+# NPC 도보
+var _walking := false
+var _walk_target := 0.0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # 일시정지 중에도 동작
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	if GameState.sandbox or not INTRO.has(key):
+	if GameState.sandbox or not EVENTS.has(key):
 		queue_free()
 		return
-	_data = INTRO[key]
+	_data = EVENTS[key]
 	_spawner = get_parent().get_node_or_null("Spawner")
 	_hud = get_parent().get_node_or_null("HUD")
+	if _data.has("first_kill"):
+		GameState.enemy_killed.connect(_on_enemy_killed)
+	if _data.has("intro"):
+		_run_intro()
+
+
+func _process(delta: float) -> void:
+	if _walking and is_instance_valid(_npc):
+		var dir := signf(_walk_target - _npc.position.x)
+		_npc.flip_h = dir > 0.0                       # 오른쪽으로 가면 오른쪽 바라봄
+		_npc.position.x += dir * WALK_SPEED * delta
+		if absf(_npc.position.x - _walk_target) <= WALK_SPEED * delta:
+			_npc.position.x = _walk_target
+			_walking = false
+
+
+# ── 인트로(웨이브 전, NPC 도보 등장) ─────────────────────
+func _run_intro() -> void:
+	_busy = true
+	await get_tree().process_frame                    # 플레이어/뷰포트 준비
 	if _spawner != null and _spawner.has_method("hold_intro"):
 		_spawner.hold_intro()
 	if _hud != null:
 		_hud.visible = false
-	_run()
-
-
-func _run() -> void:
-	await get_tree().process_frame          # 뷰포트/레이아웃 준비
-	_spawn_npc()
-	await _walk_npc(get_viewport().get_visible_rect().size.x * 0.30, 1.3)   # 좌측에서 입장
-	_build_ui()
-	var beats: Array = _data.get("beats", [])
-	for i in beats.size():
-		var beat: Dictionary = beats[i]
-		_show_beat(beat)
-		if beat.has("choices"):
-			await _wait_choice()
-		else:
-			await _wait_advance()
+	get_tree().paused = true                           # 조작 실제 차단
+	var vp := get_viewport().get_visible_rect().size
+	var cat_x := 200.0
+	var pl := get_parent().get_node_or_null("Player")
+	if pl != null and pl is Node2D:
+		cat_x = (pl as Node2D).global_position.x
+	var target_x: float = vp.x - cat_x                 # 치즈와 대칭(우측에서 같은 거리)
+	_spawn_npc(vp.x + 160.0)                            # 화면 우측 밖에서 등장
+	await _walk_to(target_x)                            # 걸어 들어옴
+	_build_ui(0.0)                                      # 인트로는 Dim 없음
+	await _play_beats(_data["intro"])
 	_close_ui()
-	await _walk_npc(-180.0, 1.0)             # 좌측으로 퇴장
+	await _walk_to(vp.x + 200.0)                        # 우측으로 퇴장
 	if is_instance_valid(_npc):
 		_npc.queue_free()
 	if _hud != null:
 		_hud.visible = true
 	if _spawner != null and _spawner.has_method("release_intro"):
-		_spawner.release_intro()             # 이제 웨이브 시작
-	queue_free()
+		_spawner.release_intro()                        # 웨이브 시작
+	get_tree().paused = false
+	_busy = false
+
+
+# ── 팝업(일시정지 + Dim + 대화) ─────────────────────────
+func _on_enemy_killed() -> void:
+	if _first_kill_done or _busy or not _data.has("first_kill"):
+		return
+	_first_kill_done = true
+	await _run_popup(_data["first_kill"])
+
+
+func _run_popup(beats: Array) -> void:
+	_busy = true
+	if _hud != null:
+		_hud.visible = false
+	get_tree().paused = true
+	_build_ui(0.55)                                    # 화면 Dim
+	await _play_beats(beats)
+	_close_ui()
+	if _hud != null:
+		_hud.visible = true
+	get_tree().paused = false
+	_busy = false
 
 
 # ── NPC ────────────────────────────────────────────────
-func _spawn_npc() -> void:
+func _spawn_npc(start_x: float) -> void:
 	_npc = AnimatedSprite2D.new()
 	_npc.sprite_frames = MFRAMES
 	_npc.scale = Vector2(0.65, 0.65)
-	_npc.flip_h = true                       # 좌→우(화면 안쪽) 바라봄
-	_npc.position = Vector2(-160.0, Layout.ground_y() - SPRITE_FOOT)
+	_npc.position = Vector2(start_x, Layout.ground_y() - SPRITE_FOOT)
 	add_child(_npc)
 	_npc.play("walk")
 
 
-func _walk_npc(target_x: float, dur: float) -> void:
-	if not is_instance_valid(_npc):
-		return
-	_npc.play("walk")
-	var tw := create_tween()
-	tw.tween_property(_npc, "position:x", target_x, dur).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await tw.finished
+func _walk_to(tx: float) -> void:
+	_walk_target = tx
+	_walking = true
 	if is_instance_valid(_npc):
-		_npc.pause()                         # 멈춰서 말하기(별도 idle 프레임 없음)
+		_npc.play("walk")
+	while _walking:
+		await get_tree().process_frame
+	if is_instance_valid(_npc):
+		_npc.pause()                                   # 멈춰서 말하기
 
 
 # ── 대화 UI(코드 생성) ──────────────────────────────────
@@ -115,20 +163,28 @@ func _sb(bg: Color, radius: int = 10) -> StyleBoxFlat:
 	s.set_border_width_all(4)
 	s.border_color = INK
 	s.set_corner_radius_all(radius)
-	s.content_margin_left = 16.0
-	s.content_margin_right = 16.0
+	s.content_margin_left = 18.0
+	s.content_margin_right = 18.0
 	s.content_margin_top = 10.0
 	s.content_margin_bottom = 10.0
 	return s
 
 
-func _build_ui() -> void:
+func _build_ui(dim_alpha: float) -> void:
 	var vp := get_viewport().get_visible_rect().size
 	_ui = CanvasLayer.new()
-	_ui.layer = 60                            # HUD보다 위
+	_ui.layer = 60                                     # HUD보다 위
 	add_child(_ui)
+	_ui.process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# 화면 탭 = 다음(선택지 없을 때만)
+	# Dim(맨 아래, 입력은 통과)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, dim_alpha)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui.add_child(dim)
+
+	# 전체화면 탭 = 다음(선택지 없을 때). 박스/라벨은 통과시켜 어디를 탭해도 넘어가게.
 	_tap = Button.new()
 	_tap.flat = true
 	_tap.focus_mode = Control.FOCUS_NONE
@@ -136,57 +192,66 @@ func _build_ui() -> void:
 	_tap.pressed.connect(func() -> void: _advance = true)
 	_ui.add_child(_tap)
 
-	var box_h := 232.0
+	var box_h := 236.0
 	var box := Panel.new()
 	box.add_theme_stylebox_override("panel", _sb(PAPER, 12))
 	box.position = Vector2(24, vp.y - box_h - 24)
 	box.size = Vector2(vp.x - 48, box_h)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(box)
 
-	# 얼굴(초상화)
+	# 얼굴(초상화) — 박스 안에 클립
 	var port_sz := box_h - 32.0
 	var port := Panel.new()
 	port.add_theme_stylebox_override("panel", _sb(PAPER_DEEP, 8))
 	port.position = Vector2(16, 16)
 	port.size = Vector2(port_sz, port_sz)
+	port.clip_contents = true
+	port.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(port)
 	var face := TextureRect.new()
 	face.texture = MFRAMES.get_frame_texture("walk", 0)
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 10; face.offset_top = 10; face.offset_right = -10; face.offset_bottom = -10
+	face.offset_left = 8; face.offset_top = 8; face.offset_right = -8; face.offset_bottom = -8
+	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	port.add_child(face)
 
 	var tx := 16.0 + port_sz + 24.0
-	# 이름
-	_name_lbl = Label.new()
-	_name_lbl.add_theme_font_override("font", FONT)
-	_name_lbl.add_theme_font_size_override("font_size", 30)
-	_name_lbl.add_theme_color_override("font_color", CHEESE_DEEP)
-	_name_lbl.position = Vector2(tx, 18)
+	_name_lbl = _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
 	box.add_child(_name_lbl)
-	# 대사
-	_text_lbl = Label.new()
-	_text_lbl.add_theme_font_override("font", FONT)
-	_text_lbl.add_theme_font_size_override("font_size", 24)
-	_text_lbl.add_theme_color_override("font_color", INK)
+	_text_lbl = _mk_label(24, INK, Vector2(tx, 62))
 	_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text_lbl.position = Vector2(tx, 62)
-	_text_lbl.size = Vector2(box.size.x - tx - 24.0, 84)
+	_text_lbl.size = Vector2(box.size.x - tx - 24.0, 92)
 	box.add_child(_text_lbl)
-	# 선택지
 	_choices = HBoxContainer.new()
 	_choices.add_theme_constant_override("separation", 16)
-	_choices.position = Vector2(tx, 150)
+	_choices.position = Vector2(tx, 156)
+	_choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(_choices)
-	# 계속 힌트
-	_hint_lbl = Label.new()
+	_hint_lbl = _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 176.0, box_h - 40.0))
 	_hint_lbl.text = "▶ 탭하여 계속"
-	_hint_lbl.add_theme_font_override("font", FONT)
-	_hint_lbl.add_theme_font_size_override("font_size", 18)
-	_hint_lbl.add_theme_color_override("font_color", CHEESE_DEEP)
-	_hint_lbl.position = Vector2(box.size.x - 168.0, box_h - 38.0)
 	box.add_child(_hint_lbl)
+
+
+func _mk_label(fsize: int, col: Color, pos: Vector2) -> Label:
+	var l := Label.new()
+	l.add_theme_font_override("font", FONT)
+	l.add_theme_font_size_override("font_size", fsize)
+	l.add_theme_color_override("font_color", col)
+	l.position = pos
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+
+func _play_beats(beats: Array) -> void:
+	for i in beats.size():
+		_show_beat(beats[i])
+		if beats[i].has("choices"):
+			await _wait_choice()
+		else:
+			await _wait_advance()
 
 
 func _show_beat(beat: Dictionary) -> void:
@@ -210,6 +275,7 @@ func _show_beat(beat: Dictionary) -> void:
 			b.add_theme_font_size_override("font_size", 22)
 			b.add_theme_color_override("font_color", INK)
 			b.add_theme_color_override("font_hover_color", INK)
+			b.add_theme_color_override("font_pressed_color", INK)
 			b.add_theme_stylebox_override("normal", _sb(PAPER_DEEP, 10))
 			b.add_theme_stylebox_override("hover", _sb(CHEESE, 10))
 			b.add_theme_stylebox_override("pressed", _sb(CHEESE_DEEP, 10))
