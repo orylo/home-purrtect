@@ -10,7 +10,7 @@ const RATE := 22050
 const FILES := {
 	"click": ["res://assets/sfx/click_a.wav", "res://assets/sfx/click_b.wav"],
 	"coin":  ["res://assets/sfx/coin.ogg"],
-	"hit":   ["res://assets/sfx/hit.ogg"],
+	"hit":   ["res://assets/sfx/hit_a.ogg", "res://assets/sfx/hit_b.ogg"],
 	"crit":  ["res://assets/sfx/crit.ogg"],
 	"heal":  ["res://assets/sfx/heal.ogg"],
 	"buff":  ["res://assets/sfx/buff.ogg"],

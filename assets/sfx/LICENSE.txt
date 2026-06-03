@@ -8,9 +8,10 @@ Home Purrtect — 효과음 출처/라이선스
 |-----------------|------------------|---------------------|
 | click_a.wav     | click1.wav       | Kenney UI Audio     |
 | click_b.wav     | click3.wav       | Kenney UI Audio     |
-| coin.ogg        | handle_coins.ogg | Kenney RPG Audio    |
-| hit.ogg         | chop.ogg         | Kenney RPG Audio    |
-| crit.ogg        | knife_slice.ogg  | Kenney RPG Audio    |
+| coin.ogg        | handle_coins.ogg          | Kenney RPG Audio     |
+| hit_a.ogg       | impact_soft_medium_000.ogg | Kenney Impact Sounds |
+| hit_b.ogg       | impact_soft_medium_002.ogg | Kenney Impact Sounds |
+| crit.ogg        | impact_punch_heavy_001.ogg | Kenney Impact Sounds |
 | heal.ogg        | power_up_2.ogg   | Kenney Digital Audio|
 | buff.ogg        | power_up_7.ogg   | Kenney Digital Audio|
 
