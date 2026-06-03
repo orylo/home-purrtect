@@ -125,7 +125,7 @@ func buy_consumable(id: String) -> bool:
 		save_game()
 	return true
 
-## --- 전리품(재료) 인벤토리 (드랍·매입·제작, 시스템밸런스 §5.2) ---
+## --- 전리품 인벤토리 (드랍·매입·제작, 시스템밸런스 §5.2) ---
 ## sell=맥스 매입가(§5.2-C). 표시 순서대로 MAT_ORDER.
 const MATERIALS := {
 	"fur_gray":        {"name": "회색쥐 털",   "sell": 2},
@@ -463,7 +463,7 @@ func clear_event_for(stage: int) -> String:
 	match stage:
 		3:  return "보안관이 합류했다!\n전투 준비에서 직업으로 선택할 수 있어."
 		5:  return "고양이 숙녀 '펄'을 만났다.\n(펄 시스템은 준비 중 — 로드맵 6단계)"
-		7:  return "맥스의 상점이 열렸다!\n메이드·음악가를 재료로 제작할 수 있어."
+		7:  return "맥스의 상점이 열렸다!\n메이드·음악가를 전리품으로 제작할 수 있어."
 		9:  return "맥스가 스킬을 팔기 시작했다!\n상점 [스킬] 탭에서 직업 스킬 구매."
 		10: return "중간보스 펑거스를 물리쳤다!"
 		13: return "비둘기 동료를 만났다.\n(동료 시스템은 준비 중)"
@@ -636,7 +636,7 @@ func save_game() -> void:
 		"equipped_grade": equipped_grade,  # 장착 등급
 		"owned_grades": owned_grades,   # 보유 (직업×등급) 세트(★등급=별개 장비)
 		"inventory": inventory,         # 소모품 보유(상점 구매, 로드맵 4단계)
-		"materials": materials,         # 전리품(재료) 보유(드랍·매입·제작, 로드맵 4단계)
+		"materials": materials,         # 전리품 보유(드랍·매입·제작, 로드맵 4단계)
 		"item_slots": item_slots,       # 소모품 슬롯 배치(로드맵 4단계)
 		"owned_skills": owned_skills,   # 보유 스킬(로드맵 5단계)
 		"equipped_skills": equipped_skills,  # 장착 스킬(로드맵 5단계)
@@ -713,7 +713,7 @@ func load_game() -> void:
 		if typeof(inv) == TYPE_DICTIONARY:
 			for k in inventory.keys():
 				inventory[k] = maxi(0, int(inv.get(k, 0)))
-		# 전리품(재료) 보유 복원
+		# 전리품 보유 복원
 		materials = {}
 		var mat = data.get("materials", {})
 		if typeof(mat) == TYPE_DICTIONARY:

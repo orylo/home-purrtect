@@ -65,7 +65,7 @@ const STAGE_WAVES := {
 }
 
 
-## --- 전리품(재료) 드랍 (시스템밸런스 §5.2) ---
+## --- 전리품 드랍 (시스템밸런스 §5.2) ---
 ## 쥐 = 티어별 털(30%) + 행동별 장비(15%) / 비-쥐 = 부위(15%) / 전 몬스터 공통 보석(2% 별도 굴림).
 const DROP_TABLE := {
 	"gray":          [["fur_gray", 0.30]],
@@ -78,13 +78,13 @@ const DROP_TABLE := {
 	"sparrow":       [["sparrow_feather", 0.15]],
 	"bee":           [["honey_drop", 0.15]],
 	"spider":        [["spider_silk", 0.15]],
-	# 보스는 재료 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 몬스터 공통 적용.
+	# 보스는 전리품 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 몬스터 공통 적용.
 }
 const GEM_CHANCE := 0.02
 ## 보석 종류 비중(§5.5): 합 100. 조약돌 60 / 자수정 25 / 사파이어 10 / 루비 4 / 다이아 1
 const GEM_WEIGHTS := [["gem_pebble", 60], ["gem_amethyst", 25], ["gem_sapphire", 10], ["gem_ruby", 4], ["gem_diamond", 1]]
 
-## 적 처치 시 떨군 재료 id 배열 반환(런타임 난수)
+## 적 처치 시 떨군 전리품 id 배열 반환(런타임 난수)
 func roll_drops(id: String) -> Array:
 	var out: Array = []
 	for entry in DROP_TABLE.get(id, []):

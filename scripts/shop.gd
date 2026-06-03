@@ -1,6 +1,6 @@
 extends Control
 ## 맥스의 상점 (로드맵 4단계) — 코인을 쓰는 곳. 탭 구조.
-##   [레벨업] 직업 Lv↑ / [소모품] 붕대·멸치·폭죽 / [전리품 매입] 재료 팔기 / [제작] 메이드·음악가
+##   [레벨업] 직업 Lv↑ / [소모품] 붕대·멸치·폭죽 / [전리품 매입] 전리품 팔기 / [제작] 메이드·음악가
 ##   진입: 홈 [맥스 상점]. 나가기: [← 홈].
 
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
@@ -335,7 +335,7 @@ func _on_buy_companion(cid: String) -> void:
 # --- 직업 제작 탭(동적) ---
 func _build_craft_pane() -> void:
 	var p := _new_pane("craft")
-	var head := _text("직업 제작 (재료 + 코인)", 30, ORANGE)
+	var head := _text("직업 제작 (전리품 + 코인)", 30, ORANGE)
 	head.position = Vector2(20, 12)
 	p.add_child(head)
 	_craft_box = VBoxContainer.new()
@@ -357,7 +357,7 @@ func _rebuild_craft() -> void:
 		var nm := _text(String(r["name"]), 28, Color(1, 1, 1))
 		nm.position = Vector2(16, 12)
 		card.add_child(nm)
-		# 재료 요구 + 보유
+		# 전리품 요구 + 보유
 		var parts: Array = []
 		for mid in r["mats"]:
 			var need: int = int(r["mats"][mid])
@@ -481,7 +481,7 @@ func _on_craft(job: String) -> void:
 		_rebuild_craft()
 		_refresh()
 	else:
-		_toast_msg("재료나 코인이 부족해요")
+		_toast_msg("전리품이나 코인이 부족해요")
 
 
 func _process(delta: float) -> void:
