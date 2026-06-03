@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bevent01home"]
+[ext_resource type="Script" path="res://scripts/event.gd" id="1_event"]
+[node name="Event" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+script = ExtResource("1_event")

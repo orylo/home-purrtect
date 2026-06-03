@@ -3,7 +3,7 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.32"
+const BUILD := "0.33"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -452,6 +452,9 @@ func award_stage_clear() -> int:
 
 ## 클리어 이벤트 텍스트(로드맵 2-B) — 해당 스테이지 클리어 시 띄울 해금 이벤트. 없으면 "".
 ## (지금은 placeholder 안내 텍스트. 나중에 컷신·NPC를 이 자리에 끼움.)
+## 해금 이벤트 씬으로 넘길 때, 방금 깬 스테이지 번호(이벤트 씬이 읽고 0으로 리셋). 세이브 안 함(전환용)
+var pending_event_stage: int = 0
+
 func clear_event_for(stage: int) -> String:
 	match stage:
 		3:  return "보안관이 합류했다!\n전투 준비에서 직업으로 선택할 수 있어."
@@ -462,7 +465,7 @@ func clear_event_for(stage: int) -> String:
 		13: return "비둘기 동료를 만났다.\n(동료 시스템은 준비 중)"
 		15: return "두 번째 스킬을 살 수 있게 됐다!"
 		16: return "치와와 동료를 만났다.\n(동료 시스템은 준비 중)"
-		19: return "직업 Lv2 강화가 열렸다!\n상점 [레벨업]에서 더 세질 수 있어."
+		19: return "직업 2등급(떠오르는) 제작이 열렸다!\n맥스 상점에서 상위 등급 직업을 만들 수 있어."
 		20: return "최종보스 큰 뱀을 물리쳤다! 1막 클리어!"
 		_:  return ""
 

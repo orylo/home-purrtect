@@ -180,15 +180,17 @@ func _on_to_select_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/home.tscn")   # 전투 포기 → 홈
 
 
-## [다음 ▶ / 확인 ▶] — 이벤트 스테이지면 첫 탭은 이벤트 실행(placeholder), 그 뒤 진행 열림
+## [다음 ▶ / 확인 ▶] — 이벤트 스테이지면 [확인]→이벤트 씬으로 랜딩, 아니면 다음 스테이지
 func _on_clear_next() -> void:
+	get_tree().paused = false
 	if _event_pending:
 		_event_pending = false
-		clear_title.text += "\n\n● " + _event_text   # 이벤트 placeholder 안내
-		clear_next.text = "다음 ▶"
-		clear_restart.visible = true
+		GameState.pending_event_stage = GameState.stage_minor   # 방금 깬 스테이지(이벤트 씬이 읽음)
+		GameState.advance_stage()
+		if GameState.mode != "dev" and GameState.AUTOSAVE:
+			GameState.save_game()
+		get_tree().change_scene_to_file("res://scenes/event.tscn")   # 이벤트 씬 랜딩
 		return
-	get_tree().paused = false
 	GameState.advance_stage()
 	if GameState.mode != "dev" and GameState.AUTOSAVE:
 		GameState.save_game()                                      # (출시 빌드) 진행 저장
