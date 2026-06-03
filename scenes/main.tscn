@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://scripts/debug_overlay.gd" id="15_debug"]
 [ext_resource type="Material" path="res://assets/shaders/halftone_bg.tres" id="16_halftone"]
 [ext_resource type="Script" path="res://scripts/ground_layer.gd" id="17_ground"]
+[ext_resource type="Script" path="res://scripts/halftone_bg.gd" id="18_ht"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -76,6 +77,7 @@ fog_enabled = false
 
 [node name="Halftone" type="ColorRect" parent="BG"]
 material = ExtResource("16_halftone")
+script = ExtResource("18_ht")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

@@ -14,7 +14,8 @@ uniform float dot_max : hint_range(0.1, 0.75) = 0.58;          // 최대 점 반
 
 group_uniforms field;
 uniform float noise_scale : hint_range(0.3, 8.0) = 2.0;        // 밝기 덩어리 크기(작을수록 큰 구름)
-uniform float anim_speed : hint_range(0.0, 1.0) = 0.06;        // 흐르는 속도(천천히 흐름)
+uniform float anim_speed : hint_range(0.0, 1.0) = 0.08;        // 흐르는 속도(천천히 흐름)
+uniform float u_time = 0.0;                                   // 시간(스크립트가 매 프레임 주입 — TIME 대신 확실히 흐르게)
 uniform float contrast : hint_range(0.2, 4.0) = 1.6;          // 밝고 어두움 대비
 uniform float brightness : hint_range(0.0, 1.0) = 0.5;        // 전체 밝기(점 평균 크기)
 
@@ -61,7 +62,7 @@ void fragment() {
 
 	// 밝기 필드: 셀 중심에서 1회 샘플(→ 점은 셀에 고정) + TIME으로 흐름
 	vec2 field_uv = (cell_id + 0.5) / grid;
-	float t = TIME * anim_speed;
+	float t = u_time * anim_speed;
 	// 두 방향으로 흐르는 fbm을 겹쳐 구름처럼 일렁이게
 	vec2 q = field_uv * noise_scale * vec2(aspect, 1.0);
 	float n = fbm(q + vec2(t, t * 0.6));
@@ -78,8 +79,12 @@ void fragment() {
 	float aa = fwidth(dist) + 1e-4;
 	float dot = 1.0 - smoothstep(radius - aa, radius + aa, dist);
 
-	// 합성: 배경 ↔ 점
-	vec4 col = mix(bg_color, dot_color, dot);
-	col.a *= alpha;
-	COLOR = col;
+	// 합성: 점(흰색) over 배경. RGB를 배경으로 섞지 않아 가장자리 회색 테두리(스트록)가 안 생김.
+	float dotA = dot * dot_color.a;
+	float outA = dotA + bg_color.a * (1.0 - dotA);
+	vec3 rgb = dot_color.rgb;
+	if (outA > 0.0001) {
+		rgb = (dot_color.rgb * dotA + bg_color.rgb * bg_color.a * (1.0 - dotA)) / outA;
+	}
+	COLOR = vec4(rgb, outA * alpha);
 }
