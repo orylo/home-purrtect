@@ -27,6 +27,9 @@ func _process(delta: float) -> void:
 
 func _on_stage_cleared() -> void:
 	var bonus := GameState.award_stage_clear()   # 첫 클리어 보너스 코인(파밍은 0)
+	var si := get_node_or_null("StageIntro")     # 클리어 퇴장 이벤트(있으면)가 먼저
+	if si != null and si.has_method("has_outro") and si.has_outro():
+		await si.play_outro()
 	get_tree().paused = true
 	hud.show_clear(bonus)
 

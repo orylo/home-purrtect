@@ -22,17 +22,39 @@ const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) — 급하지 않게
 ## 스테이지별 이벤트 데이터
 const EVENTS := {
 	"1-1": {
-		"npc": "gray",
 		"name": "펑거스",
-		"intro": [
-			{"text": "크크… 너, 잘 만났다!!"},
-			{"text": "내 졸병들이 널 가만두지 않을 거다."},
-			{"text": "그 집엔… 내가 다시 들어갈 거야.", "choices": ["덤벼 봐!", "무슨 소리야?"]},
+		"intro": [                                          # ① 전투 시작 전
+			{"text": "너… 그때 날 걷어찬 그 고양이?! 이 펑거스, 그 발길질을 잊을 줄 알았더냐!"},
+			{"text": "좋다, 오늘 집도 복수도 한꺼번에 되찾아주마. 가라, 나의 정예들이여—!"},
 		],
-		"first_kill": [
-			{"text": "아닛! 내 졸병을 쓰러뜨리다니… 제법인걸?"},
-			{"text": "하지만 이건 어떨까!? 끝없이 보내주마!"},
+		"first_kill": [                                     # ② 첫 몹 처치(1회)
+			{"text": "뭐…?! 어떻게 싸울 줄 아는 거지?! 한낱 길바닥 출신인 주제에…!"},
 		],
+		"on_wave": {                                        # ③ 웨이브 시작 팝업
+			2: [{"text": "제법이군. 허나 이 몸은 위대한 책략가! 부대는 얼마든지 있다 — 가라, 제2진!"}],
+		},
+		"outro": [                                          # ④ 전 웨이브 클리어 후
+			{"text": "이…이럴 수가! 오늘의 수치, 이 펑거스가 절대 잊지 않겠다!"},
+			{"text": "이번이 마지막이라 생각 마라! 이 몸은 반드시 다시 돌아온다, 치즈으으—!"},
+		],
+	},
+	"1-3": {
+		"name": "펑거스",
+		"intro": [                                          # ① 전투 시작 전(흐림+비)
+			{"text": "또 만났군, 치즈. 허나 이 몸을 우습게 보지 마라!"},
+			{"text": "이 위대한 펑거스가… 새로운 비밀 병기를 준비했거든!"},
+			{"text": "멀찍이서 던져주마. 네놈이 손도 못 대게 말이야 — 가라, 나의 정예들이여!"},
+		],
+		"on_wave": {
+			2: [{"text": "후하하—! 등장이다, 나의 투척 부대! 멀리서 깔끔하게 처리해주마!"}],   # ② 투척쥐 첫 등장
+			3: [{"text": "뭐, 뭐야 이 햇살은—?! …흥, 상관없다! 마지막 부대다, 가랏!"}],   # ③ 비 그침→해
+		},
+		"outro": [                                          # ④ 전 웨이브 클리어 후
+			{"text": "흥… 이번엔 제법 진땀 좀 뺐겠다, 치즈?"},
+			{"text": "두고 봐라! 다음엔 투척쥐를 잔뜩, 아주 잔뜩 데려올 테니까! 끄으윽—!"},
+		],
+		"reward": "보안관",                                  # ⑤ 클리어 후 보안관 획득
+		"reward_text": "[전투 준비 > 직업]에서 장착·교체할 수 있어요.",
 	},
 }
 
@@ -70,6 +92,8 @@ func _ready() -> void:
 	_hud = get_parent().get_node_or_null("HUD")
 	if _data.has("first_kill"):
 		GameState.enemy_killed.connect(_on_enemy_killed)
+	if _data.has("on_wave") and _spawner != null and _spawner.has_signal("wave_started"):
+		_spawner.wave_started.connect(_on_wave_popup)
 	if _data.has("intro"):
 		_run_intro()
 
@@ -131,6 +155,47 @@ func _run_popup(beats: Array) -> void:
 	_build_ui(0.55)                                    # 화면 Dim
 	await _play_beats(beats)
 	_close_ui()
+	if _hud != null:
+		_hud.visible = true
+	get_tree().paused = false
+	_busy = false
+
+
+## ③ 웨이브 시작 팝업(on_wave[N]) — current는 1부터.
+func _on_wave_popup(current: int, _total: int) -> void:
+	if _busy:
+		return
+	var ow: Dictionary = _data.get("on_wave", {})
+	if ow.has(current):
+		await _run_popup(ow[current])
+
+
+# ── ④ 클리어 후 퇴장(+⑤ 보상) — game.gd가 클리어 패널 직전에 await ─────
+func has_outro() -> bool:
+	return _data.has("outro")
+
+
+func play_outro() -> void:
+	if not _data.has("outro"):
+		return
+	_busy = true
+	if _hud != null:
+		_hud.visible = false
+	get_tree().paused = true
+	var vp := get_viewport().get_visible_rect().size
+	_spawn_npc(vp.x + 160.0)                            # 우측에서 다시 등장
+	await _walk_to(vp.x * 0.6)
+	_build_ui(0.0)
+	await _play_beats(_data["outro"])
+	_close_ui()
+	await _walk_to(vp.x + 220.0, "run", WALK_SPEED * 2.2)   # 분해서 달려 퇴장
+	if is_instance_valid(_npc):
+		_npc.queue_free()
+	if _data.has("reward"):                             # ⑤ 보상 획득 안내
+		_build_ui(0.55)
+		var rt: String = String(_data.get("reward_text", ""))
+		await _play_beats([{"text": "%s 획득!  %s" % [_data["reward"], rt], "name": "획득"}])
+		_close_ui()
 	if _hud != null:
 		_hud.visible = true
 	get_tree().paused = false
@@ -261,7 +326,7 @@ func _play_beats(beats: Array) -> void:
 
 
 func _show_beat(beat: Dictionary) -> void:
-	_name_lbl.text = String(_data.get("name", "?"))
+	_name_lbl.text = String(beat.get("name", _data.get("name", "?")))
 	_text_lbl.text = String(beat.get("text", ""))
 	for c in _choices.get_children():
 		c.queue_free()
