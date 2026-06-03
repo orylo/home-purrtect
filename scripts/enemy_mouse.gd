@@ -40,12 +40,20 @@ const SIZE_MULT := {
 }
 # 발 위치 미세조정(양수=아래로 내려 지면에 더 가깝게). fh*sc 비율.
 const FOOT_NUDGE := {"spider": 0.14}
-const WINDUP_MELEE := 0.22    # 근접: 모션 시작 후 타격까지
-const WINDUP_RANGED := 0.30   # 원거리: 모션 시작 후 발사까지
-# 투척쥐: 매 공격 attack 전체(자루에서 줍기~) 대신 [시작, 발사, 끝] 프레임만 짧게 재생.
-const THROW_WINDOW := {
-	"gray_thrower": [6, 8, 10],
-	"black_thrower": [6, 8, 10],
+const WINDUP_MELEE := 0.22    # 근접(placeholder 폴백): 모션 시작 후 타격까지
+const WINDUP_RANGED := 0.30   # 원거리(placeholder 폴백): 모션 시작 후 발사까지
+# attack 애니에서 발사/타격이 일어나는 프레임(스프라이트 분석값).
+const ATK_RELEASE := {
+	"gray_thrower": 8, "black_thrower": 8,
+	"bee": 7, "spider": 3, "bat": 4, "sparrow": 6,
+}
+# 사거리 안에서 attack 사이클을 루프하며 연속발사(발사=ATK_RELEASE 프레임).
+const LOOP_SHOOTERS := ["gray_thrower", "black_thrower", "spider", "bee"]
+# 공중 상하진동: c=평균 높이(px,위로) / a=진폭 / s=각속도. 최저점(바닥)=c-a.
+const AIR_BOB := {
+	"bat":     {"c": 221.0, "a": 120.0, "s": 1.6},   # 폭 큼: 최저점=치즈 얼굴 높이
+	"bee":     {"c": 250.0, "a": 40.0,  "s": 3.6},   # 작고 빠르게
+	"sparrow": {"c": 145.0, "a": 130.0, "s": 2.4},   # 크게 내려와 쪼기
 }
 
 # def에서 채워지는 행동/외형
@@ -83,14 +91,14 @@ var _stun_timer: float = 0.0
 var _eslow_timer: float = 0.0    # 스킬 둔화(왁스칠·불협화음 등) 남은 시간
 var _eslow_factor: float = 1.0   # 둔화 시 이동 배율
 var _lunge: float = 0.0        # 근접 찌르기 모션 타이머
-var _dive: float = 0.0         # 참새 급강하(공격 때 내려갔다 올라옴) 타이머
-const DIVE_DUR := 0.5
-var _windup: float = 0.0           # 공격 모션 후 실제 타격까지 남은 시간
-var _windup_pending: bool = false
-var _windup_ranged: bool = false
-var _throw_active: bool = false    # 투척쥐: 교전 중 던지기 사이클 루프 진행 여부
-var _throw_prev_frame: int = -1    # 발사프레임 통과 감지용(직전 프레임)
-var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y(공중 다이브 계산용)
+var _windup: float = 0.0           # placeholder 폴백: 공격 모션 후 타격까지 남은 시간
+var _pending_release: bool = false # 공격 모션 재생 중, 발사/타격 프레임 대기
+var _release_ranged: bool = false
+var _loop_active: bool = false     # 루프 슈터: 교전 중 attack 사이클 루프 진행 여부
+var _loop_prev_frame: int = -1     # 발사프레임 통과 감지용(직전 프레임)
+var _air_phase: float = 0.0        # 공중 상하진동 위상
+var _air_dip_armed: bool = true    # 바닥(최저점) 1회 트리거 준비
+var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y
 var _size_mult: float = 1.0        # 화면 크기 배율(그림자 크기에도 반영)
 var _popups: Array = []
 
@@ -120,8 +128,7 @@ func _ready() -> void:
 		anim.visible = false   # placeholder는 _draw로 그림
 	anim.animation_finished.connect(_on_anim_finished)
 	if _air:
-		anim.position.y -= AIR_HEIGHT
-		$Hitbox.position.y -= AIR_HEIGHT   # 공중 적은 그려진 위치에서 맞게
+		_air_phase = randf() * TAU   # 개체마다 진동 위상 분산(군집이 따로 출렁이게)
 
 
 func _apply_def() -> void:
@@ -147,9 +154,9 @@ func _apply_def() -> void:
 	if ENEMY_FRAMES.has(_id):
 		var sf: SpriteFrames = load(ENEMY_FRAMES[_id])
 		if sf != null:
-			if THROW_WINDOW.has(_id):
+			if _id in LOOP_SHOOTERS:
 				sf = sf.duplicate(true)                       # 공유 리소스 보호
-				sf.set_animation_loop("attack", true)          # 던지기 사이클 무한 루프
+				sf.set_animation_loop("attack", true)          # 발사 사이클 무한 루프
 			anim.sprite_frames = sf
 			_use_sprite = true
 			_has_idle = sf.has_animation("idle")
@@ -195,8 +202,6 @@ func _physics_process(delta: float) -> void:
 		_eslow_timer -= delta
 	if _lunge > 0.0:
 		_lunge -= delta
-	if _dive > 0.0:
-		_dive -= delta
 	# placeholder 적: hit 애니가 없어 타이머로 피격 경직 해제(안 그러면 영영 멈춤)
 	if _hit and not _use_sprite:
 		_hit_timer -= delta
@@ -208,7 +213,7 @@ func _physics_process(delta: float) -> void:
 		if _phase_timer <= 0.0:
 			_walking = not _walking
 			_phase_timer = walk_time if _walking else stop_time
-			if _use_sprite and not _hit and not dead and not _windup_pending and anim.animation != "attack":
+			if _use_sprite and not _hit and not dead and not _pending_release and not _loop_active and anim.animation != "attack":
 				_play_move_anim()
 
 	var ranged := _kind == "lob" or _kind == "shoot"
@@ -233,13 +238,17 @@ func _physics_process(delta: float) -> void:
 	_push_vx = 0.0
 
 	# 공격
-	if _is_ground_thrower():
-		# 투척쥐: 교전 중 던지기 사이클 루프(전용). 와인드업/idle 안 씀.
-		_update_thrower(delta, dist, stunned)
+	if _id in LOOP_SHOOTERS:
+		# 사거리 안에서 attack 사이클 루프 + ATK_RELEASE 프레임마다 발사(투척쥐·거미·벌).
+		_update_loop_shooter(delta, dist, stunned)
+	elif _air and AIR_BOB.has(_id):
+		# 공중 바닥트리거(박쥐·참새): 진동 최저점에서 공격 시작 → 발사/타격은 release 프레임.
+		_update_air_attacker(dist, stunned)
+		_resolve_pending_release(delta)
 	else:
-		# 트리거 시 모션(attack)만 먼저 재생 → 와인드업 후 _resolve_attack에서 실제 타격/발사
+		# 일반(쥐 근접 등): 트리거 시 모션 먼저 → release 프레임(또는 폴백 시간)에 타격.
 		_attack_timer -= delta
-		if not stunned and not dead and not _windup_pending and _attack_timer <= 0.0:
+		if not stunned and not dead and not _pending_release and _attack_timer <= 0.0:
 			if ranged:
 				if _atk_range > 0.0 and dist <= _atk_range:
 					_attack_timer = attack_interval
@@ -247,21 +256,19 @@ func _physics_process(delta: float) -> void:
 			elif _is_touching_player():
 				_attack_timer = attack_interval
 				_start_attack(false)
-		if _windup_pending:
-			_windup -= delta
-			if _windup <= 0.0:
-				_windup_pending = false
-				_resolve_attack()
+		_resolve_pending_release(delta)
 
 	# 스프라이트 적: 근접 찌르기 + 번쩍/스턴 색
 	if _use_sprite:
 		anim.position.x = -(_lunge / 0.16) * 16.0 if _lunge > 0.0 else 0.0
-		if _air:
-			# 참새 급강하: _dive 동안 바닥까지 내려갔다 떠오름. 평소엔 AIR_HEIGHT에 떠 있음.
-			var lift := 0.0
-			if _dive > 0.0:
-				lift = sin((1.0 - _dive / DIVE_DUR) * PI) * AIR_HEIGHT
-			anim.position.y = _sprite_foot_y - AIR_HEIGHT + lift
+		if _air and AIR_BOB.has(_id):
+			# 공중 상하진동. 박쥐·참새는 공격 모션 중엔 위상 정지(최저점에 머물러 타격).
+			var freeze: bool = anim.animation == "attack" and (_id == "bat" or _id == "sparrow")
+			if not freeze:
+				_air_phase += float(AIR_BOB[_id]["s"]) * delta
+			var raise: float = float(AIR_BOB[_id]["c"]) + sin(_air_phase) * float(AIR_BOB[_id]["a"])
+			anim.position.y = _sprite_foot_y - raise
+			$Hitbox.position.y = anim.position.y          # 보이는 높이에서 맞게
 		else:
 			anim.position.y = _sprite_foot_y
 		if _flash > 0.0:
@@ -277,74 +284,86 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-## attack 애니 길이(프레임수/속도). 없으면 기본값.
-func _attack_release_time(is_ranged: bool) -> float:
-	var fallback := WINDUP_RANGED if is_ranged else WINDUP_MELEE
-	if not (_use_sprite and _has_attack) or anim.sprite_frames == null:
-		return fallback
-	var n := anim.sprite_frames.get_frame_count("attack")
-	var spd := anim.sprite_frames.get_animation_speed("attack")
-	if n <= 0 or spd <= 0.0:
-		return fallback
-	var dur := float(n) / spd
-	return dur * (0.55 if is_ranged else 0.5)   # 모션 중반쯤에 발사/타격
-
-
-## 공격 트리거 — 모션을 먼저 재생하고 타격/발사는 와인드업 뒤로 미룬다.
+## 공격 트리거 — 모션을 먼저 재생, 발사/타격은 release 프레임(또는 폴백 시간)에.
 func _start_attack(is_ranged: bool) -> void:
-	_windup_pending = true
-	_windup_ranged = is_ranged
+	_pending_release = true
+	_release_ranged = is_ranged
 	_lunge = 0.16
-	if not is_ranged and _kind == "dive":
-		# 참새: 먼저 급강하(walk/flap 유지) → 최저점에서 쪼기 모션+타격
-		_dive = DIVE_DUR
-		_windup = DIVE_DUR * 0.5
-		return
 	if _use_sprite and _has_attack and not _hit:
 		anim.play("attack")
-	_windup = _attack_release_time(is_ranged)
+		anim.frame = 0
+	# placeholder(스프라이트/ATK_RELEASE 없음) 폴백용 시간
+	_windup = WINDUP_RANGED if is_ranged else WINDUP_MELEE
 
 
-func _is_ground_thrower() -> bool:
-	return THROW_WINDOW.has(_id)
+## 대기 중인 공격 해소: 스프라이트는 release 프레임 도달 시, 그 외는 시간 경과 시.
+func _resolve_pending_release(delta: float) -> void:
+	if not _pending_release:
+		return
+	if _use_sprite and ATK_RELEASE.has(_id):
+		if anim.animation == "attack" and anim.frame >= int(ATK_RELEASE[_id]):
+			_pending_release = false
+			_resolve_attack()
+	else:
+		_windup -= delta
+		if _windup <= 0.0:
+			_pending_release = false
+			_resolve_attack()
 
 
-## 투척쥐 전용: 교전 중 던지기 사이클을 계속 루프(자루에서 줍기→던지기→마무리),
-## 발사는 #8(release) 프레임 통과 순간. 루프 속도를 공격 간격에 맞춤. idle 안 씀.
-func _update_thrower(delta: float, dist: float, stunned: bool) -> void:
+## 루프 슈터(투척쥐·거미·벌): 교전 중 attack 사이클을 계속 루프,
+## ATK_RELEASE 프레임 통과 순간 발사. 루프 속도를 공격 간격에 맞춤. idle 안 씀.
+func _update_loop_shooter(delta: float, dist: float, stunned: bool) -> void:
 	var in_range := _atk_range > 0.0 and dist <= _atk_range
 	if stunned or dead or _hit or not in_range:
-		if _throw_active:
-			_throw_active = false
+		if _loop_active:
+			_loop_active = false
 			anim.speed_scale = 1.0
 			_play_move_anim()
 		return
-	if not _throw_active or anim.animation != "attack":
-		_throw_active = true
-		_throw_prev_frame = -1
+	if not _loop_active or anim.animation != "attack":
+		_loop_active = true
+		_loop_prev_frame = -1
 		var fc := float(anim.sprite_frames.get_frame_count("attack"))
 		var fs: float = maxf(anim.sprite_frames.get_animation_speed("attack"), 1.0)
 		var base_dur := fc / fs                                  # 전체 사이클 길이(초)
 		anim.speed_scale = clampf(base_dur / maxf(attack_interval, 0.4), 0.5, 3.0)
 		anim.play("attack")
 		anim.frame = 0
-	var rf := int(THROW_WINDOW[_id][1])                          # 발사 프레임(#8)
-	if anim.frame == rf and _throw_prev_frame != rf:
+	var rf := int(ATK_RELEASE[_id])
+	if anim.frame == rf and _loop_prev_frame != rf:
 		_fire_projectile()
-	_throw_prev_frame = anim.frame
+	_loop_prev_frame = anim.frame
 
 
-## 와인드업 종료 — 실제 데미지/발사. 그 사이 죽거나 경직/스턴되면 취소.
+## 공중 바닥트리거(박쥐·참새): 진동 최저점(sin≈-1)에서 1회 공격 시작.
+##   박쥐=사거리 내 음파(얼굴 높이), 참새=x로 가까우면 쪼기.
+func _update_air_attacker(dist: float, stunned: bool) -> void:
+	if stunned or dead or _hit or _pending_release:
+		return
+	var s := sin(_air_phase)
+	if s > -0.2:
+		_air_dip_armed = true                  # 위로 떠오르면 다음 바닥트리거 준비
+	if _air_dip_armed and s < -0.85:           # 최저점 부근
+		var can := false
+		if _kind == "dive":
+			can = _is_touching_player()        # 참새: 치즈에 가까울 때만 쪼기
+		else:
+			can = _atk_range > 0.0 and dist <= _atk_range   # 박쥐: 사거리 내
+		if can:
+			_air_dip_armed = false
+			_start_attack(_kind != "dive")     # 박쥐=원거리, 참새=근접
+
+
+## release 프레임에서 실제 발사/타격. 그 사이 죽거나 경직/스턴되면 취소.
 func _resolve_attack() -> void:
 	if dead or _stun_timer > 0.0 or _hit:
 		return
-	if _windup_ranged:
-		if _atk_range > 0.0 and _dist_to_player() <= _atk_range * 1.2:
+	if _release_ranged:
+		if _atk_range > 0.0 and _dist_to_player() <= _atk_range * 1.25:
 			_fire_projectile()
 		return
 	# 근접
-	if _kind == "dive" and _use_sprite and _has_attack:
-		anim.play("attack")              # 참새: 바닥 도달 순간 쪼기 모션
 	if _is_touching_player() or _kind == "dive":
 		var player := get_tree().get_first_node_in_group("player")
 		if player and player.has_method("take_damage"):
@@ -364,17 +383,17 @@ func _fire_projectile() -> void:
 	elif _id == "bee":
 		b.shape = "cone"           # 벌 = 원뿔 독침
 
-	# 박쥐: 머리 높이 수평 음파 — 치즈가 서 있으면 맞고, 앉으면(숙이면) 회피
+	# 박쥐: 현재 비행 높이(최저점=치즈 얼굴)에서 수평 음파. 서면 맞고 앉으면 회피.
 	if _high:
-		var head_y := -180.0
-		b.global_position = Vector2(global_position.x - 10.0, Layout.ground_y() + head_y)
-		b.hit_y_offset = head_y
+		var by: float = anim.position.y    # 박쥐 현재 높이(진동 최저점에서 발사됨)
+		b.global_position = Vector2(global_position.x - 10.0, global_position.y + by)
+		b.hit_y_offset = by
 		b.dodge_by_crouch = true
 		get_parent().add_child(b)
 		b.setup(Vector2(-460.0, 0.0), damage, _status, _bcolor, 0.0)   # 수평 직선
 		return
 
-	var oy := -AIR_HEIGHT if _air else -90.0
+	var oy: float = anim.position.y if (_air and _use_sprite) else (-90.0)
 	var origin := global_position + Vector2(-10, oy)
 	b.global_position = origin
 	get_parent().add_child(b)
@@ -390,6 +409,13 @@ func _fire_projectile() -> void:
 	else:
 		var dir := (target - origin).normalized()
 		b.setup(dir * 520.0, damage, _status, _bcolor, 0.0)                   # 직선
+
+
+## 공중 적의 현재 떠 있는 높이(px, 양수). 진동 스프라이트는 실시간 높이, 그 외 폴백.
+func _air_raise() -> float:
+	if _air and _use_sprite and AIR_BOB.has(_id):
+		return -anim.position.y
+	return AIR_HEIGHT if _air else 0.0
 
 
 func _dist_to_player() -> float:
@@ -408,13 +434,9 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, _body_r * _size_mult, Color(0, 0, 0, 0.3))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-	# placeholder 몸 (스프라이트 안 쓰는 적)
+	# placeholder 몸 (스프라이트 안 쓰는 적 — 보스 등. 공중 스프라이트 적은 여기 안 옴)
 	if not _use_sprite:
-		# 참새 급강하: 공격 중엔 sin 곡선으로 바닥까지 내려갔다 올라옴
-		var dive_lift := 0.0
-		if _dive > 0.0:
-			dive_lift = sin((1.0 - _dive / DIVE_DUR) * PI) * AIR_HEIGHT
-		var cy := -_body_r - 12.0 - (AIR_HEIGHT if _air else 0.0) + dive_lift
+		var cy := -_body_r - 12.0 - _air_raise()
 		var lunge_off := Vector2(-(_lunge / 0.16) * 18.0, 0.0)
 		var bc := _color.lightened(0.6) if _flash > 0.0 else _color
 		draw_set_transform(Vector2(0, cy) + lunge_off, 0.0, Vector2(1.0, 1.15))
@@ -429,7 +451,7 @@ func _draw() -> void:
 	# HP 바 (피해 입었을 때만)
 	if health < max_health:
 		var w := 76.0
-		var hy := -158.0 - (AIR_HEIGHT if _air else 0.0)
+		var hy := -158.0 - _air_raise()
 		var ratio := clampf(health / max_health, 0.0, 1.0)
 		draw_rect(Rect2(-w * 0.5, hy, w, 9.0), Color(0, 0, 0, 0.65))
 		draw_rect(Rect2(-w * 0.5, hy, w * ratio, 9.0), Color(0.95, 0.25, 0.2, 1.0))
@@ -440,7 +462,7 @@ func _draw_damage_popups() -> void:
 	if _popups.is_empty():
 		return
 	var font: Font = ENEMY_FONT
-	var base_y := -174.0 - (AIR_HEIGHT if _air else 0.0)
+	var base_y := -174.0 - _air_raise()
 	for p in _popups:
 		var f: float = clampf(p["t"] / DMG_POP_DUR, 0.0, 1.0)
 		var y := base_y - 48.0 * f
@@ -508,7 +530,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		Fx.request_shake(7.0 if crit else 3.0)
 		if play_sfx:
 			Sfx.impact(crit)   # 근접·원거리 통일(punch), 크리=퍼벅
-		var _fy := -50.0 - (AIR_HEIGHT if _air else 0.0)
+		var _fy := -50.0 - _air_raise()
 		if crit:
 			Fx.burst("critical_hit", global_position + Vector2(0, _fy), 0.62, 45)
 		else:
@@ -525,19 +547,19 @@ func apply_slow(dur: float, factor: float) -> void:
 		return
 	_eslow_timer = maxf(_eslow_timer, dur)
 	_eslow_factor = factor
-	Fx.burst("slime_drip", global_position + Vector2(0, -42.0 - (AIR_HEIGHT if _air else 0.0)), 0.4, 44, 14.0, true, minf(dur, 1.2))
+	Fx.burst("slime_drip", global_position + Vector2(0, -42.0 - _air_raise()), 0.4, 44, 14.0, true, minf(dur, 1.2))
 
 ## 스킬 스턴(완전 정지 dur초) — 자장가. 데미지·넉백 없음
 func apply_stun(dur: float) -> void:
 	if dead:
 		return
 	_stun_timer = maxf(_stun_timer, dur)
-	Fx.burst("dizzy_stars", global_position + Vector2(0, -92.0 - (AIR_HEIGHT if _air else 0.0)), 0.46, 46, 14.0, true, dur)
+	Fx.burst("dizzy_stars", global_position + Vector2(0, -92.0 - _air_raise()), 0.46, 46, 14.0, true, dur)
 
 
 ## 이동/정지 애니(idle 있으면 정지 시 idle, 아니면 walk).
 func _play_move_anim() -> void:
-	_throw_active = false
+	_loop_active = false
 	if _use_sprite:
 		anim.speed_scale = 1.0
 	# 원거리 적이 사거리 안에서 교전 중이면(멈춰 발사) 발사 사이에 idle 유지.
@@ -569,10 +591,10 @@ func _die() -> void:
 	queue_redraw()
 	var pop := POP.instantiate()
 	get_parent().add_child(pop)
-	pop.global_position = global_position + Vector2(0, -45 - (AIR_HEIGHT if _air else 0.0))
+	pop.global_position = global_position + Vector2(0, -45 - _air_raise())
 	Fx.request_shake(7.0)
 	Fx.request_hitstop(0.05)
-	Fx.burst("poof_explosion", global_position + Vector2(0, -45.0 - (AIR_HEIGHT if _air else 0.0)), 0.6, 47)
+	Fx.burst("poof_explosion", global_position + Vector2(0, -45.0 - _air_raise()), 0.6, 47)
 	Sfx.play("pop")
 	if _use_sprite:
 		anim.modulate = Color(1, 1, 1)
