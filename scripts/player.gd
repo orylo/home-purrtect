@@ -514,11 +514,17 @@ func _fire_ranged() -> void:
 		cfg["mode"] = "straight"
 		cfg["dir"] = Vector2.RIGHT
 		cfg["shape"] = "note"
-		cfg["note_type"] = randi() % JAZZ_NOTE_TYPES
-		cfg["speed"] = randf_range(JAZZ_SPEED_MIN, JAZZ_SPEED_MAX)
+		var nt := randi() % JAZZ_NOTE_TYPES
+		cfg["note_type"] = nt
+		# 음표 종류=음가 → 탄속. 잇단음표(짧음·빠름)=보안관 총알속도 / 8분=중간 / 4분(긺·느림)=기존 느린값.
+		var note_spd: Array = [540.0, SHERIFF_BULLET_SPEED, JAZZ_SPEED_MIN]   # [0]8분 [1]잇단 [2]4분
+		var spd: float = note_spd[nt]
+		cfg["speed"] = spd
 		cfg["max_range"] = get_viewport_rect().size.x * ranged_limit_frac
 		cfg["fade_start"] = JAZZ_FADE_START
-		cfg["wave_amp"] = randf_range(JAZZ_WAVE_AMP_MIN, JAZZ_WAVE_AMP_MAX)
+		# 빠른 음표는 물결을 작게(스냅 있게), 느린 음표는 크게 출렁
+		var wf: float = 1.0 - (spd - JAZZ_SPEED_MIN) / maxf(1.0, SHERIFF_BULLET_SPEED - JAZZ_SPEED_MIN)  # 느릴수록 1
+		cfg["wave_amp"] = lerp(JAZZ_WAVE_AMP_MIN, JAZZ_WAVE_AMP_MAX, wf)
 		cfg["wave_freq"] = TAU / randf_range(JAZZ_WAVE_LEN_MIN, JAZZ_WAVE_LEN_MAX)
 	var bullet := bullet_scene.instantiate()
 	bullet.global_position = global_position + muzzle_offset

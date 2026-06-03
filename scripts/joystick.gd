@@ -7,8 +7,8 @@ const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 ## · 거의 안 움직이고 떼면 = 탭 = 점프(Touch.request_jump).
 ## 키보드(←→/스페이스)도 그대로 쓸 수 있다.
 
-@export var base_radius: float = 70.0   # 베이스(바깥 링) 크기
-@export var knob_radius: float = 38.0   # 노브(손잡이) 크기
+@export var base_radius: float = 84.0   # 베이스(바깥 링) 크기
+@export var knob_radius: float = 46.0   # 노브(손잡이) 크기
 @export var tap_threshold: float = 18.0 # 이만큼 안 움직이고 떼면 '탭(점프)'
 
 var _active: bool = false
@@ -87,35 +87,52 @@ func _handle_drag(pos: Vector2) -> void:
 
 func _draw() -> void:
 	if _active:
-		draw_circle(_center, base_radius, Color(1, 1, 1, 0.12))
-		draw_arc(_center, base_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.45), 3.0)
-		draw_circle(_knob, knob_radius, Color(1, 1, 1, 0.40))
-		draw_arc(_knob, knob_radius, 0.0, TAU, 32, Color(1, 1, 1, 0.8), 3.0)
-		_draw_wasd(_center)
+		_draw_pad(_center, 1.0)
+		_draw_knob(_knob)
+		_draw_wasd(_center, 1.0)
 	else:
-		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙에 흐릿하게 표시
+		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙
 		var band_cy := (Layout.band_top() + size.y) * 0.5
 		var rest := Vector2(50.0 + base_radius, band_cy)
-		draw_circle(rest, base_radius, Color(1, 1, 1, 0.08))
-		draw_arc(rest, base_radius, 0.0, TAU, 48, Color(1, 1, 1, 0.25), 2.0)
-		draw_circle(rest, knob_radius, Color(1, 1, 1, 0.15))
-		_draw_wasd(rest)
+		_draw_pad(rest, 0.85)
+		_draw_knob(rest)
+		_draw_wasd(rest, 0.85)
 
 
-## 상하좌우에 W S A D 키 힌트(컴퓨터 사용자용)
-func _draw_wasd(c: Vector2) -> void:
+## 베이스 패드 — 카데라 톤(크림 바탕 + 진한 크림 안쪽 + 두꺼운 잉크 외곽선 + 단색 그림자)
+func _draw_pad(c: Vector2, op: float) -> void:
+	draw_circle(c + Vector2(0, 5), base_radius, _col(Design.INK, 0.22 * op))   # 그림자
+	draw_circle(c, base_radius, _col(Design.PAPER, 0.96 * op))                  # 크림 바탕
+	draw_arc(c, base_radius - 9.0, 0.0, TAU, 64, _col(Design.PAPER_DEEP, 0.9 * op), 4.0)  # 안쪽 음영링
+	draw_arc(c, base_radius, 0.0, TAU, 72, _col(Design.INK, op), 5.0)           # 잉크 외곽선
+
+
+## 노브(손잡이) — 골든 + 잉크 외곽선 + 하이라이트
+func _draw_knob(c: Vector2) -> void:
+	draw_circle(c + Vector2(0, 3), knob_radius, _col(Design.INK, 0.25))         # 그림자
+	draw_circle(c, knob_radius, Design.CHEESE)
+	draw_arc(c, knob_radius, 0.0, TAU, 48, Design.INK, 5.0)
+	draw_circle(c + Vector2(-knob_radius * 0.32, -knob_radius * 0.32), knob_radius * 0.26, _col(Color(1, 1, 1), 0.45))
+
+
+## 상하좌우에 W S A D 키 힌트 — 잉크색(크림 위)
+func _draw_wasd(c: Vector2, op: float) -> void:
 	var font := UI_FONT
 	if font == null:
 		return
-	var d := base_radius * 0.60
-	_key_label(font, c + Vector2(0.0, -d), "W")
-	_key_label(font, c + Vector2(0.0, d), "S")
-	_key_label(font, c + Vector2(-d, 0.0), "A")
-	_key_label(font, c + Vector2(d, 0.0), "D")
+	var d := base_radius * 0.62
+	_key_label(font, c + Vector2(0.0, -d), "W", op)
+	_key_label(font, c + Vector2(0.0, d), "S", op)
+	_key_label(font, c + Vector2(-d, 0.0), "A", op)
+	_key_label(font, c + Vector2(d, 0.0), "D", op)
 
 
-func _key_label(font: Font, center: Vector2, ch: String) -> void:
-	var fs := 22
-	var pos := center + Vector2(-14.0, 8.0)   # 대략 가운데 정렬
-	draw_string_outline(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 28.0, fs, 4, Color(0, 0, 0, 0.6))
-	draw_string(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 28.0, fs, Color(1, 1, 1, 0.85))
+func _key_label(font: Font, center: Vector2, ch: String, op: float) -> void:
+	var fs := 24
+	var pos := center + Vector2(-15.0, 9.0)
+	draw_string_outline(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 30.0, fs, 4, _col(Design.PAPER, 0.7 * op))
+	draw_string(font, pos, ch, HORIZONTAL_ALIGNMENT_CENTER, 30.0, fs, _col(Design.INK, op))
+
+
+func _col(base: Color, a: float) -> Color:
+	return Color(base.r, base.g, base.b, a)
