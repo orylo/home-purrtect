@@ -164,19 +164,29 @@ func _trumpet(dur := 0.30) -> PackedFloat32Array:
 	return s
 
 
-## 천둥 — 날카로운 크랙 + 깊은 저역 럼블(긴 감쇠).
+## 천둥 — 깊게 굴러가는 럼블(여러 스웰이 시간차로 겹침) + 부드러운 크랙.
+##   총소리처럼 안 들리게: 날카로운 크랙 대신 저역 섞은 약한 크랙 + 3단 저역통과.
 func _thunder() -> PackedFloat32Array:
-	var dur := 1.1
+	var dur := 1.9
 	var n := int(RATE * dur)
 	var s := PackedFloat32Array(); s.resize(n)
-	var lp := 0.0
+	var lp1 := 0.0
+	var lp2 := 0.0
+	var lp3 := 0.0
 	for i in n:
 		var t := float(i) / RATE
 		var white := randf() * 2.0 - 1.0
-		lp = lp * 0.968 + white * 0.032            # 저역 통과 → 럼블
-		var rumble := lp * exp(-t * 2.4) * 7.0
-		var crack := white * exp(-t * 42.0) * 0.7  # 초반 날카로운 크랙
-		s[i] = clampf((rumble + crack) * 0.5, -1.0, 1.0)
+		lp1 = lp1 * 0.94 + white * 0.06            # 3단 저역통과 → 아주 깊은 럼블
+		lp2 = lp2 * 0.96 + lp1 * 0.04
+		lp3 = lp3 * 0.92 + lp2 * 0.08
+		# 굴러가는 천둥: 여러 스웰이 시간차로 겹쳐 우르르~쾅~우르르
+		var roll := exp(-t * 1.1) \
+			+ 0.7 * exp(-pow((t - 0.45) / 0.22, 2.0)) \
+			+ 0.5 * exp(-pow((t - 0.95) / 0.30, 2.0)) \
+			+ 0.35 * exp(-pow((t - 1.40) / 0.30, 2.0))
+		var rumble := lp3 * roll * 9.0
+		var soft := lp1 * exp(-t * 9.0) * 1.2      # 부드러운 크랙(저역 섞어 총소리 방지)
+		s[i] = clampf((rumble + soft) * 0.6, -1.0, 1.0)
 	return s
 
 
