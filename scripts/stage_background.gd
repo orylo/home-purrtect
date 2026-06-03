@@ -164,8 +164,8 @@ func _draw() -> void:
 		# 2레이어: 원경(가운데·고정) 뒤 → 전경 바닥(하단 고정·좌우폭 화면맞춤) 앞.
 		_draw_far(far_texture, vis)               # far = 가운데 정렬(고정)
 		if fog_enabled:
-			_draw_fog(vis)                        # 안개(공기원근) — far 위, ground 아래
-		_draw_ground(ground_texture, vis)         # ground = 지면선을 ground_y에 정렬
+			_draw_fog(vis)                        # (옛 코드-안개. 지금은 하프톤 셰이더로 대체 → fog_enabled=false)
+		# 지면(ground)은 별도 GroundLayer 노드가 그림(하프톤 셰이더보다 앞에 오도록 분리)
 	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
 		# 가로/세로 비율 중 더 큰 쪽으로 맞춰 빈틈 없이 채우고, 넘치는 부분만 크롭.

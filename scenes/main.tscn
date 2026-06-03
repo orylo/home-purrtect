@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -20,6 +20,7 @@
 [ext_resource type="FontFile" path="res://assets/fonts/Pretendard-Regular.ttf" id="14_head"]
 [ext_resource type="Script" path="res://scripts/debug_overlay.gd" id="15_debug"]
 [ext_resource type="Material" path="res://assets/shaders/halftone_bg.tres" id="16_halftone"]
+[ext_resource type="Script" path="res://scripts/ground_layer.gd" id="17_ground"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -78,6 +79,9 @@ material = ExtResource("16_halftone")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+
+[node name="GroundLayer" type="Node2D" parent="BG"]
+script = ExtResource("17_ground")
 
 [node name="Player" type="CharacterBody2D" parent="." groups=["player"] collision_layer=4 collision_mask=2]
 position = Vector2(200, 620)

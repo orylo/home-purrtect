@@ -14,7 +14,7 @@ uniform float dot_max : hint_range(0.1, 0.75) = 0.58;          // 최대 점 반
 
 group_uniforms field;
 uniform float noise_scale : hint_range(0.3, 8.0) = 2.0;        // 밝기 덩어리 크기(작을수록 큰 구름)
-uniform float anim_speed : hint_range(0.0, 1.0) = 0.03;        // 흐르는 속도(천천히)
+uniform float anim_speed : hint_range(0.0, 1.0) = 0.06;        // 흐르는 속도(천천히 흐름)
 uniform float contrast : hint_range(0.2, 4.0) = 1.6;          // 밝고 어두움 대비
 uniform float brightness : hint_range(0.0, 1.0) = 0.5;        // 전체 밝기(점 평균 크기)
 
