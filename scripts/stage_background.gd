@@ -200,7 +200,7 @@ func _draw_fog(vis: Vector2) -> void:
 		if x < 0.0:
 			x += span
 		x -= r                                    # 화면 밖에서 들어와 반대편으로 나감(끊김 없이 순환)
-		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - _far_lift
+		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - _eff_far_lift
 		var col := FOG_COL
 		col.a = float(fb["a"])
 		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
@@ -235,14 +235,19 @@ func _make_fog_tex() -> ImageTexture:
 	return _shared_fog
 
 
-## 원경(far) — 가운데 정렬(고정). 카메라 고정 단일화면이라 패럴럭스는 안 씀.
+## 원경(far) — 가운데 정렬 + 위로 올림. 단, 원경 바닥이 ground_y 위로 올라가지 않게 올림값 제한
+##   (쇠창살 등 투명 지면 틈으로 원경 아래 빈공간이 보이는 것 방지). 적용된 올림값을 _eff_far_lift에 저장(안개도 동일 적용).
 const FAR_ZOOM := 1.0          # 원경 추가 확대(1.0 = 커버 스케일 그대로)
+var _eff_far_lift := 0.0       # 이번 프레임 실제 적용된 원경 올림값(클램프 후)
 func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
 	var w := t.x * sc
 	var h := t.y * sc
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _far_lift), Vector2(w, h)), false)
+	# 원경 바닥(=(vis.y+h)/2 - lift)이 ground_y 아래로 내려와 있도록 올림 상한 적용
+	var max_lift := (vis.y + h) * 0.5 - Layout.ground_y()
+	_eff_far_lift = clampf(_far_lift, 0.0, maxf(0.0, max_lift))
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _eff_far_lift), Vector2(w, h)), false)
 
 
 ## 지면(ground) — 하단 고정 + 발선(ground_y, 기기마다 계산)을 "길(경계~화면바닥) 구간 중앙"에 오게 키운다.
