@@ -1,23 +1,24 @@
 extends Node2D
-## 날씨 — 그라운드 BG 앞 / 근경 뒤 레이어(z49). 입자(비/눈/낙엽/먼지/반딧불)는 바닥선(Layout.ground_y)에서 착지(±50px),
-##   빛/하늘(쾌청/노을/밤)은 부드러운 세로 그라데이션 오버레이, 번개는 불규칙 섬광+천둥, 전환은 비→쾌청.
-##   스테이지별 WEATHER. 헤드리스에선 안 보이고 F5/웹에서만.
+## 날씨. 색감 틴트(노을/밤)는 z51(근경까지 덮음), 떠다니는 효과(비/눈/낙엽/먼지/반딧불/번개/쾌청플레어)는 z49(근경 아래).
+##   입자는 바닥선(Layout.ground_y)에서 착지(±50px). 빛/하늘은 부드러운 세로 그라데이션·블러 오버레이.
+##   번개는 불규칙 — 천둥 소리 먼저, 섬광은 0.3~0.7초 뒤. 전환은 비→쾌청. 헤드리스에선 안 보이고 F5/웹에서만.
 
 const WEATHER := {
 	"1-1": "rain",       # 비
 	"1-2": "snow",       # 눈
-	"1-3": "sunny",      # 쾌청(렌즈 플레어 햇살)
-	"1-4": "sunset",     # 노을(주황→노랑→분홍)
-	"1-5": "night",      # 밤(네이비→하늘색 그라데이션)
+	"1-3": "sunny",      # 쾌청(블러 햇살 + 렌즈 플레어)
+	"1-4": "sunset",     # 노을(주황→노랑→분홍 틴트)
+	"1-5": "night",      # 밤(네이비→하늘색 틴트)
 	"1-6": "leaves",     # 낙엽
 	"1-7": "motes",      # 먼지(갈색/회색 알갱이)
 	"1-8": "fireflies",  # 반딧불
-	"1-9": "lightning",  # 번개(불규칙 섬광+천둥+비)
+	"1-9": "lightning",  # 번개(불규칙 천둥→섬광+비)
 	"1-11": "transition",# 비→쾌청 전환
 }
 
 const RAIN_COL := Color(0.72, 0.80, 0.95, 0.55)
 const SNOW_COL := Color(1.0, 1.0, 1.0, 0.92)
+const LEAF_INK := Color(0.34, 0.19, 0.08)   # 낙엽 잎맥·외곽 갈색
 const LAND := 50.0   # 착지 ground_y ± 이 값 랜덤
 
 var _mode := "none"
@@ -27,11 +28,14 @@ var _t := 0.0
 var _flash := 0.0
 var _flash_next := 3.0
 var _flash2 := 0.0      # 잔섬광 대기
+var _flash_delay := 0.0 # 천둥 소리 후 섬광까지 대기(소리 먼저)
 var _trans := 0.0       # 전환 진행(0=비 → 1=쾌청)
 
 
 func _ready() -> void:
 	_mode = WEATHER.get("%d-%d" % [GameState.stage_major, GameState.stage_minor], "none")
+	# 색감 틴트(노을/밤)는 근경까지 덮게 z51, 떠다니는 효과는 근경 아래 z49
+	z_index = 51 if _mode in ["sunset", "night"] else 49
 	if _mode == "none":
 		set_process(false)
 		return
@@ -75,13 +79,13 @@ func _make(vp: Vector2, scatter: bool) -> Dictionary:
 				"amp": randf_range(28.0, 58.0), "sw": randf_range(0.6, 1.3), "ph": randf() * TAU,
 				"rot": randf() * TAU, "rspd": randf_range(-2.2, 2.2), "col": pal[randi() % pal.size()], "land": randf_range(-LAND, LAND)}
 		"motes":
-			# 갈색 알갱이와 회색 알갱이를 각각 만들어 섞음(다양한 낙엽처럼)
+			# 갈색 알갱이와 회색 알갱이를 각각 만들어 섞음 / 반딧불보다 조금 큼
 			var brown := [Color(0.55, 0.40, 0.26), Color(0.62, 0.48, 0.30), Color(0.48, 0.34, 0.20)]
 			var gray := [Color(0.52, 0.52, 0.54), Color(0.45, 0.46, 0.48), Color(0.60, 0.60, 0.62)]
 			var pool: Array = brown if randf() < 0.55 else gray
 			return {"k": "mote", "x": randf() * vp.x, "y": randf() * vp.y,
 				"vx": randf_range(-20.0, 20.0), "vy": randf_range(-16.0, 16.0),
-				"r": randf_range(1.8, 4.0), "ph": randf() * TAU, "col": pool[randi() % pool.size()]}
+				"r": randf_range(3.0, 5.2), "ph": randf() * TAU, "col": pool[randi() % pool.size()]}
 		"fireflies":
 			return {"k": "fly", "x": randf() * vp.x, "y": vp.y * randf_range(0.30, 0.85),
 				"vx": randf_range(-22.0, 22.0), "vy": randf_range(-14.0, 14.0),
@@ -101,19 +105,23 @@ func _process(delta: float) -> void:
 		if s.t < 0.26:
 			keep.append(s)
 	_splash = keep
-	# 번개: 불규칙 간격 + 가끔 잔섬광 + 천둥
+	# 번개: 불규칙 간격 — 천둥 소리 먼저, 섬광은 _flash_delay 뒤
 	if _mode == "lightning":
 		_flash = maxf(0.0, _flash - delta * 5.5)
 		if _flash2 > 0.0:
 			_flash2 -= delta
 			if _flash2 <= 0.0:
 				_flash = maxf(_flash, 0.65)
+		if _flash_delay > 0.0:
+			_flash_delay -= delta
+			if _flash_delay <= 0.0:
+				_flash = 1.0                                  # 소리 뒤에 번쩍
+				_flash2 = randf_range(0.07, 0.18) if randf() < 0.4 else 0.0
 		_flash_next -= delta
 		if _flash_next <= 0.0:
-			_flash = 1.0
-			Sfx.play("thunder", randf_range(0.9, 1.1), -1.0)
-			_flash_next = randf_range(1.4, 7.5)              # 불규칙
-			_flash2 = randf_range(0.07, 0.18) if randf() < 0.4 else 0.0
+			Sfx.play("thunder", randf_range(0.9, 1.1), -1.0)  # 소리 먼저
+			_flash_delay = randf_range(0.3, 0.7)              # 빛은 잠시 뒤
+			_flash_next = randf_range(1.4, 7.5)               # 불규칙
 	if _mode == "transition":
 		_trans = minf(1.0, _trans + delta / 12.0)
 	queue_redraw()
@@ -195,7 +203,7 @@ func _draw_particles(gy: float, gA: float) -> void:
 		draw_arc(Vector2(s.x, s.y), rad, PI, TAU, 10, _a(RAIN_COL, 0.5 * a * gA), 2.0)
 
 
-## 잎 — 잎자루 + 가운데 넓고 끝 뾰족한 잎몸 + 가장자리 톱니 + 잎맥(주맥·측맥).
+## 잎 — 잎자루+주맥+측맥+톱니. 잎맥·외곽 스트로크는 갈색(LEAF_INK).
 func _draw_leaf(c: Vector2, r: float, rot: float, col: Color) -> void:
 	var dir := Vector2(cos(rot), sin(rot))     # 밑동(-r) → 잎끝(+r)
 	var perp := Vector2(-dir.y, dir.x)
@@ -208,89 +216,88 @@ func _draw_leaf(c: Vector2, r: float, rot: float, col: Color) -> void:
 		var t2 := float(steps - i) / steps
 		pts.append(c + dir * lerp(-r, r, t2) - perp * _leaf_w(t2) * r)
 	draw_colored_polygon(pts, col)
-	var dark := Color(col.r * 0.5, col.g * 0.5, col.b * 0.45, col.a)
-	# 잎자루(밑동 바깥으로)
-	draw_line(c - dir * r, c - dir * r * 1.4, dark, maxf(1.0, r * 0.10))
-	# 주맥
-	draw_line(c - dir * r * 0.92, c + dir * r * 0.92, dark, maxf(1.0, r * 0.08))
-	# 측맥(좌우 3쌍, 위로 비스듬히)
-	for sv in [-0.45, -0.1, 0.28]:
+	var ink := Color(LEAF_INK.r, LEAF_INK.g, LEAF_INK.b, col.a)
+	var outline := pts.duplicate(); outline.append(pts[0])           # 외곽 스트로크(갈색)
+	draw_polyline(outline, ink, maxf(1.0, r * 0.09), true)
+	draw_line(c - dir * r, c - dir * r * 1.4, ink, maxf(1.0, r * 0.10))   # 잎자루
+	draw_line(c - dir * r * 0.92, c + dir * r * 0.92, ink, maxf(1.0, r * 0.08))  # 주맥
+	for sv in [-0.45, -0.1, 0.28]:             # 측맥 3쌍
 		var s: float = float(sv)
 		var bse: Vector2 = c + dir * (r * s)
 		var tip: Vector2 = dir * r * 0.34
 		var hw: float = _leaf_w((s + 1.0) * 0.5) * r * 0.75
-		draw_line(bse, bse + tip + perp * hw, dark, 1.0)
-		draw_line(bse, bse + tip - perp * hw, dark, 1.0)
+		draw_line(bse, bse + tip + perp * hw, ink, 1.0)
+		draw_line(bse, bse + tip - perp * hw, ink, 1.0)
 
 
 ## 잎 폭 곡선(0=밑동,1=끝) — 밑은 둥글고, 가운데 넓고, 끝 뾰족 + 미세 톱니.
 func _leaf_w(t: float) -> float:
 	if t <= 0.0 or t >= 1.0:
 		return 0.0
-	var body: float = pow(sin(t * PI), 0.7)       # 양끝 0, 가운데 볼록
-	body *= (0.72 + 0.28 * (1.0 - t))             # 밑동 쪽을 더 넓게(잎다움)
-	var teeth: float = 1.0 + 0.09 * sin(t * PI * 9.0)   # 가장자리 톱니
+	var body: float = pow(sin(t * PI), 0.7)
+	body *= (0.72 + 0.28 * (1.0 - t))
+	var teeth: float = 1.0 + 0.09 * sin(t * PI * 9.0)
 	return body * 0.52 * teeth
 
 
-## 쾌청 — 우상단 태양(부드럽게 번진 빛) + 렌즈 플레어 고스트 체인, 치즈 위치로 미세 흔들.
+## 쾌청 — 강하게 번진(블러) 퓨어화이트 태양 + 화면 중~하단에서 움직이는 렌즈 플레어.
 func _draw_sunny(vp: Vector2, a: float) -> void:
 	var sun := Vector2(vp.x * 0.86, vp.y * 0.15)
 	var px := 0.0
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null and pl is Node2D:
 		px = clampf((pl as Node2D).global_position.x / maxf(vp.x, 1.0), 0.0, 1.0) - 0.5
-	var center := vp * 0.5 + Vector2(px * 46.0, 0.0)   # 걸을 때 플레어가 살짝 움직임
-	draw_rect(Rect2(Vector2.ZERO, vp), Color(1.0, 0.95, 0.78, 0.07 * a))   # 따뜻한 틴트
-	# 넓고 부드러운 후광(바깥 → 안, 겹쳐서 번지게)
-	for k in range(22):
-		var rr0: float = 240.0 - k * 10.0
-		draw_circle(sun, rr0, Color(1.0, 0.96, 0.78, 0.018 * a))
-	# 부드러운 코어(작은 원을 겹쳐 가우시안처럼 번지게 — 선명한 동그라미 제거)
-	for k in range(16):
-		var rr1: float = 60.0 - k * 3.4
-		draw_circle(sun, rr1, Color(1.0, 0.99, 0.9, 0.05 * a))
-	for i in range(12):                                   # 스타버스트 스파이크(은은)
+	var center := Vector2(vp.x * 0.5 + px * 70.0, vp.y * 0.62)   # 플레어 초점=중~하단, 걸으면 가로 이동
+	draw_rect(Rect2(Vector2.ZERO, vp), Color(1, 1, 1, 0.06 * a))  # 옅은 화이트 틴트
+	_soft_disc(sun, vp.x * 0.42, Color(1, 1, 1), 0.16 * a)        # 거대한 후광(강블러)
+	_soft_disc(sun, 110.0, Color(1, 1, 1), 0.22 * a)             # 코어(블러, 선명한 원 아님)
+	for i in range(12):                                          # 스타버스트(아주 은은·번짐)
 		var ang := TAU * float(i) / 12.0 + 0.05 * sin(_t * 0.3)
-		var L: float = (vp.x * 0.5 if i % 3 == 0 else vp.x * 0.22) * (0.9 + 0.1 * sin(_t * 0.7 + i))
+		var Ln: float = (vp.x * 0.5 if i % 3 == 0 else vp.x * 0.22) * (0.9 + 0.1 * sin(_t * 0.7 + i))
 		var dir := Vector2(cos(ang), sin(ang))
-		var perp := Vector2(-dir.y, dir.x) * 3.0
-		draw_colored_polygon(PackedVector2Array([sun + perp, sun - perp, sun + dir * L]), Color(1, 1, 1, 0.10 * a))
-	# 렌즈 플레어 고스트(태양→중심선 따라)
+		var perp := Vector2(-dir.y, dir.x) * 5.0
+		draw_colored_polygon(PackedVector2Array([sun + perp, sun - perp, sun + dir * Ln]), Color(1, 1, 1, 0.05 * a))
+	# 렌즈 플레어 고스트(태양→초점선 따라, 부드럽게)
 	var v := center - sun
 	var pal := [Color(0.6, 0.72, 1.0), Color(1.0, 0.82, 0.6), Color(0.75, 1.0, 0.8), Color(1.0, 0.7, 0.85), Color(0.85, 0.85, 1.0)]
 	var gs := [0.35, 0.6, 0.85, 1.05, 1.35, 1.7, 2.0]
-	var rr := [16.0, 9.0, 26.0, 12.0, 40.0, 18.0, 30.0]
+	var rr := [18.0, 11.0, 30.0, 14.0, 46.0, 22.0, 36.0]
 	for i in range(gs.size()):
 		var pos: Vector2 = sun + v * float(gs[i])
-		var rad: float = float(rr[i])
-		var col: Color = pal[i % pal.size()]; col.a = 0.10 * a
-		draw_circle(pos, rad, col)
-		if i % 2 == 0:
-			draw_arc(pos, rad * 1.1, 0.0, TAU, 24, Color(col.r, col.g, col.b, 0.12 * a), 2.0)
+		var col: Color = pal[i % pal.size()]
+		_soft_disc(pos, float(rr[i]), Color(col.r, col.g, col.b), 0.13 * a)
 
 
-## 노을 — 상단 진한 주황 → 노랑 → 하단 분홍(부드러운 세로 그라데이션, 변화폭 크게). 해=쾌청과 동일 우상단.
+## 부드럽게 번진 원반 — 큰 원(낮은 알파)부터 작은 원(높은 알파)까지 겹쳐 가우시안처럼. 선명한 외곽 없음.
+func _soft_disc(c: Vector2, rmax: float, rgb: Color, peak: float) -> void:
+	var n := 18
+	for k in range(n):
+		var f := float(k) / float(n - 1)        # 0(바깥) → 1(중심)
+		var r: float = rmax * (1.0 - f)
+		draw_circle(c, maxf(r, 1.0), Color(rgb.r, rgb.g, rgb.b, peak * f * f))
+
+
+## 노을 — 상단 진한 주황 → 노랑 → 하단 분홍(부드러운 세로 그라데이션). 해=쾌청과 동일 우상단(블러).
 func _draw_sunset(vp: Vector2) -> void:
 	_draw_vgradient(vp, [
-		[0.0,  Color(0.94, 0.34, 0.06, 0.55)],   # 상단 진한 주황
-		[0.42, Color(1.0,  0.74, 0.18, 0.34)],   # 노랑
-		[0.72, Color(1.0,  0.55, 0.42, 0.24)],   # 살구
-		[1.0,  Color(0.97, 0.42, 0.66, 0.16)],   # 하단 분홍
+		[0.0,  Color(0.94, 0.34, 0.06, 0.55)],
+		[0.42, Color(1.0,  0.74, 0.18, 0.34)],
+		[0.72, Color(1.0,  0.55, 0.42, 0.24)],
+		[1.0,  Color(0.97, 0.42, 0.66, 0.16)],
 	])
-	_draw_soft_sun(Vector2(vp.x * 0.86, vp.y * 0.15), Color(1.0, 0.86, 0.5), 1.0)
+	_soft_disc(Vector2(vp.x * 0.86, vp.y * 0.15), 200.0, Color(1.0, 0.9, 0.6), 0.5)
 
 
 ## 밤 — 상단 꽤 진한 네이비 → 하단 옅은 하늘색(부드러운 세로 그라데이션, 변화폭 크게). 달 없음.
 func _draw_night(vp: Vector2) -> void:
 	_draw_vgradient(vp, [
-		[0.0,  Color(0.04, 0.05, 0.22, 0.62)],   # 최상단 진한 네이비
-		[0.45, Color(0.12, 0.22, 0.46, 0.42)],   # 청록빛 남색
-		[1.0,  Color(0.55, 0.74, 0.92, 0.20)],   # 하단 옅은 하늘색
+		[0.0,  Color(0.04, 0.05, 0.22, 0.62)],
+		[0.45, Color(0.12, 0.22, 0.46, 0.42)],
+		[1.0,  Color(0.55, 0.74, 0.92, 0.20)],
 	])
 
 
-## 세로 그라데이션 — stops=[[pos0..1, Color(알파포함)], ...]. 인접 쿼드가 색을 공유 → 가로 줄(이음새) 없음.
+## 세로 그라데이션 — stops=[[pos0..1, Color(알파포함)], ...]. 인접 쿼드가 색 공유 → 가로 줄(이음새) 없음.
 func _draw_vgradient(vp: Vector2, stops: Array) -> void:
 	for i in range(stops.size() - 1):
 		var p0: float = float(stops[i][0]);     var c0: Color = stops[i][1]
@@ -300,16 +307,6 @@ func _draw_vgradient(vp: Vector2, stops: Array) -> void:
 		var pts := PackedVector2Array([Vector2(0, y0), Vector2(vp.x, y0), Vector2(vp.x, y1), Vector2(0, y1)])
 		var cols := PackedColorArray([c0, c0, c1, c1])
 		draw_polygon(pts, cols)
-
-
-## 부드럽게 번진 태양(겹친 원들). 쾌청/노을 공통.
-func _draw_soft_sun(sun: Vector2, tint: Color, a: float) -> void:
-	for k in range(20):
-		var rr0: float = 210.0 - k * 9.0
-		draw_circle(sun, rr0, Color(tint.r, tint.g, tint.b, 0.016 * a))
-	for k in range(14):
-		var rr1: float = 56.0 - k * 3.4
-		draw_circle(sun, rr1, Color(tint.r, min(1.0, tint.g + 0.08), min(1.0, tint.b + 0.12), 0.05 * a))
 
 
 func _a(base: Color, alpha: float) -> Color:
