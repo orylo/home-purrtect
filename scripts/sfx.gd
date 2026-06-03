@@ -10,6 +10,9 @@ const RATE := 22050
 const FILES := {
 	"click": ["res://assets/sfx/click_a.wav", "res://assets/sfx/click_b.wav"],
 	"coin":  ["res://assets/sfx/coin.ogg"],
+	"pop":   ["res://assets/sfx/pop.wav"],     # 처치 펑(카툰)
+	"jump":  ["res://assets/sfx/jump.wav"],    # 점프(카툰)
+	"clear": ["res://assets/sfx/clear.wav"],   # 스테이지 클리어 딩!
 	"hit":   ["res://assets/sfx/hit_a.ogg", "res://assets/sfx/hit_b.ogg"],
 	"punch": ["res://assets/sfx/punch.wav"],   # 평타 근접(카툰 펀치) — 휘두름당 1번
 	"swing": ["res://assets/sfx/swing.wav"],   # 근접 버튼 누를 때 휘두르는 소리

@@ -134,6 +134,7 @@ func set_wave(current: int, total: int) -> void:
 
 
 func show_clear(bonus: int = 0) -> void:
+	Sfx.play("clear")
 	var msg := "스테이지 클리어!"
 	if bonus > 0:
 		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
