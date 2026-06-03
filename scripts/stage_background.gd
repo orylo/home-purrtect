@@ -160,24 +160,33 @@ func _draw_fog(vis: Vector2) -> void:
 		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
 
 
-## 빈티지 망점(halftone) 안개 텍스처 — 흰 점들이 가운데 모이고 가장자리로 사라짐(1회 생성).
-const FOG_CELL := 9.0      # 망점 간격(px)
-const FOG_DOT := 3.2       # 망점 반지름(px)
+## 빈티지 망점(halftone) 안개 텍스처 — 흰 점이 가운데 모이고 가장자리로 사라짐.
+## 고해상도(512)라 블롭으로 확대해 그려도 점이 작고 촘촘하게 유지됨. 세션당 1회만 생성(static 캐시).
+const FOG_TEX_N := 512     # 텍스처 해상도(클수록 점이 작고 촘촘)
+const FOG_CELL := 5.0      # 망점 간격(px, 텍스처 기준)
+const FOG_DOT := 1.9       # 망점 반지름(px, 텍스처 기준)
+static var _shared_fog: ImageTexture
 func _make_fog_tex() -> ImageTexture:
-	var n := 160
+	if _shared_fog != null:
+		return _shared_fog
+	var n := FOG_TEX_N
 	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
 	var c := (n - 1) * 0.5
+	var dot2 := FOG_DOT * FOG_DOT
 	for y in n:
 		for x in n:
-			var d: float = Vector2(x - c, y - c).length() / c
+			var ex := x - c
+			var ey := y - c
+			var d: float = sqrt(ex * ex + ey * ey) / c
 			var radial: float = clampf(1.0 - d, 0.0, 1.0)
 			radial = radial * radial * (3.0 - 2.0 * radial)   # 가장자리 부드럽게(smoothstep)
-			# 망점: 격자 셀 중심에서 FOG_DOT 안이면 점(흰색), 밖이면 투명
+			# 망점: 격자 셀 중심에서 FOG_DOT 안이면 점(흰색), 밖이면 투명(sqrt 없이 제곱비교)
 			var dx: float = fmod(float(x), FOG_CELL) - FOG_CELL * 0.5
 			var dy: float = fmod(float(y), FOG_CELL) - FOG_CELL * 0.5
-			var dot: float = 1.0 if Vector2(dx, dy).length() <= FOG_DOT else 0.0
+			var dot: float = 1.0 if (dx * dx + dy * dy) <= dot2 else 0.0
 			img.set_pixel(x, y, Color(1, 1, 1, radial * dot))
-	return ImageTexture.create_from_image(img)
+	_shared_fog = ImageTexture.create_from_image(img)
+	return _shared_fog
 
 
 ## 원경(far) — 가운데 정렬(고정). 카메라 고정 단일화면이라 패럴럭스는 안 씀.
