@@ -5,7 +5,7 @@ extends Node
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.53"
+const BUILD := "0.54"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -130,23 +130,23 @@ func buy_consumable(id: String) -> bool:
 const MATERIALS := {
 	# 부위/장비(침입자 드랍)
 	"fur_gray":        {"name": "회색쥐 털",   "sell": 2},
-	"fur_black":       {"name": "검은쥐 털",   "sell": 2},
+	"fur_black":       {"name": "검은쥐 털",   "sell": 4},
 	"wheel":           {"name": "롤러 바퀴",   "sell": 3},
 	"sack":            {"name": "포대 조각",   "sell": 3},
 	"bat_wing":        {"name": "박쥐 날개",   "sell": 3},
 	"sparrow_feather": {"name": "참새 깃털",   "sell": 3},
-	"honey_drop":      {"name": "벌꿀",        "sell": 3},
+	"honey_drop":      {"name": "벌꿀",        "sell": 4},
 	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
-	# 연상 잡템(침입자 드랍 10%) — 매입가 잠정([밸런스 재계산])
-	"cheese_crumb":    {"name": "치즈 부스러기", "sell": 2},
+	# 연상 잡템(침입자 드랍 10%) — 매입가 출처: 기획_전리품보석도감.md §2 (플레이테스트 튜닝 대상)
+	"cheese_crumb":    {"name": "치즈 부스러기", "sell": 1},
 	"cheese":          {"name": "치즈 조각",   "sell": 3},
-	"nail":            {"name": "녹슨 못",     "sell": 1},
-	"button":          {"name": "단추",        "sell": 1},
+	"nail":            {"name": "녹슨 못",     "sell": 2},
+	"button":          {"name": "단추",        "sell": 2},
 	"thread_spool":    {"name": "실패",        "sell": 2},
-	"safety_pin":      {"name": "옷핀",        "sell": 1},
-	"cotton":          {"name": "솜뭉치",      "sell": 2},
-	"bread":           {"name": "빵 조각",     "sell": 2},
-	"honeycomb":       {"name": "벌집",        "sell": 3},
+	"safety_pin":      {"name": "옷핀",        "sell": 2},
+	"cotton":          {"name": "솜뭉치",      "sell": 1},
+	"bread":           {"name": "빵 조각",     "sell": 1},
+	"honeycomb":       {"name": "벌집",        "sell": 4},
 	# 보석 18종 사다리(등급별 독립 드랍 · §5.5) — 자갈~다이아
 	"gem_gravel":      {"name": "얼룩 자갈",     "sell": 15},
 	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 30},
