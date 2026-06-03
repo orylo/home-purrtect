@@ -65,43 +65,41 @@ const STAGE_WAVES := {
 }
 
 
-## --- 전리품 드랍 (시스템밸런스 §5.2) ---
-## 쥐 = 티어별 털(30%) + 행동별 장비(15%) / 비-쥐 = 부위(15%) / 전 몬스터 공통 보석(2% 별도 굴림).
+## --- 전리품 드랍 (시스템밸런스 §5.2, 2026-06-03 재정의) ---
+## 쥐 계열 = 티어별 털 30% + 행동별 장비 15% + 연상 잡템 10% / 비-쥐 = 부위 15% + 연상 잡템 10%.
+## 처치당 각 항목 독립 굴림(여러 종 동시 드랍 가능). 보석은 GEM_DROP에서 등급별 독립 굴림.
 const DROP_TABLE := {
-	"gray":          [["fur_gray", 0.30]],
-	"gray_roller":   [["fur_gray", 0.30], ["wheel", 0.15]],
-	"gray_thrower":  [["fur_gray", 0.30], ["sack", 0.15]],
-	"black":         [["fur_black", 0.30]],
-	"black_roller":  [["fur_black", 0.30], ["wheel", 0.15]],
-	"black_thrower": [["fur_black", 0.30], ["sack", 0.15]],
-	"bat":           [["bat_wing", 0.15]],
-	"sparrow":       [["sparrow_feather", 0.15]],
-	"bee":           [["honey_drop", 0.15]],
-	"spider":        [["spider_silk", 0.15]],
-	# 보스는 전리품 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 몬스터 공통 적용.
+	"gray":          [["fur_gray", 0.30], ["cheese_crumb", 0.10]],
+	"gray_roller":   [["fur_gray", 0.30], ["wheel", 0.15], ["nail", 0.10]],
+	"gray_thrower":  [["fur_gray", 0.30], ["sack", 0.15], ["thread_spool", 0.10]],
+	"black":         [["fur_black", 0.30], ["cheese", 0.10]],
+	"black_roller":  [["fur_black", 0.30], ["wheel", 0.15], ["button", 0.10]],
+	"black_thrower": [["fur_black", 0.30], ["sack", 0.15], ["safety_pin", 0.10]],
+	"bat":           [["bat_wing", 0.15], ["cotton", 0.10]],
+	"sparrow":       [["sparrow_feather", 0.15], ["bread", 0.10]],
+	"bee":           [["honey_drop", 0.15], ["honeycomb", 0.10]],
+	"spider":        [["spider_silk", 0.15], ["button", 0.10]],
+	# 보스는 전리품 없음(코인·클리어 보너스로 보상). 보석 굴림은 전 침입자 공통 적용.
 }
-const GEM_CHANCE := 0.02
-## 보석 종류 비중(§5.5): 합 100. 조약돌 60 / 자수정 25 / 사파이어 10 / 루비 4 / 다이아 1
-const GEM_WEIGHTS := [["gem_pebble", 60], ["gem_amethyst", 25], ["gem_sapphire", 10], ["gem_ruby", 4], ["gem_diamond", 1]]
+## 보석 = 등급별 독립 드랍률(§5.5, 처치당 각 보석 독립 굴림). 옛 "2% 후 비중 굴림" 폐기.
+const GEM_DROP := [
+	["gem_gravel", 0.030], ["gem_pebble", 0.022], ["gem_shell", 0.016], ["gem_marble", 0.011],
+	["gem_glass_bead", 0.008], ["gem_agate", 0.0055], ["gem_quartz", 0.0038], ["gem_amber", 0.0026],
+	["gem_amethyst", 0.0018], ["gem_garnet", 0.0012], ["gem_rose", 0.0008], ["gem_teal", 0.0005],
+	["gem_sapphire", 0.0003], ["gem_emerald", 0.00018], ["gem_pearl", 0.00011], ["gem_teardrop", 0.00007],
+	["gem_ruby", 0.00004], ["gem_diamond", 0.00002],
+]
 
-## 적 처치 시 떨군 전리품 id 배열 반환(런타임 난수)
+## 적 처치 시 떨군 전리품 id 배열 반환(런타임 난수). 전리품·보석 모두 독립 굴림.
 func roll_drops(id: String) -> Array:
 	var out: Array = []
 	for entry in DROP_TABLE.get(id, []):
 		if randf() < float(entry[1]):
 			out.append(String(entry[0]))
-	if randf() < GEM_CHANCE:
-		out.append(_roll_gem())
+	for g in GEM_DROP:
+		if randf() < float(g[1]):
+			out.append(String(g[0]))
 	return out
-
-func _roll_gem() -> String:
-	var r := randi() % 100
-	var acc := 0
-	for w in GEM_WEIGHTS:
-		acc += int(w[1])
-		if r < acc:
-			return String(w[0])
-	return "gem_pebble"
 
 
 ## 스테이지 번호 → 웨이브 구성 (없으면 회색쥐 기본)

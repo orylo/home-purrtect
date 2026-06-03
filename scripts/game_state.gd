@@ -5,7 +5,7 @@ extends Node
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.52"
+const BUILD := "0.53"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -128,6 +128,7 @@ func buy_consumable(id: String) -> bool:
 ## --- 전리품 인벤토리 (드랍·매입·제작, 시스템밸런스 §5.2) ---
 ## sell=맥스 매입가(§5.2-C). 표시 순서대로 MAT_ORDER.
 const MATERIALS := {
+	# 부위/장비(침입자 드랍)
 	"fur_gray":        {"name": "회색쥐 털",   "sell": 2},
 	"fur_black":       {"name": "검은쥐 털",   "sell": 2},
 	"wheel":           {"name": "롤러 바퀴",   "sell": 3},
@@ -136,13 +137,39 @@ const MATERIALS := {
 	"sparrow_feather": {"name": "참새 깃털",   "sell": 3},
 	"honey_drop":      {"name": "벌꿀",        "sell": 3},
 	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
-	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 10},
-	"gem_amethyst":    {"name": "자수정",      "sell": 40},
-	"gem_sapphire":    {"name": "사파이어",    "sell": 100},
-	"gem_ruby":        {"name": "루비",        "sell": 250},
-	"gem_diamond":     {"name": "다이아몬드",  "sell": 600},
+	# 연상 잡템(침입자 드랍 10%) — 매입가 잠정([밸런스 재계산])
+	"cheese_crumb":    {"name": "치즈 부스러기", "sell": 2},
+	"cheese":          {"name": "치즈 조각",   "sell": 3},
+	"nail":            {"name": "녹슨 못",     "sell": 1},
+	"button":          {"name": "단추",        "sell": 1},
+	"thread_spool":    {"name": "실패",        "sell": 2},
+	"safety_pin":      {"name": "옷핀",        "sell": 1},
+	"cotton":          {"name": "솜뭉치",      "sell": 2},
+	"bread":           {"name": "빵 조각",     "sell": 2},
+	"honeycomb":       {"name": "벌집",        "sell": 3},
+	# 보석 18종 사다리(등급별 독립 드랍 · §5.5) — 자갈~다이아
+	"gem_gravel":      {"name": "얼룩 자갈",     "sell": 15},
+	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 30},
+	"gem_shell":       {"name": "조개껍데기",   "sell": 55},
+	"gem_marble":      {"name": "유리구슬",     "sell": 90},
+	"gem_glass_bead":  {"name": "투명 구슬",    "sell": 140},
+	"gem_agate":       {"name": "마노",        "sell": 220},
+	"gem_quartz":      {"name": "수정 원석",    "sell": 340},
+	"gem_amber":       {"name": "호박",        "sell": 520},
+	"gem_amethyst":    {"name": "자수정",      "sell": 800},
+	"gem_garnet":      {"name": "석류석",      "sell": 1250},
+	"gem_rose":        {"name": "로즈쿼츠",     "sell": 1900},
+	"gem_teal":        {"name": "청록석",      "sell": 2900},
+	"gem_sapphire":    {"name": "사파이어",    "sell": 4400},
+	"gem_emerald":     {"name": "에메랄드",     "sell": 6800},
+	"gem_pearl":       {"name": "진주",        "sell": 10500},
+	"gem_teardrop":    {"name": "눈물 수정",    "sell": 16000},
+	"gem_ruby":        {"name": "루비",        "sell": 25000},
+	"gem_diamond":     {"name": "다이아몬드",  "sell": 50000},
 }
-const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "honey_drop", "spider_silk", "gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]
+const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "honey_drop", "spider_silk", "cheese_crumb", "cheese", "nail", "button", "thread_spool", "safety_pin", "cotton", "bread", "honeycomb", "gem_gravel", "gem_pebble", "gem_shell", "gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz", "gem_amber", "gem_amethyst", "gem_garnet", "gem_rose", "gem_teal", "gem_sapphire", "gem_emerald", "gem_pearl", "gem_teardrop", "gem_ruby", "gem_diamond"]
+## 보석 사다리 순서(자갈→다이아) — 펄 헌납·도감 등에서 사용
+const GEM_ORDER := ["gem_gravel", "gem_pebble", "gem_shell", "gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz", "gem_amber", "gem_amethyst", "gem_garnet", "gem_rose", "gem_teal", "gem_sapphire", "gem_emerald", "gem_pearl", "gem_teardrop", "gem_ruby", "gem_diamond"]
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
 
@@ -187,10 +214,11 @@ func sell_material(id: String, n: int = 1) -> int:
 	return gain
 
 ## --- 직업 제작 (상점, 시스템밸런스 §5.2-B) ---
-## 메이드 = 회색쥐 털×15 + 포대 조각×3 + 코인500 / 음악가 = 회색쥐 털×15 + 롤러 바퀴×3 + 코인500
+## 메이드 = 회색쥐 털×12 + 포대 조각×2 + 치즈 부스러기×4 + 코인500
+## 음악가 = 회색쥐 털×12 + 롤러 바퀴×2 + 녹슨 못×1 + 코인500
 const CRAFT_RECIPES := {
-	"maid": {"name": "메이드", "coin": 500, "mats": {"fur_gray": 15, "sack": 3}},
-	"jazz": {"name": "음악가", "coin": 500, "mats": {"fur_gray": 15, "wheel": 3}},
+	"maid": {"name": "메이드", "coin": 500, "mats": {"fur_gray": 12, "sack": 2, "cheese_crumb": 4}},
+	"jazz": {"name": "음악가", "coin": 500, "mats": {"fur_gray": 12, "wheel": 2, "nail": 1}},
 }
 
 ## 1등급(이름없는) 제작 가능? — 레시피 있고, 아직 1등급 미보유, 상점에 노출(해금)됐고, 자원 충분.
@@ -373,7 +401,7 @@ const BLESSINGS := {
 	"coin":  {"name": "부자집 곳간", "kind": "coin", "desc": "이번 판 동전 획득 +"},
 }
 const BLESSING_ORDER := ["claw", "belly", "coin"]
-const GEM_FAVOR := {"gem_pebble": 1, "gem_amethyst": 5, "gem_sapphire": 15, "gem_ruby": 40, "gem_diamond": 100}
+const GEM_FAVOR := {"gem_gravel": 1, "gem_pebble": 1, "gem_shell": 2, "gem_marble": 2, "gem_glass_bead": 3, "gem_agate": 4, "gem_quartz": 6, "gem_amber": 8, "gem_amethyst": 12, "gem_garnet": 17, "gem_rose": 24, "gem_teal": 33, "gem_sapphire": 45, "gem_emerald": 62, "gem_pearl": 85, "gem_teardrop": 115, "gem_ruby": 155, "gem_diamond": 200}
 const FAVOR_THRESHOLDS := [30, 80, 200, 500]   # Lv2/Lv3/Lv4/Lv5 누적 호감도
 var pearl_favor: int = 0          # 누적 호감도
 var selected_blessing: String = ""   # 이번 판 축복("claw"/"belly"/"coin"/"")

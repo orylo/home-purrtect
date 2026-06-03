@@ -55,7 +55,7 @@ func _grant(bid: String) -> void:
 func _gift_menu() -> void:
 	portrait(PURPLE, "neutral")
 	var items: Array = []
-	for gid in ["gem_pebble", "gem_amethyst", "gem_sapphire", "gem_ruby", "gem_diamond"]:
+	for gid in GameState.GEM_ORDER:
 		var n: int = GameState.mat_count(gid)
 		if n > 0:
 			items.append(["%s ×%d  (+%d)" % [String(GameState.MATERIALS[gid]["name"]), n, int(GameState.GEM_FAVOR[gid])], _gift.bind(gid)])
