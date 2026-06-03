@@ -8,7 +8,7 @@ render_mode blend_mix;   // 게임 위에 부드럽게 깔림. (가산광 느낌
 
 // ── 인스펙터 조절 ───────────────────────────────────────────────
 group_uniforms grid;
-uniform float grid_density : hint_range(20.0, 480.0) = 220.0;   // 가로 셀 개수(클수록 점이 작고 촘촘)
+uniform float grid_density : hint_range(20.0, 480.0) = 150.0;   // 가로 셀 개수(클수록 점이 작고 촘촘 / 작을수록 간격 넓음)
 uniform float dot_min : hint_range(0.0, 0.5) = 0.0;             // 최소 점 반지름(셀 기준, 0=완전 사라짐)
 uniform float dot_max : hint_range(0.1, 0.75) = 0.58;          // 최대 점 반지름(0.5=맞닿음, 그 이상=살짝 겹침)
 
