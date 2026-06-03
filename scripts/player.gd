@@ -409,6 +409,7 @@ func _handle_attack() -> void:
 	if want_melee:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
 		_melee_pending = melee_hit_delay # 딜은 모션 중간에(펀치 닿을 때)
+		Sfx.play("swing")                # 휘두르는 소리(버튼 누르는 즉시)
 	else:
 		_committed_anim = "shoot"  # 사격 모션(끝까지 재생)
 		if ranged_fire_delay > 0.0:
@@ -457,7 +458,10 @@ func _melee_attack() -> void:
 	for i in range(n):
 		var e = targets[i]["e"]
 		if e.has_method("take_damage"):
-			e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"])
+			e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"], false)  # 마리별 소리 X
+	# 펀치 소리는 휘두름당 1번만(여러 마리 때려도 한 번) — 맞았을 때만
+	if n > 0:
+		Sfx.play("crit" if hit["crit"] else "punch")
 
 
 ## 직업별 원거리 발사.

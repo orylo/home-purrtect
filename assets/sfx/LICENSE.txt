@@ -15,4 +15,12 @@ Home Purrtect — 효과음 출처/라이선스
 | heal.ogg        | power_up_2.ogg   | Kenney Digital Audio|
 | buff.ogg        | power_up_7.ogg   | Kenney Digital Audio|
 
+근접(카툰) — 사용자가 Pixabay에서 받은 카툰 효과음(로열티프리·상업무료·표기 불필요).
+무음/긴 꼬리를 잘라 짧게 가공(afconvert→wav, 앞부분 컷 + 끝 페이드).
+
+| 파일       | 원본(Pixabay)                         | 용도            |
+|------------|---------------------------------------|-----------------|
+| punch.wav  | cartoon-punch-404407                  | 평타 근접(휘두름당 1번) |
+| swing.wav  | woosh-long-cartoon-370386             | 근접 버튼 휘두르는 소리 |
+
 처치(pop)·점프(jump)·사격(shoot)은 scripts/sfx.gd 의 코드 합성음을 사용(직업별 피치 변주).

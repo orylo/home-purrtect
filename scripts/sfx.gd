@@ -11,6 +11,8 @@ const FILES := {
 	"click": ["res://assets/sfx/click_a.wav", "res://assets/sfx/click_b.wav"],
 	"coin":  ["res://assets/sfx/coin.ogg"],
 	"hit":   ["res://assets/sfx/hit_a.ogg", "res://assets/sfx/hit_b.ogg"],
+	"punch": ["res://assets/sfx/punch.wav"],   # 평타 근접(카툰 펀치) — 휘두름당 1번
+	"swing": ["res://assets/sfx/swing.wav"],   # 근접 버튼 누를 때 휘두르는 소리
 	"crit":  ["res://assets/sfx/crit.ogg"],
 	"heal":  ["res://assets/sfx/heal.ogg"],
 	"buff":  ["res://assets/sfx/buff.ogg"],

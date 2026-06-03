@@ -327,7 +327,8 @@ func is_air() -> bool:
 	return _air
 
 
-func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false) -> void:
+## play_sfx: false면 피격음을 내지 않는다(근접 다중타격은 player가 휘두름당 1번만 재생).
+func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit: bool = false, play_sfx: bool = true) -> void:
 	if dead:
 		return
 	# 공중 적도 "실제로 닿은" 공격이면 데미지 적용:
@@ -351,7 +352,8 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		if stun > 0.0:
 			_stun_timer = stun
 		Fx.request_shake(7.0 if crit else 3.0)
-		Sfx.play("crit" if crit else "hit")
+		if play_sfx:
+			Sfx.play("crit" if crit else "hit")
 		var _fy := -50.0 - (AIR_HEIGHT if _air else 0.0)
 		if crit:
 			Fx.burst("critical_hit", global_position + Vector2(0, _fy), 0.62, 45)
