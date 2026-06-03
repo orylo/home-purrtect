@@ -58,6 +58,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
+	# 바닥 그림자 — 높이(바닥과의 거리)에 따라 크기·농도 변화(치즈/적 그림자와 동일 로직).
+	var gy: float = _ground_y - global_position.y    # 바닥 위 높이(로컬 y)
+	if gy > 4.0:
+		var t: float = clampf(1.0 - gy / 460.0, 0.22, 1.0)
+		var sr := 13.0 if shape == "stone" else (12.0 if shape == "cone" else 10.0)
+		draw_set_transform(Vector2(0, gy), -rotation, Vector2(1.0, 0.3))   # 회전 보정해 바닥에 평평
+		draw_circle(Vector2.ZERO, sr * t, Color(0, 0, 0, 0.24 * t))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	match shape:
 		"stone": _draw_stone()
 		"cone":  _draw_cone()

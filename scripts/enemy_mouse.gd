@@ -32,6 +32,7 @@ const ENEMY_FRAMES := {
 }
 const BLACK_IDS := ["black", "black_roller", "black_thrower"]   # 회색 프레임 리스킨
 const DARK_SHADER := preload("res://assets/shaders/enemy_darken.gdshader")
+const GHOST_FRAMES := preload("res://assets/sprites/ghost/ghost_frames.tres")   # 통일 죽음 귀신
 # 종류별 화면 크기 배율(쥐·투척쥐 제외하고 키움). 기본 1.0.
 const SIZE_MULT := {
 	"gray_roller": 1.28, "black_roller": 1.18,
@@ -453,9 +454,12 @@ func _draw() -> void:
 	_draw_damage_popups()
 	if dead:
 		return
-	# 발밑 그림자 — 화면 크기 배율 반영(거미·투척쥐 등 큰 적은 그림자도 크게)
+	# 발밑 그림자 — 크기 배율 + 공중 높이 연동(높이 뜰수록 작고 옅게, 치즈 점프와 동일 로직)
+	var sh_t := 1.0
+	if _air:
+		sh_t = clampf(1.0 - _air_raise() / 500.0, 0.30, 1.0)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.28))
-	draw_circle(Vector2.ZERO, _body_r * _size_mult, Color(0, 0, 0, 0.3))
+	draw_circle(Vector2.ZERO, _body_r * _size_mult * sh_t, Color(0, 0, 0, 0.3 * sh_t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	# placeholder 몸 (스프라이트 안 쓰는 적 — 보스 등. 공중 스프라이트 적은 여기 안 옴)
@@ -620,13 +624,26 @@ func _die() -> void:
 	Fx.request_hitstop(0.05)
 	Fx.burst("poof_explosion", global_position + Vector2(0, -45.0 - _air_raise()), 0.6, 47)
 	Sfx.play("pop")
-	if _use_sprite:
-		anim.modulate = Color(1, 1, 1)
-		if anim.sprite_frames != null and anim.sprite_frames.has_animation("ghost"):
-			anim.play("ghost")               # 옛 mouse_frames(있으면)
-		else:
-			anim.play("hit")                 # 신규 침입자 프레임엔 ghost 없음 → hit 후 종료 시 free
-			get_tree().create_timer(0.5).timeout.connect(queue_free)
-	else:
-		var t := get_tree().create_timer(0.05)
-		t.timeout.connect(queue_free)
+	_show_ghost()
+
+
+## 통일 죽음 귀신: 적 크기에 비례, 그 자리에서 점점 투명·위로 떠올라 사라짐.
+func _show_ghost() -> void:
+	anim.visible = true
+	anim.material = null                  # 검은쥐 셰이더 제거(귀신은 흰색)
+	anim.flip_h = false
+	anim.speed_scale = 1.0
+	anim.modulate = Color(1, 1, 1, 1)
+	anim.sprite_frames = GHOST_FRAMES
+	anim.play("float")
+	var gh: float = float(GHOST_FRAMES.get_frame_texture("float", 0).get_height())
+	var gsc: float = (_body_r * 2.4 * _size_mult) / maxf(gh, 1.0)   # 적 크기 비례
+	anim.scale = Vector2(gsc, gsc)
+	# 시작 위치 = 적 몸 중심(공중은 진동 높이 반영)
+	var start_y: float = anim.position.y if _use_sprite else (-_body_r - 12.0)
+	anim.position = Vector2(0, start_y)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(anim, "position:y", start_y - 130.0, 1.1)   # 위로 떠오름
+	t.tween_property(anim, "modulate:a", 0.0, 1.1).set_ease(Tween.EASE_IN)  # 점점 투명
+	t.chain().tween_callback(queue_free)
