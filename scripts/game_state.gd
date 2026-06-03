@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.72"
+const BUILD := "0.0.73"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -33,6 +33,7 @@ var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
 var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 자동재생 게이트)
+var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
 
 ## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
 ## ★합성 승급 모델(2026-06-04): 다음 등급 = 직전 등급 장비 + 재료(+코인). 합성 시 직전 등급 소모(등급당 0/1개).
@@ -713,6 +714,7 @@ func save_game() -> void:
 		"selected_blessing": selected_blessing,
 		"bgm_enabled": bgm_enabled,              # 배경음악 켜짐 여부
 		"prologue_seen": prologue_seen,          # 프롤로그 봤는지
+		"coachmark_seen": coachmark_seen,        # 홈 코치마크 본 항목
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -733,6 +735,11 @@ func load_game() -> void:
 		coins = int(data.get("coins", 0))
 		bgm_enabled = bool(data.get("bgm_enabled", true))
 		prologue_seen = bool(data.get("prologue_seen", false))
+		coachmark_seen = []
+		var cms = data.get("coachmark_seen", [])
+		if typeof(cms) == TYPE_ARRAY:
+			for c in cms:
+				coachmark_seen.append(String(c))
 		cleared_stages = []
 		var cs = data.get("cleared_stages", [])
 		if typeof(cs) == TYPE_ARRAY:
