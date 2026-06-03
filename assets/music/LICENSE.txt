@@ -1,0 +1,10 @@
+Home Purrtect — 배경음악(BGM) 출처/라이선스
+=============================================
+
+bgm.wav — "Maple Leaf Rag" (Scott Joplin, 1899)
+  · 작곡: 퍼블릭 도메인(1899년 작, 저작권 만료)
+  · 음원: FreePD.com 컬렉션(현재 Internet Archive 보존: archive.org/details/freepd)
+    라이선스 CC0 1.0 (퍼블릭 도메인) — 상업적 사용 자유, 출처 표기 의무 없음.
+  · 가공: mp3(179초, 스테레오) → 모노 22050Hz wav 변환 + 앞뒤 무음 정리(174초).
+    Godot가 QOA로 압축 임포트 → 웹 빌드엔 약 1.6MB만 포함.
+  · 재생: scripts/music.gd (Music 오토로드), 전체 구간 이음새 없이 루프.
