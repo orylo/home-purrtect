@@ -50,6 +50,12 @@ const FIXED_GROUND := {
 	"1-20": "res://assets/backgrounds/wall/ground/fixed/1-20.png",
 }
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
+## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
+const SURF_FRAC := 0.70                      # 기본값(대부분 담장+길 구도에 맞음)
+const GROUND_SURF := {                       # 예외 개별 보정: "파일명.png" → 비율
+	# 예) "g14.png": 0.66,
+}
+var _ground_surf := SURF_FRAC
 
 
 func _ready() -> void:
@@ -75,6 +81,9 @@ func _pick_backgrounds() -> void:
 			ground_texture = _load_tex(FIXED_GROUND[key])
 		else:
 			ground_texture = _pick_seq("res://assets/backgrounds/%s/ground/g%%02d.png" % theme, int(cnt.get("ground", 0)))
+	# 지면 정렬 비율(이미지별 예외 보정 or 기본)
+	if ground_texture != null:
+		_ground_surf = float(GROUND_SURF.get(ground_texture.resource_path.get_file(), SURF_FRAC))
 	# 근경 = 0~2개, 서로 다른 코너에서(한 코너 중복 금지)
 	near_pieces = _pick_near(theme, int(cnt.get("near", 0)))
 
@@ -128,7 +137,7 @@ func _draw() -> void:
 		_draw_far(far_texture, vis)               # far = 가운데 정렬(고정)
 		if fog_enabled:
 			_draw_fog(vis)                        # 안개(공기원근) — far 위, ground 아래
-		_draw_anchored(ground_texture, vis, false) # ground = 하단 고정(움직임 X)
+		_draw_ground(ground_texture, vis)         # ground = 지면선을 ground_y에 정렬
 	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
 		# 가로/세로 비율 중 더 큰 쪽으로 맞춰 빈틈 없이 채우고, 넘치는 부분만 크롭.
@@ -208,13 +217,16 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _far_lift), Vector2(w, h)), false)
 
 
-## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
-##   → 가로는 정확히 화면 폭, 세로는 비율 유지(넘치면 크롭).
-func _draw_anchored(tex: Texture2D, vis: Vector2, top_anchor: bool) -> void:
+## 지면(ground) — 이미지의 '서는 면(_ground_surf)'을 ground_y(기기마다 계산)에 정렬해 그린다.
+##   기본은 좌우폭=화면폭(가로맞춤). 단 지면선~화면바닥을 못 채우면 그만큼 키워(빈틈 방지) — 그땐 좌우가 살짝 넘쳐 크롭.
+func _draw_ground(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
-	var sc := (vis.x / t.x) * bg_zoom        # 가로 기준 → 좌우폭이 화면에 딱 맞음
+	var gy := Layout.ground_y()
+	var sc_w := (vis.x / t.x) * bg_zoom                       # 가로맞춤
+	var below := (1.0 - _ground_surf) * t.y                   # 서는 면 아래(길) 원본 높이
+	var sc_fill := ((vis.y - gy) / below) if below > 1.0 else sc_w   # 지면선~바닥을 채울 최소 배율
+	var sc := maxf(sc_w, sc_fill)
 	var w := t.x * sc
 	var h := t.y * sc
-	var x := (vis.x - w) * 0.5
-	var y := 0.0 if top_anchor else (vis.y - h)   # 지면=항상 바닥 고정(올리지 않음)
-	draw_texture_rect(tex, Rect2(Vector2(x, y), Vector2(w, h)), false)
+	var art_y := gy - _ground_surf * h                       # 서는 면을 바닥선에 정렬
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, art_y), Vector2(w, h)), false)
