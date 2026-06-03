@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Material" path="res://assets/shaders/halftone_bg.tres" id="1"]
+
+[node name="HalftoneTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+color = Color(0.09, 0.11, 0.16, 1)
+
+[node name="Halftone" type="ColorRect" parent="."]
+material = ExtResource("1")
+layout_mode = 1
+anchors_preset = 15
