@@ -246,7 +246,7 @@ func _rebuild_skill() -> void:
 		c.queue_free()
 	var job: String = GameState.selected_job
 	if job == "base":
-		var none := _text("맨몸(길냥이)은 구매 스킬이 없어요. 고유기 '냥냥펀치'만 (§4.1)\n전투 준비에서 직업을 골라 보세요.", 24, Color(1, 1, 1, 0.8))
+		var none := _text("맨몸(길냥이)은 튜토리얼 구간이라 스킬이 없어요.\n전투 준비에서 직업을 골라 보세요.", 24, Color(1, 1, 1, 0.8))
 		_skill_box.add_child(none)
 		return
 	# 해당 직업 스킬 3개를 order 순으로
