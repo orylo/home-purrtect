@@ -42,6 +42,7 @@ var _hint: Label
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE   # 배경 클릭은 통과 → _unhandled_input이 받음(버튼은 별도로 받음)
 	_music = AudioStreamPlayer.new()
 	_music.bus = "Master"
 	_music.volume_db = -12.0
@@ -60,42 +61,55 @@ func _ready() -> void:
 	set_process(true)
 
 
+# 모두 앵커 기반(화면 크기 바뀌어도 자동 정렬). 배경 클릭은 통과시켜 _unhandled_input이 받게 함.
 func _build_ui() -> void:
-	var vp := get_viewport().get_visible_rect().size
-	# 자막(상단 가운데)
+	# 자막(상단 가로 전체, 가운데 정렬)
 	_cap = _mklabel(36, Color(0.97, 0.95, 0.90))
 	_cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cap.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_cap.position = Vector2(vp.x * 0.5 - 600, 70)
-	_cap.size = Vector2(1200, 160)
+	_cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cap.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_cap.offset_left = 60; _cap.offset_right = -60
+	_cap.offset_top = 60; _cap.offset_bottom = 250
 	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_cap.add_theme_constant_override("outline_size", 8)
 	add_child(_cap)
-	# 영감 대화창(하단)
+	# 영감 대화창(하단 가운데, 고정폭 1120·바닥에서 64px 위)
 	_dlg = Panel.new()
 	_dlg.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 5, 16))
-	_dlg.position = Vector2(vp.x * 0.5 - 560, vp.y - 220)
-	_dlg.size = Vector2(1120, 156)
+	_dlg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dlg.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_dlg.offset_left = -560; _dlg.offset_right = 560
+	_dlg.offset_top = -220; _dlg.offset_bottom = -64
 	add_child(_dlg)
 	_dlg_name = _mklabel(26, Design.RED)
+	_dlg_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dlg_name.position = Vector2(32, 14)
 	_dlg.add_child(_dlg_name)
 	_dlg_line = _mklabel(30, Design.INK)
-	_dlg_line.position = Vector2(32, 56)
-	_dlg_line.size = Vector2(1056, 90)
+	_dlg_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dlg_line.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dlg_line.offset_left = 32; _dlg_line.offset_right = -32
+	_dlg_line.offset_top = 56; _dlg_line.offset_bottom = -10
 	_dlg_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_dlg.add_child(_dlg_line)
 	_dlg.visible = false
-	# 건너뛰기
+	# 건너뛰기(우상단) — 누르면 전체 건너뜀(_finish). 버튼은 클릭을 받아야 하므로 mouse_filter 기본(STOP).
 	var skip := Design.button("건너뛰기", "secondary", Design.FS_BODY)
 	skip.custom_minimum_size = Vector2(150, 52)
-	skip.position = Vector2(vp.x - 174, 24)
+	skip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	skip.offset_left = -174; skip.offset_right = -24
+	skip.offset_top = 24; skip.offset_bottom = 76
 	skip.pressed.connect(_finish)
 	add_child(skip)
-	# 진행 힌트
+	# 진행 힌트(우하단)
 	_hint = _mklabel(22, Color(1, 1, 1, 0.75))
 	_hint.text = "탭하여 계속 ▶"
-	_hint.position = Vector2(vp.x - 240, vp.y - 48)
+	_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_hint.offset_left = -260; _hint.offset_right = -24
+	_hint.offset_top = -52; _hint.offset_bottom = -12
 	_hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
 	_hint.add_theme_constant_override("outline_size", 5)
 	add_child(_hint)
@@ -160,7 +174,8 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _input(event: InputEvent) -> void:
+# 배경(빈 곳) 탭/스페이스 = 다음 장면. 건너뛰기 버튼 클릭은 여기 안 옴(버튼이 먼저 소비 → _finish).
+func _unhandled_input(event: InputEvent) -> void:
 	var adv := false
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		adv = true
@@ -169,7 +184,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
 		adv = true
 	if adv:
-		accept_event()
+		get_viewport().set_input_as_handled()
 		_goto(_i + 1)
 
 
