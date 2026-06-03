@@ -59,7 +59,7 @@ func _draw() -> void:
 
 ## 원경(far) — 세로 가운데 정렬 + 1.5배 확대 + 치즈 좌우 위치에 따라 미세 패럴럭스(같은 방향).
 const FAR_ZOOM := 1.5         # 원경 추가 확대
-const FAR_PARALLAX := 50.0    # 치즈가 화면 끝까지 갈 때 far가 움직이는 최대 px(미세하게)
+const FAR_PARALLAX := 22.0    # 치즈가 화면 끝까지 갈 때 far가 움직이는 최대 px(아주 미세하게)
 func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
@@ -74,10 +74,11 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5 + px, (vis.y - h) * 0.5), Vector2(w, h)), false)
 
 
-## 가로를 꽉 채우는 커버 스케일로 그리되, top_anchor면 상단(y=0)·아니면 하단(바닥)에 붙임.
+## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
+##   → 가로는 정확히 화면 폭, 세로는 비율 유지(넘치면 크롭).
 func _draw_anchored(tex: Texture2D, vis: Vector2, top_anchor: bool) -> void:
 	var t := tex.get_size()
-	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom
+	var sc := (vis.x / t.x) * bg_zoom        # 가로 기준 → 좌우폭이 화면에 딱 맞음
 	var w := t.x * sc
 	var h := t.y * sc
 	var x := (vis.x - w) * 0.5
