@@ -49,6 +49,11 @@ const FIXED_GROUND := {
 	"1-10": "res://assets/backgrounds/wall/ground/fixed/1-10.png",
 	"1-20": "res://assets/backgrounds/wall/ground/fixed/1-20.png",
 }
+## 특정 스테이지 원경 고정. 키="막-스테이지".
+const FIXED_FAR := {
+	"1-10": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
+	"1-20": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
+}
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
 const SURF_FRAC := 0.70                      # 지면 이미지에서 '담장-지면 경계'의 세로 비율(기본)
@@ -73,9 +78,12 @@ func _pick_backgrounds() -> void:
 	var theme := _theme_for(GameState.stage_major, GameState.stage_minor)
 	var cnt: Dictionary = POOL_COUNT.get(theme, {})
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	# 원경 = 랜덤
+	# 원경 = 고정 스테이지면 고정, 아니면 랜덤
 	if far_texture == null:
-		far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)))
+		if FIXED_FAR.has(key):
+			far_texture = _load_tex(FIXED_FAR[key])
+		else:
+			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)))
 	# 지면 = 고정 스테이지면 고정, 아니면 랜덤
 	if ground_texture == null:
 		if FIXED_GROUND.has(key):
