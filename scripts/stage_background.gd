@@ -10,7 +10,7 @@ extends Node2D
 ##   에디터에서 직접 지정하면 그 값이 우선(보스 등 고정 연출용).
 @export var far_texture: Texture2D
 @export var ground_texture: Texture2D
-@export var near_texture: Texture2D
+var near_pieces: Array = []                  # 이번 판 근경 조각 [{corner,tex,phase,spd}] — Foreground가 그림
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
 @export var show_ground_line: bool = true
 ## 배경 추가 확대 배율(1.0 = 기본, 비율 유지 커버). 필요 시만 키움.
@@ -38,25 +38,18 @@ var _fog_tex: ImageTexture
 
 # ── 스테이지 배경 풀(테마별) ─────────────────────────────────
 ## 같은 막=같은 테마. 한 판마다 far/ground/near를 풀에서 랜덤으로 뽑는다.
-## 새 배경은 폴더에 넣고 아래 배열에 경로만 추가하면 됨.
-const THEMES := {
-	"wall": {
-		"far": [
-			"res://assets/backgrounds/wall/far/far01.jpg", "res://assets/backgrounds/wall/far/far02.jpg",
-			"res://assets/backgrounds/wall/far/far03.jpg", "res://assets/backgrounds/wall/far/far04.jpg",
-			"res://assets/backgrounds/wall/far/far05.jpg", "res://assets/backgrounds/wall/far/far06.jpg",
-			"res://assets/backgrounds/wall/far/far07.jpg", "res://assets/backgrounds/wall/far/far08.jpg",
-			"res://assets/backgrounds/wall/far/far09.jpg", "res://assets/backgrounds/wall/far/far10.jpg",
-			"res://assets/backgrounds/wall/far/far11.jpg", "res://assets/backgrounds/wall/far/far12.jpg",
-		],
-		"ground": ["res://assets/backgrounds/wall/ground/ground01.png"],  # 추후 더 추가
-		"near": [],   # 근경 — 추후 추가(있으면 캐릭터 앞에 그려짐)
-	},
+## 새 배경: 해당 폴더에 규칙대로 넣고 아래 장수만 늘리면 자동 포함.
+##   far: wall/far/far01..NN.jpg / ground: wall/ground/g01..NN.png / near: wall/near/<tl|tr|bl|br>/<코너>01..NN.png
+const POOL_COUNT := {
+	"wall": {"far": 12, "ground": 21, "near": 7},
 }
-## 특정 스테이지 배경 고정(보스 등). 키="막-스테이지". 지정되면 랜덤 대신 이걸 사용.
-const FIXED := {
-	# 예) "1-10": {"theme": "wall", "far": "res://...far05.jpg", "ground": "res://...ground01.png", "near": ""},
+## 특정 스테이지 지면 고정(보스 등). 키="막-스테이지". 다른 스테이지도 여기 추가하면 고정.
+const FIXED_GROUND := {
+	"1-3":  "res://assets/backgrounds/wall/ground/fixed/1-3.png",
+	"1-10": "res://assets/backgrounds/wall/ground/fixed/1-10.png",
+	"1-20": "res://assets/backgrounds/wall/ground/fixed/1-20.png",
 }
+const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 
 
 func _ready() -> void:
@@ -64,27 +57,42 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(queue_redraw)
 	_fog_tex = _make_fog_tex()
 	_far_lift = randf_range(FAR_LIFT_MIN, FAR_LIFT_MAX)   # 매 판 원경 올림 랜덤
-	add_to_group("stage_bg")     # 근경(Foreground) 노드가 near_texture를 읽어감
+	add_to_group("stage_bg")     # 근경(Foreground) 노드가 near_pieces를 읽어감
 	_pick_backgrounds()
 
 
-## 현재 스테이지에 맞는 배경 3종을 정한다(에디터에서 직접 지정했으면 그대로 둠).
+## 현재 스테이지 배경(far/ground/near)을 정한다. 에디터에서 far/ground를 직접 지정했으면 그대로 둠.
 func _pick_backgrounds() -> void:
+	var theme := _theme_for(GameState.stage_major, GameState.stage_minor)
+	var cnt: Dictionary = POOL_COUNT.get(theme, {})
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	if FIXED.has(key):                       # 보스 등 고정
-		var fx: Dictionary = FIXED[key]
-		far_texture = _load_tex(fx.get("far", ""))
-		ground_texture = _load_tex(fx.get("ground", ""))
-		near_texture = _load_tex(fx.get("near", ""))
-		return
-	var th: Dictionary = THEMES.get(_theme_for(GameState.stage_major, GameState.stage_minor), {})
-	# 에디터에서 미리 지정한 슬롯은 존중, 비어있으면 풀에서 랜덤
+	# 원경 = 랜덤
 	if far_texture == null:
-		far_texture = _pick_from(th.get("far", []))
+		far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)))
+	# 지면 = 고정 스테이지면 고정, 아니면 랜덤
 	if ground_texture == null:
-		ground_texture = _pick_from(th.get("ground", []))
-	if near_texture == null:
-		near_texture = _pick_from(th.get("near", []))
+		if FIXED_GROUND.has(key):
+			ground_texture = _load_tex(FIXED_GROUND[key])
+		else:
+			ground_texture = _pick_seq("res://assets/backgrounds/%s/ground/g%%02d.png" % theme, int(cnt.get("ground", 0)))
+	# 근경 = 0~2개, 서로 다른 코너에서(한 코너 중복 금지)
+	near_pieces = _pick_near(theme, int(cnt.get("near", 0)))
+
+
+## 근경 0~2조각: 서로 다른 코너 랜덤 선택 → 각 코너 풀에서 랜덤 조각.
+func _pick_near(theme: String, per_corner: int) -> Array:
+	var count := randi() % 3                      # 0, 1, 2
+	if count == 0 or per_corner <= 0:
+		return []
+	var corners := NEAR_CORNERS.duplicate()
+	corners.shuffle()
+	var pieces: Array = []
+	for i in range(min(count, corners.size())):
+		var corner: String = corners[i]
+		var tex := _pick_seq("res://assets/backgrounds/%s/near/%s/%s%%02d.png" % [theme, corner, corner], per_corner)
+		if tex != null:
+			pieces.append({"corner": corner, "tex": tex, "phase": randf() * TAU, "spd": randf_range(0.6, 1.0)})
+	return pieces
 
 
 ## 막·스테이지 → 테마. (1막 = 담벼락. 추후 막별 분기)
@@ -92,10 +100,11 @@ func _theme_for(_major: int, _minor: int) -> String:
 	return "wall"
 
 
-func _pick_from(pool: Array) -> Texture2D:
-	if pool.is_empty():
+## "...%02d.png" 형식 경로의 1~count 중 랜덤 1장 로드.
+func _pick_seq(fmt: String, count: int) -> Texture2D:
+	if count <= 0:
 		return null
-	return _load_tex(String(pool[randi() % pool.size()]))
+	return _load_tex(fmt % (randi() % count + 1))
 
 
 func _load_tex(path: String) -> Texture2D:
