@@ -58,6 +58,9 @@ var on_ground: bool = true
 var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격을 피함(추후 큰 적용)
 var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
+const IDLE_HOLD := 1.0             # idle: 첫 프레임에서 이만큼 유지 후 재생(모든 직업)
+var _idle_phase: String = ""       # ""(미진입) / hold(첫프레임 유지) / play(1회 재생 중)
+var _idle_hold_t: float = 0.0
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
 const ATTACK_PREP_SPEED := 3.5     # 준비동작(발사/타격 전)은 빠르게 → 누르는 즉시 공격되는 느낌
@@ -153,6 +156,8 @@ func _ready() -> void:
 	var frames := load(GameState.job_frames_path())
 	if frames:
 		anim.sprite_frames = frames
+		if frames.has_animation("idle"):
+			frames.set_animation_loop("idle", false)   # idle은 1회 재생(앞 프레임 1초 유지 사이클을 코드로)
 		anim.play("idle")
 	anim.animation_finished.connect(_on_anim_finished)
 	add_to_group("player")
@@ -193,6 +198,12 @@ func _on_anim_finished() -> void:
 		_committed_anim = ""      # 공격/피격 모션 끝
 	if a == "sit" and _sit_phase == "up":
 		_sit_phase = ""           # 일어나기 끝
+	if a == "idle" and _idle_phase == "play":
+		# idle 1회 재생 끝 → 다시 첫 프레임에서 1초 유지
+		_idle_phase = "hold"
+		_idle_hold_t = IDLE_HOLD
+		anim.frame = 0
+		anim.pause()
 
 
 func _physics_process(delta: float) -> void:
@@ -329,7 +340,7 @@ func _physics_process(delta: float) -> void:
 		while not _hurt_popups.is_empty() and _hurt_popups[0]["t"] >= HURT_POP_DUR:
 			_hurt_popups.pop_front()
 
-	_update_animation(direction)
+	_update_animation(direction, delta)
 	queue_redraw()   # 발밑 그림자(점프 높이/눕기 반영) + 데미지 숫자 갱신
 
 
@@ -660,7 +671,7 @@ func _poison_damage(amount: float) -> void:
 		died.emit()
 
 
-func _update_animation(direction: float) -> void:
+func _update_animation(direction: float, delta: float) -> void:
 	# 우선순위: 1회성모션(피격/공격) > 앉기 > 점프 > 걷기 > 정지
 	# idle은 "아무 입력/모션도 없을 때"만 나온다.
 	var next := "idle"
@@ -676,6 +687,12 @@ func _update_animation(direction: float) -> void:
 	elif direction < 0.0:
 		next = "walk"
 		reversed = true   # 뒷걸음질 = walk 역재생(전용 모션 없음)
+
+	# idle: 첫 프레임에서 1초 유지 → 1회 재생 → 반복 (모든 직업·모든 정지 순간)
+	if next == "idle":
+		_tick_idle(delta)
+		return
+	_idle_phase = ""   # idle을 벗어나면 사이클 리셋(다음 정지 때 다시 유지부터)
 
 	if anim.animation != next or _anim_reversed != reversed:
 		_anim_reversed = reversed
@@ -703,3 +720,22 @@ func _update_animation(direction: float) -> void:
 	if next == "sit" and _sit_phase == "down" and anim.frame >= SIT_HOLD_FRAME:
 		anim.frame = SIT_HOLD_FRAME
 		anim.speed_scale = 0.0
+
+
+## idle 사이클 — 첫 프레임에서 IDLE_HOLD초 유지 → idle 1회 재생 → (재생 끝나면 _on_anim_finished가 다시 유지)
+func _tick_idle(delta: float) -> void:
+	if _idle_phase == "":
+		# idle 진입: 첫 프레임 고정 + 유지 타이머 시작
+		_idle_phase = "hold"
+		_idle_hold_t = IDLE_HOLD
+		_anim_reversed = false
+		anim.animation = "idle"
+		anim.speed_scale = 1.0
+		anim.frame = 0
+		anim.pause()
+	elif _idle_phase == "hold":
+		_idle_hold_t -= delta
+		if _idle_hold_t <= 0.0:
+			_idle_phase = "play"
+			anim.play("idle")        # 1회 재생(loop off → 끝나면 animation_finished)
+	# "play" 단계는 재생 완료를 _on_anim_finished에서 받아 다시 hold로 전환
