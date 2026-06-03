@@ -55,6 +55,9 @@ const FIXED_FAR := {
 	"1-20": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
 }
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
+## 직전 판 반복 방지(세션 동안만 기억 — 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
+static var _last_far := ""
+static var _last_near: Array = []
 ## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
 const SURF_FRAC := 0.70                      # 지면 이미지에서 '담장-지면 경계'의 세로 비율(기본)
 const GROUND_CROP_MAX := 200.0               # 발선을 길 중앙에 맞추려 키울 때 허용하는 좌우 크롭 상한(px)
@@ -78,12 +81,14 @@ func _pick_backgrounds() -> void:
 	var theme := _theme_for(GameState.stage_major, GameState.stage_minor)
 	var cnt: Dictionary = POOL_COUNT.get(theme, {})
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	# 원경 = 고정 스테이지면 고정, 아니면 랜덤
+	# 원경 = 고정 스테이지면 고정, 아니면 랜덤(직전 판과 다르게)
 	if far_texture == null:
 		if FIXED_FAR.has(key):
 			far_texture = _load_tex(FIXED_FAR[key])
 		else:
-			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)))
+			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)), [_last_far])
+			if far_texture != null:
+				_last_far = far_texture.resource_path
 	# 지면 = 고정 스테이지면 고정, 아니면 랜덤
 	if ground_texture == null:
 		if FIXED_GROUND.has(key):
@@ -107,9 +112,14 @@ func _pick_near(theme: String, per_corner: int) -> Array:
 	var pieces: Array = []
 	for i in range(min(count, corners.size())):
 		var corner: String = corners[i]
-		var tex := _pick_seq("res://assets/backgrounds/%s/near/%s/%s%%02d.png" % [theme, corner, corner], per_corner)
+		# 직전 판에 나온 조각은 빼고 뽑음
+		var tex := _pick_seq("res://assets/backgrounds/%s/near/%s/%s%%02d.png" % [theme, corner, corner], per_corner, _last_near)
 		if tex != null:
 			pieces.append({"corner": corner, "tex": tex, "phase": randf() * TAU, "spd": randf_range(0.6, 1.0)})
+	# 이번 판 조각들을 기억(다음 판 제외용)
+	_last_near = []
+	for p in pieces:
+		_last_near.append(p["tex"].resource_path)
 	return pieces
 
 
@@ -118,11 +128,18 @@ func _theme_for(_major: int, _minor: int) -> String:
 	return "wall"
 
 
-## "...%02d.png" 형식 경로의 1~count 중 랜덤 1장 로드.
-func _pick_seq(fmt: String, count: int) -> Texture2D:
+## "...%02d.png" 형식 경로의 1~count 중 랜덤 1장 로드. exclude 경로는 빼고 뽑음(직전 판 반복 방지).
+func _pick_seq(fmt: String, count: int, exclude: Array = []) -> Texture2D:
 	if count <= 0:
 		return null
-	return _load_tex(fmt % (randi() % count + 1))
+	var cands: Array = []
+	for i in range(1, count + 1):
+		var p := fmt % i
+		if not exclude.has(p):
+			cands.append(p)
+	if cands.is_empty():                       # 전부 제외(=1장뿐)면 그냥 랜덤
+		cands.append(fmt % (randi() % count + 1))
+	return _load_tex(cands[randi() % cands.size()])
 
 
 func _load_tex(path: String) -> Texture2D:
