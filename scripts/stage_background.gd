@@ -15,14 +15,31 @@ extends Node2D
 @export var bg_zoom: float = 1.0
 ## 배경을 아래로 내리는 양(px). 양수면 그림이 내려가 위쪽이 더 보인다.
 @export var offset_y: float = 0.0
+## 원경 안개(공기원근) — far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
+@export var fog_enabled: bool = true
+
+const FOG_COL := Color(0.88, 0.92, 0.97)   # 안개 색(옅은 차가운 흰색)
+# 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
+#   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
+const FOG_BLOBS := [
+	{"x0": 0.10, "y0": 0.46, "r": 0.62, "spd": 5.0,  "bob_s": 0.25, "bob_a": 0.012, "a": 0.10, "ph": 0.0},
+	{"x0": 0.55, "y0": 0.50, "r": 0.74, "spd": 3.5,  "bob_s": 0.18, "bob_a": 0.010, "a": 0.09, "ph": 1.7},
+	{"x0": 0.85, "y0": 0.42, "r": 0.50, "spd": 8.0,  "bob_s": 0.34, "bob_a": 0.016, "a": 0.11, "ph": 3.1},
+	{"x0": 0.30, "y0": 0.40, "r": 0.42, "spd": 11.0, "bob_s": 0.40, "bob_a": 0.018, "a": 0.10, "ph": 4.6},
+	{"x0": 0.70, "y0": 0.55, "r": 0.55, "spd": 6.5,  "bob_s": 0.22, "bob_a": 0.011, "a": 0.08, "ph": 2.2},
+]
+var _t := 0.0
+var _fog_tex: ImageTexture
 
 
 func _ready() -> void:
 	# 화면 크기가 바뀌면(회전·창 크기) 다시 그림
 	get_viewport().size_changed.connect(queue_redraw)
+	_fog_tex = _make_fog_tex()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_t += delta
 	queue_redraw()
 
 
@@ -33,6 +50,8 @@ func _draw() -> void:
 	if far_texture != null and ground_texture != null:
 		# 2레이어: 원경(가운데·고정) 뒤 → 전경 바닥(하단 고정·좌우폭 화면맞춤) 앞.
 		_draw_far(far_texture, vis)               # far = 가운데 정렬(고정)
+		if fog_enabled:
+			_draw_fog(vis)                        # 안개(공기원근) — far 위, ground 아래
 		_draw_anchored(ground_texture, vis, false) # ground = 하단 고정(움직임 X)
 	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
@@ -55,6 +74,37 @@ func _draw() -> void:
 	if show_ground_line:
 		var line_y := Layout.ground_y()
 		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
+
+
+## 안개(공기원근) — far 위에 부드러운 안개 덩어리를 천천히 흘려 멀어 보이게/살아있게.
+func _draw_fog(vis: Vector2) -> void:
+	if _fog_tex == null:
+		return
+	for fb in FOG_BLOBS:
+		var r: float = float(fb["r"]) * vis.y
+		var span: float = vis.x + r * 2.0
+		var x: float = fmod(float(fb["x0"]) * vis.x + _t * float(fb["spd"]), span)
+		if x < 0.0:
+			x += span
+		x -= r                                    # 화면 밖에서 들어와 반대편으로 나감(끊김 없이 순환)
+		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y
+		var col := FOG_COL
+		col.a = float(fb["a"])
+		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
+
+
+## 가운데가 진하고 가장자리로 부드럽게 사라지는 원형 안개 텍스처(1회 생성).
+func _make_fog_tex() -> ImageTexture:
+	var n := 96
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var c := (n - 1) * 0.5
+	for y in n:
+		for x in n:
+			var d: float = Vector2(x - c, y - c).length() / c
+			var a: float = clampf(1.0 - d, 0.0, 1.0)
+			a = a * a * (3.0 - 2.0 * a)            # smoothstep — 가장자리 더 부드럽게
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	return ImageTexture.create_from_image(img)
 
 
 ## 원경(far) — 세로·가로 가운데 정렬(고정, 패럴럭스 없음).
