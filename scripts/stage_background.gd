@@ -6,7 +6,7 @@ extends Node2D
 ## · 바닥 라인은 Layout.ground_y()와 항상 일치 → 캐릭터 발이 그림의 땅에 딱 맞음.
 
 @export var stage_texture: Texture2D
-## 2레이어 배경(둘 다 넣으면 stage_texture 대신 사용): far=원경(세로 가운데·가로 패럴럭스) / ground=전경 바닥(하단 고정, 마젠타 제거 PNG).
+## 2레이어 배경(둘 다 넣으면 stage_texture 대신 사용): far=원경(가운데 정렬·1.5배·고정) / ground=전경 바닥(하단 고정, 마젠타 제거 PNG).
 @export var far_texture: Texture2D
 @export var ground_texture: Texture2D
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
@@ -31,8 +31,8 @@ func _draw() -> void:
 	var s := Layout.cover_scale()
 
 	if far_texture != null and ground_texture != null:
-		# 2레이어: 원경(상단 고정·1.5배·치즈 따라 미세 패럴럭스) 뒤 → 전경 바닥(하단 고정) 앞.
-		_draw_far(far_texture, vis)               # far = 세로 가운데 + 가로 패럴럭스
+		# 2레이어: 원경(가운데·1.5배·고정) 뒤 → 전경 바닥(하단 고정·좌우폭 화면맞춤) 앞.
+		_draw_far(far_texture, vis)               # far = 가운데 정렬(고정)
 		_draw_anchored(ground_texture, vis, false) # ground = 하단 고정(움직임 X)
 	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
@@ -57,21 +57,14 @@ func _draw() -> void:
 		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
 
 
-## 원경(far) — 세로 가운데 정렬 + 1.5배 확대 + 치즈 좌우 위치에 따라 미세 패럴럭스(같은 방향).
+## 원경(far) — 세로·가로 가운데 정렬 + 1.5배 확대(고정, 패럴럭스 없음).
 const FAR_ZOOM := 1.5         # 원경 추가 확대
-const FAR_PARALLAX := 22.0    # 치즈가 화면 끝까지 갈 때 far가 움직이는 최대 px(아주 미세하게)
 func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
 	var w := t.x * sc
 	var h := t.y * sc
-	var px := 0.0
-	var p := get_tree().get_first_node_in_group("player")
-	if p != null and p is Node2D:
-		var f: float = clampf((p as Node2D).global_position.x / maxf(vis.x, 1.0), 0.0, 1.0)
-		px = (f - 0.5) * 2.0 * FAR_PARALLAX   # 가운데=0, 오른쪽 끝=+, 왼쪽 끝=−(치즈와 같은 방향)
-	# 가로=가운데+패럴럭스, 세로=가운데 정렬(상단 고정 X)
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5 + px, (vis.y - h) * 0.5), Vector2(w, h)), false)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5), Vector2(w, h)), false)
 
 
 ## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
