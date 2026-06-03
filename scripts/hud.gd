@@ -5,8 +5,8 @@ extends CanvasLayer
 ## 전투결과 [확인]을 눌렀고, 그 스테이지가 "전투 씬 내 컷씬"이면 발신(game.gd가 받아 처리).
 signal inscene_event_requested
 
-# 전투 씬 안에서(씬전환 없이) 컷씬을 재생하는 스테이지(보안관=1-3 등)
-const INSCENE_EVENT_STAGES := [3]
+# 전투 씬 안에서(씬전환 없이) 컷씬을 재생하는 스테이지(케이스 A: 1-3 보안관·1-5 펄·1-7 맥스)
+const INSCENE_EVENT_STAGES := [3, 5, 7]
 
 # 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
 const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
