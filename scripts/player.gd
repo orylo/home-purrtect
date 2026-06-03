@@ -61,6 +61,7 @@ var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 const IDLE_HOLD := 1.0             # idle: 첫 프레임에서 이만큼 유지 후 재생(모든 직업)
 var _idle_phase: String = ""       # ""(미진입) / hold(첫프레임 유지) / play(1회 재생 중)
+var _event_idle: bool = false      # 인게임 이벤트 중: 전투 정지, idle 사이클만(트리 일시정지에도 동작)
 var _idle_hold_t: float = 0.0
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
@@ -208,6 +209,13 @@ func _on_anim_finished() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# 이벤트(인게임 이벤트/팝업) 중: 입력·전투 정지, 제자리에서 idle 사이클만 계속.
+	if _event_idle:
+		velocity = Vector2.ZERO
+		anim.modulate = Color(1, 1, 1)
+		_update_animation(0.0, delta)   # next="idle" → _tick_idle(1초 유지→재생→반복)
+		queue_redraw()
+		return
 	_fire_timer -= delta
 	if _hurt_flash_timer > 0.0:
 		_hurt_flash_timer -= delta
@@ -725,6 +733,18 @@ func _update_animation(direction: float, delta: float) -> void:
 	if next == "sit" and _sit_phase == "down" and anim.frame >= SIT_HOLD_FRAME:
 		anim.frame = SIT_HOLD_FRAME
 		anim.speed_scale = 0.0
+
+
+## 이벤트 중 idle 모드 토글 — 트리 일시정지에도 _physics가 돌게 PROCESS_MODE_ALWAYS로.
+func set_event_idle(on: bool) -> void:
+	_event_idle = on
+	process_mode = Node.PROCESS_MODE_ALWAYS if on else Node.PROCESS_MODE_INHERIT
+	if on:
+		_committed_anim = ""
+		_jump_state = ""
+		_sit_phase = ""
+		crouching = false
+		_idle_phase = ""   # 다음 틱에서 idle 진입(1초 유지부터)
 
 
 ## idle 사이클 — 첫 프레임에서 IDLE_HOLD초 유지 → idle 1회 재생 → (재생 끝나면 _on_anim_finished가 다시 유지)

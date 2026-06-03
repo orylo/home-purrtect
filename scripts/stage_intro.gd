@@ -23,35 +23,37 @@ const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) — 급하지 않게
 const EVENTS := {
 	"1-1": {
 		"name": "펑거스",
-		"intro": [                                          # ① 전투 시작 전
-			{"text": "너… 그때 날 걷어찬 그 고양이?! 이 펑거스, 그 발길질을 잊을 줄 알았더냐!"},
-			{"text": "좋다, 오늘 집도 복수도 한꺼번에 되찾아주마. 가라, 나의 정예들이여—!"},
+		"intro": [                                          # ① 전투 시작 전 (?→펑거스 정체 공개)
+			{"text": "흐흐… 드디어 돌아왔다, 나의 안식처여……", "name": "?", "anim": "idle"},
+			{"text": "…뭐야? 웬 고양이가 길을 막고 서 있지? 비켜라, 여긴 내 집이다!", "name": "?", "anim": "fear"},
+			{"text": "너… 그때 날 걷어찬 그 고양이?! 이 펑거스, 그 발길질을 잊을 줄 알았더냐!", "anim": "angry"},
+			{"text": "좋다, 오늘 집도 복수도 한꺼번에 되찾아주마. 가라, 나의 정예들이여—!", "anim": "angry"},
 		],
-		"first_kill": [                                     # ② 첫 몹 처치(1회)
-			{"text": "뭐…?! 어떻게 싸울 줄 아는 거지?! 한낱 길바닥 출신인 주제에…!"},
+		"first_kill": [                                     # ② 첫 몹 처치(1회) — 당황
+			{"text": "뭐…?! 어떻게 싸울 줄 아는 거지?! 한낱 길바닥 출신인 주제에…!", "anim": "fear"},
 		],
-		"on_wave": {                                        # ③ 웨이브 시작 팝업
-			2: [{"text": "제법이군. 허나 이 몸은 위대한 책략가! 부대는 얼마든지 있다 — 가라, 제2진!"}],
+		"on_wave": {                                        # ③ 웨이브 시작 팝업 — 비웃음
+			2: [{"text": "제법이군. 허나 이 몸은 위대한 책략가! 부대는 얼마든지 있다 — 가라, 제2진!", "anim": "laugh"}],
 		},
-		"outro": [                                          # ④ 전 웨이브 클리어 후
-			{"text": "이…이럴 수가! 오늘의 수치, 이 펑거스가 절대 잊지 않겠다!"},
-			{"text": "이번이 마지막이라 생각 마라! 이 몸은 반드시 다시 돌아온다, 치즈으으—!"},
+		"outro": [                                          # ④ 전 웨이브 클리어 후 — 분노
+			{"text": "이…이럴 수가! 오늘의 수치, 이 펑거스가 절대 잊지 않겠다!", "anim": "angry"},
+			{"text": "이번이 마지막이라 생각 마라! 이 몸은 반드시 다시 돌아온다, 치즈으으—!", "anim": "angry"},
 		],
 	},
 	"1-3": {
 		"name": "펑거스",
-		"intro": [                                          # ① 전투 시작 전(흐림+비)
-			{"text": "또 만났군, 치즈. 허나 이 몸을 우습게 보지 마라!"},
-			{"text": "이 위대한 펑거스가… 새로운 비밀 병기를 준비했거든!"},
-			{"text": "멀찍이서 던져주마. 네놈이 손도 못 대게 말이야 — 가라, 나의 정예들이여!"},
+		"intro": [                                          # ① 전투 시작 전(흐림+비) — 비웃음
+			{"text": "또 만났군, 치즈. 허나 이 몸을 우습게 보지 마라!", "anim": "laugh"},
+			{"text": "이 위대한 펑거스가… 새로운 비밀 병기를 준비했거든!", "anim": "laugh"},
+			{"text": "멀찍이서 던져주마. 네놈이 손도 못 대게 말이야 — 가라, 나의 정예들이여!", "anim": "laugh"},
 		],
 		"on_wave": {
-			2: [{"text": "후하하—! 등장이다, 나의 투척 부대! 멀리서 깔끔하게 처리해주마!"}],   # ② 투척쥐 첫 등장
-			3: [{"text": "뭐, 뭐야 이 햇살은—?! …흥, 상관없다! 마지막 부대다, 가랏!"}],   # ③ 비 그침→해
+			2: [{"text": "후하하—! 등장이다, 나의 투척 부대! 멀리서 깔끔하게 처리해주마!", "anim": "laugh"}],   # ② 투척쥐 첫 등장
+			3: [{"text": "뭐, 뭐야 이 햇살은—?! …흥, 상관없다! 마지막 부대다, 가랏!", "anim": "fear"}],   # ③ 비 그침→해, 당황
 		},
 		"outro": [                                          # ④ 전 웨이브 클리어 후
-			{"text": "흥… 이번엔 제법 진땀 좀 뺐겠다, 치즈?"},
-			{"text": "두고 봐라! 다음엔 투척쥐를 잔뜩, 아주 잔뜩 데려올 테니까! 끄으윽—!"},
+			{"text": "흥… 이번엔 제법 진땀 좀 뺐겠다, 치즈?", "anim": "laugh"},
+			{"text": "두고 봐라! 다음엔 투척쥐를 잔뜩, 아주 잔뜩 데려올 테니까! 끄으윽—!", "anim": "angry"},
 		],
 		"reward": "보안관",                                  # ⑤ 클리어 후 보안관 획득
 		"reward_text": "[전투 준비 > 직업]에서 장착·교체할 수 있어요.",
@@ -62,6 +64,7 @@ var _data: Dictionary = {}
 var _spawner: Node = null
 var _hud: CanvasLayer = null
 var _npc: AnimatedSprite2D = null
+var _face: TextureRect = null
 var _ui: CanvasLayer = null
 
 # UI 노드
@@ -117,6 +120,7 @@ func _run_intro() -> void:
 	if _hud != null:
 		_hud.visible = false
 	get_tree().paused = true                           # 조작 실제 차단
+	_set_cat_idle(true)
 	var vp := get_viewport().get_visible_rect().size
 	var cat_x := 200.0
 	var pl := get_parent().get_node_or_null("Player")
@@ -135,6 +139,7 @@ func _run_intro() -> void:
 		_hud.visible = true
 	if _spawner != null and _spawner.has_method("release_intro"):
 		_spawner.release_intro()                        # 웨이브 시작
+	_set_cat_idle(false)
 	get_tree().paused = false
 	_busy = false
 
@@ -152,11 +157,13 @@ func _run_popup(beats: Array) -> void:
 	if _hud != null:
 		_hud.visible = false
 	get_tree().paused = true
+	_set_cat_idle(true)
 	_build_ui(0.55)                                    # 화면 Dim
 	await _play_beats(beats)
 	_close_ui()
 	if _hud != null:
 		_hud.visible = true
+	_set_cat_idle(false)
 	get_tree().paused = false
 	_busy = false
 
@@ -182,6 +189,7 @@ func play_outro() -> void:
 	if _hud != null:
 		_hud.visible = false
 	get_tree().paused = true
+	_set_cat_idle(true)
 	var vp := get_viewport().get_visible_rect().size
 	_spawn_npc(vp.x + 160.0)                            # 우측에서 다시 등장
 	await _walk_to(vp.x * 0.6)
@@ -198,8 +206,16 @@ func play_outro() -> void:
 		_close_ui()
 	if _hud != null:
 		_hud.visible = true
+	_set_cat_idle(false)
 	get_tree().paused = false
 	_busy = false
+
+
+## 이벤트 동안 치즈를 제자리 idle 사이클로(트리 일시정지에도 동작). 끝나면 복귀.
+func _set_cat_idle(on: bool) -> void:
+	var pl := get_parent().get_node_or_null("Player")
+	if pl != null and pl.has_method("set_event_idle"):
+		pl.set_event_idle(on)
 
 
 # ── NPC ────────────────────────────────────────────────
@@ -288,6 +304,7 @@ func _build_ui(dim_alpha: float) -> void:
 	face.offset_left = 8; face.offset_top = 8; face.offset_right = -8; face.offset_bottom = -8
 	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	port.add_child(face)
+	_face = face
 
 	var tx := 16.0 + port_sz + 24.0
 	_name_lbl = _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
@@ -328,6 +345,13 @@ func _play_beats(beats: Array) -> void:
 func _show_beat(beat: Dictionary) -> void:
 	_name_lbl.text = String(beat.get("name", _data.get("name", "?")))
 	_text_lbl.text = String(beat.get("text", ""))
+	# 펑거스 표정(anim): NPC 스프라이트 + 초상화 얼굴 둘 다 반영
+	var face_anim := String(beat.get("anim", ""))
+	if face_anim != "" and FUNGUS.has_animation(face_anim):
+		if is_instance_valid(_npc):
+			_npc.play(face_anim)
+		if is_instance_valid(_face):
+			_face.texture = FUNGUS.get_frame_texture(face_anim, 0)
 	for c in _choices.get_children():
 		c.queue_free()
 	_choice = -1
