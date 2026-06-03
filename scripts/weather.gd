@@ -16,7 +16,7 @@ const WEATHER := {
 	"1-7": "motes",      # 먼지(갈색/회색 알갱이)
 	"1-8": "fireflies",  # 반딧불
 	"1-9": "lightning",  # 번개(불규칙 천둥→섬광+비)
-	"1-11": "transition",# 비→쾌청 전환
+	"1-11": "transition",# 밤+비 → 여명 → 아침 전환
 }
 
 const RAIN_COL := Color(0.72, 0.80, 0.95, 0.55)
@@ -27,6 +27,11 @@ const LAND := 50.0   # 착지 ground_y ± 이 값 랜덤
 const Z_PARTICLES := 49   # 근경 아래(비·눈·낙엽·먼지·햇빛 알갱이)
 const Z_TINT := 51        # 근경 위(화면 전체 색감)
 const Z_LIGHT := 52       # 색감 위(반딧불·번개 빛)
+## 세로 그라데이션 스톱(틴트) — [pos0..1, Color(알파포함)]
+const _SUNSET := [[0.0, Color(0.94, 0.34, 0.06, 0.55)], [0.42, Color(1.0, 0.74, 0.18, 0.34)], [0.72, Color(1.0, 0.55, 0.42, 0.24)], [1.0, Color(0.97, 0.42, 0.66, 0.16)]]
+const _NIGHT := [[0.0, Color(0.04, 0.05, 0.22, 0.62)], [0.45, Color(0.12, 0.22, 0.46, 0.42)], [1.0, Color(0.55, 0.74, 0.92, 0.20)]]
+const _DAWN := [[0.0, Color(0.22, 0.16, 0.34, 0.55)], [0.5, Color(0.95, 0.48, 0.30, 0.40)], [1.0, Color(1.0, 0.72, 0.58, 0.22)]]
+const _MORNING := [[0.0, Color(0.55, 0.74, 0.95, 0.20)], [1.0, Color(1.0, 0.93, 0.72, 0.12)]]
 
 
 ## 하위 레이어 — 자식 캔버스. 자기 _draw 때 부모(w)의 paint를 호출(자기 자신에 그림).
@@ -46,8 +51,9 @@ var _flash := 0.0
 var _flash_next := 3.0
 var _flash2 := 0.0      # 잔섬광 대기
 var _flash_delay := 0.0 # 천둥 소리 후 섬광까지 대기(소리 먼저)
-var _trans := 0.0       # 전환 진행(0=비 → 1=쾌청)
+var _trans := 0.0       # 전환 진행(0=밤+비 → 1=아침)
 var _layers: Array = [] # [WLayer ...]
+var _glow: GradientTexture2D    # 라디얼 그라데이션(진짜 가우시안풍 블러용)
 
 
 func _ready() -> void:
@@ -55,6 +61,7 @@ func _ready() -> void:
 	if _mode == "none":
 		set_process(false)
 		return
+	_glow = _make_glow()
 	for spec in [["particles", Z_PARTICLES], ["tint", Z_TINT], ["light", Z_LIGHT]]:
 		var n := WLayer.new()
 		n.w = self
@@ -204,36 +211,33 @@ func _paint_particles(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 		"sunset":
 			_draw_soft_sun(ci, Vector2(vp.x * 0.86, vp.y * 0.15), Color(1.0, 0.9, 0.6), 0.5)  # 태양은 근경 아래
 		"transition":
-			var rainA: float = 1.0 - smoothstep(0.35, 0.7, _trans)
-			var sunA: float = smoothstep(0.5, 1.0, _trans)
+			var rainA: float = 1.0 - smoothstep(0.2, 0.5, _trans)   # 비 먼저 그침
+			var sunA: float = smoothstep(0.55, 1.0, _trans)         # 해는 아침에 떠오름
 			_draw_ground_particles(ci, gy, rainA)
 			if sunA > 0.0: _draw_sun(ci, vp, sunA)
 		_:
 			_draw_ground_particles(ci, gy, 1.0)
 
 
-## 근경 위 — 화면 전체 색감(노을·밤 그라데이션, 쾌청 워밍 틴트).
+## 근경 위 — 화면 전체 색감(노을·밤 그라데이션, 쾌청 워밍 틴트, 반딧불=밤 색감).
 func _paint_tint(ci: CanvasItem, vp: Vector2) -> void:
 	match _mode:
 		"sunny":
 			ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(1, 1, 1, 0.06))
 		"sunset":
-			_draw_vgradient(ci, vp, [
-				[0.0,  Color(0.94, 0.34, 0.06, 0.55)],
-				[0.42, Color(1.0,  0.74, 0.18, 0.34)],
-				[0.72, Color(1.0,  0.55, 0.42, 0.24)],
-				[1.0,  Color(0.97, 0.42, 0.66, 0.16)],
-			])
+			_draw_vgradient(ci, vp, _SUNSET)
 		"night":
-			_draw_vgradient(ci, vp, [
-				[0.0,  Color(0.04, 0.05, 0.22, 0.62)],
-				[0.45, Color(0.12, 0.22, 0.46, 0.42)],
-				[1.0,  Color(0.55, 0.74, 0.92, 0.20)],
-			])
+			_draw_vgradient(ci, vp, _NIGHT)
+		"fireflies":
+			_draw_vgradient(ci, vp, _NIGHT)     # 반딧불은 밤 색감 위에서 반짝
 		"transition":
-			var sunA: float = smoothstep(0.5, 1.0, _trans)
-			if sunA > 0.0:
-				ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(1, 1, 1, 0.06 * sunA))
+			# 밤 → 여명 → 아침 크로스페이드
+			var nightA: float = 1.0 - smoothstep(0.15, 0.5, _trans)
+			var dawnA: float = clampf(1.0 - absf(_trans - 0.55) / 0.30, 0.0, 1.0)
+			var mornA: float = smoothstep(0.6, 1.0, _trans)
+			if nightA > 0.0: _draw_vgradient(ci, vp, _NIGHT, nightA)
+			if dawnA > 0.0:  _draw_vgradient(ci, vp, _DAWN, dawnA)
+			if mornA > 0.0:  _draw_vgradient(ci, vp, _MORNING, mornA)
 
 
 ## 색감 위 — 빛(반딧불, 번개 섬광).
@@ -326,9 +330,7 @@ func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
 		px = clampf((pl as Node2D).global_position.x / maxf(vp.x, 1.0), 0.0, 1.0) - 0.5
 	var center := Vector2(vp.x * 0.5 + px * 70.0, vp.y * 0.62)
 	_soft_disc(ci, sun, vp.x * 0.42, Color(1, 1, 1), 0.16 * a)   # 거대 후광(블러)
-	_soft_disc(ci, sun, 120.0, Color(1, 1, 1), 0.30 * a)        # 안쪽 글로우(블러)
-	ci.draw_circle(sun, 46.0, Color(1, 1, 1, 0.55 * a))         # 코어 둘레(살짝)
-	ci.draw_circle(sun, 30.0, Color(1, 1, 1, a))                # 퓨어화이트 불투명 코어(opacity 100)
+	_soft_disc(ci, sun, 170.0, Color(1, 1, 1), a)               # 코어: 중심 퓨어화이트(불투명) → 가장자리 매끈 페이드
 	for i in range(12):                                          # 스타버스트(은은)
 		var ang := TAU * float(i) / 12.0 + 0.05 * sin(_t * 0.3)
 		var Ln: float = (vp.x * 0.5 if i % 3 == 0 else vp.x * 0.22) * (0.9 + 0.1 * sin(_t * 0.7 + i))
@@ -351,20 +353,36 @@ func _draw_soft_sun(ci: CanvasItem, sun: Vector2, tint: Color, a: float) -> void
 	_soft_disc(ci, sun, 70.0, Color(min(1.0, tint.r + 0.1), min(1.0, tint.g + 0.08), min(1.0, tint.b + 0.12)), 0.28 * a)
 
 
-## 가우시안풍 원반 — 선명한 외곽 없음.
+## 가우시안풍 원반 — 알파가 중심→가장자리로 매끄럽게 0이 되는 라디얼 텍스처(진짜 블러). 딱딱한 외곽 없음.
 func _soft_disc(ci: CanvasItem, c: Vector2, rmax: float, rgb: Color, peak: float) -> void:
-	var n := 18
-	for k in range(n):
-		var f := float(k) / float(n - 1)
-		var r: float = rmax * (1.0 - f)
-		ci.draw_circle(c, maxf(r, 1.0), Color(rgb.r, rgb.g, rgb.b, peak * f * f))
+	if _glow == null:
+		return
+	var sz: float = rmax * 2.0
+	ci.draw_texture_rect(_glow, Rect2(c - Vector2(rmax, rmax), Vector2(sz, sz)), false, Color(rgb.r, rgb.g, rgb.b, peak))
 
 
-## 세로 그라데이션 — 인접 쿼드가 색 공유 → 가로 줄(이음새) 없음.
-func _draw_vgradient(ci: CanvasItem, vp: Vector2, stops: Array) -> void:
+## 라디얼 그라데이션 텍스처 — 중심 알파1 → 가장자리 알파0(가우시안풍 falloff).
+func _make_glow() -> GradientTexture2D:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.25, 0.55, 1.0])
+	g.colors = PackedColorArray([Color(1, 1, 1, 1.0), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.16), Color(1, 1, 1, 0.0)])
+	var t := GradientTexture2D.new()
+	t.gradient = g
+	t.width = 256
+	t.height = 256
+	t.fill = GradientTexture2D.FILL_RADIAL
+	t.fill_from = Vector2(0.5, 0.5)
+	t.fill_to = Vector2(1.0, 0.5)
+	return t
+
+
+## 세로 그라데이션 — 인접 쿼드가 색 공유 → 가로 줄(이음새) 없음. mul=전체 알파 배율(전환 페이드용).
+func _draw_vgradient(ci: CanvasItem, vp: Vector2, stops: Array, mul: float = 1.0) -> void:
 	for i in range(stops.size() - 1):
-		var p0: float = float(stops[i][0]);     var c0: Color = stops[i][1]
-		var p1: float = float(stops[i + 1][0]); var c1: Color = stops[i + 1][1]
+		var p0: float = float(stops[i][0]);     var s0: Color = stops[i][1]
+		var p1: float = float(stops[i + 1][0]); var s1: Color = stops[i + 1][1]
+		var c0 := Color(s0.r, s0.g, s0.b, s0.a * mul)
+		var c1 := Color(s1.r, s1.g, s1.b, s1.a * mul)
 		var y0: float = vp.y * p0
 		var y1: float = vp.y * p1
 		var pts := PackedVector2Array([Vector2(0, y0), Vector2(vp.x, y0), Vector2(vp.x, y1), Vector2(0, y1)])
