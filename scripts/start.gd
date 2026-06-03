@@ -47,6 +47,12 @@ func _ready() -> void:
 	story.position = Vector2(40, vp.y - 80)
 	story.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
 	add_child(story)
+	if GameState.is_dev():
+		var bgt := Design.button("BG테스트", "secondary", Design.FS_BODY)
+		bgt.custom_minimum_size = Vector2(150, 52)
+		bgt.position = Vector2(206, vp.y - 80)
+		bgt.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/bg_test.tscn"))
+		add_child(bgt)
 	# 첫 실행이면 프롤로그 자동 재생(본 뒤엔 prologue_seen=true → 안 뜸)
 	if not GameState.prologue_seen:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/prologue.tscn")

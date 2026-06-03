@@ -20,6 +20,10 @@ const FILES := {
 	"heal":  ["res://assets/sfx/heal.ogg"],
 	"buff":  ["res://assets/sfx/buff.ogg"],
 }
+## 사운드별 추가 음량(dB) — 파일 음량이 다른 소리와 안 맞을 때 보정.
+const VOL := {
+	"hit": 6.0,   # 돌/평타 맞는 소리(짧은 충격음이라 작게 들려 +6dB 더)
+}
 var _players: Array = []
 var _idx := 0
 var _cache := {}        # key(name 또는 res경로) -> AudioStream (1회 로드/생성 후 재사용)
@@ -41,7 +45,7 @@ func play(name: String, pitch: float = 1.0, vol_db: float = -4.0) -> void:
 	_idx = (_idx + 1) % _players.size()
 	p.stream = stream
 	p.pitch_scale = pitch * randf_range(0.96, 1.05)   # 미세 피치 변주(반복 단조로움 방지)
-	p.volume_db = vol_db
+	p.volume_db = vol_db + float(VOL.get(name, 0.0))
 	p.play()
 
 
