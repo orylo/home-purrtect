@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -23,6 +23,7 @@
 [ext_resource type="Script" path="res://scripts/ground_layer.gd" id="17_ground"]
 [ext_resource type="Script" path="res://scripts/halftone_bg.gd" id="18_ht"]
 [ext_resource type="Script" path="res://scripts/weather.gd" id="19_weather"]
+[ext_resource type="Script" path="res://scripts/stage_intro.gd" id="20_intro"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -117,6 +118,9 @@ script = ExtResource("7_fg")
 [node name="Weather" type="Node2D" parent="."]
 z_index = 49
 script = ExtResource("19_weather")
+
+[node name="StageIntro" type="Node2D" parent="."]
+script = ExtResource("20_intro")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 process_mode = 3

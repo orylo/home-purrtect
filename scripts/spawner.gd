@@ -19,6 +19,7 @@ var _waves: Array = []
 var _queue: Array = []         # 이번 웨이브에 남은 적 id 목록(섞어서 순서대로 등장)
 
 var _state: String = "delay"   # delay → spawning → cleared
+var _hold: bool = false         # 인트로 이벤트 중 대기
 var _wave_index: int = -1
 var _to_spawn: int = 0
 var _spawn_timer: float = 0.0
@@ -34,7 +35,17 @@ func _ready() -> void:
 	_state = "delay"
 
 
+## 인트로 이벤트 동안 웨이브 진행을 멈춰둔다(StageIntro가 제어).
+func hold_intro() -> void:
+	_hold = true
+
+func release_intro() -> void:
+	_hold = false
+
+
 func _process(delta: float) -> void:
+	if _hold:
+		return
 	match _state:
 		"delay":
 			_delay_timer -= delta
