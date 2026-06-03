@@ -52,6 +52,7 @@ const FIXED_GROUND := {
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
 const SURF_FRAC := 0.70                      # 기본값(대부분 담장+길 구도에 맞음)
+const SURF_OFFSET := 100.0                   # 담장-지면 경계를 바닥선보다 이만큼 위로(=캐릭터가 경계보다 100px 아래 길에 섬)
 const GROUND_SURF := {                       # 예외 개별 보정: "파일명.png" → 비율
 	# 예) "g14.png": 0.66,
 }
@@ -221,12 +222,12 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 ##   기본은 좌우폭=화면폭(가로맞춤). 단 지면선~화면바닥을 못 채우면 그만큼 키워(빈틈 방지) — 그땐 좌우가 살짝 넘쳐 크롭.
 func _draw_ground(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
-	var gy := Layout.ground_y()
+	var anchor := Layout.ground_y() - SURF_OFFSET            # 담장-지면 경계를 둘 위치(바닥선보다 위)
 	var sc_w := (vis.x / t.x) * bg_zoom                       # 가로맞춤
 	var below := (1.0 - _ground_surf) * t.y                   # 서는 면 아래(길) 원본 높이
-	var sc_fill := ((vis.y - gy) / below) if below > 1.0 else sc_w   # 지면선~바닥을 채울 최소 배율
+	var sc_fill := ((vis.y - anchor) / below) if below > 1.0 else sc_w   # 경계~바닥을 채울 최소 배율
 	var sc := maxf(sc_w, sc_fill)
 	var w := t.x * sc
 	var h := t.y * sc
-	var art_y := gy - _ground_surf * h                       # 서는 면을 바닥선에 정렬
+	var art_y := anchor - _ground_surf * h                   # 서는 면(경계)을 anchor에 정렬
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, art_y), Vector2(w, h)), false)
