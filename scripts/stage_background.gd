@@ -20,8 +20,10 @@ extends Node2D
 ## 원경 안개(공기원근) — far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
 @export var fog_enabled: bool = true
 
-const FAR_LIFT := 200.0                     # 원경(+안개)만 위로 올리는 양(px). 지면·근경은 항상 바닥 고정.
-const FOG_COL := Color(0.88, 0.92, 0.97)   # 안개 색(옅은 차가운 흰색)
+const FAR_LIFT_MIN := 100.0                 # 원경(+안개) 올림 범위(px). 매 판 이 사이 랜덤.
+const FAR_LIFT_MAX := 200.0
+var _far_lift := 150.0                       # 이번 판 실제 올림값(_ready에서 랜덤). 지면·근경은 항상 바닥 고정.
+const FOG_COL := Color(0.97, 0.98, 1.0)    # 안개 색(거의 흰색 — 빈티지 망점)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
 #   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
 const FOG_BLOBS := [
@@ -61,6 +63,7 @@ func _ready() -> void:
 	# 화면 크기가 바뀌면(회전·창 크기) 다시 그림
 	get_viewport().size_changed.connect(queue_redraw)
 	_fog_tex = _make_fog_tex()
+	_far_lift = randf_range(FAR_LIFT_MIN, FAR_LIFT_MAX)   # 매 판 원경 올림 랜덤
 	add_to_group("stage_bg")     # 근경(Foreground) 노드가 near_texture를 읽어감
 	_pick_backgrounds()
 
@@ -151,23 +154,29 @@ func _draw_fog(vis: Vector2) -> void:
 		if x < 0.0:
 			x += span
 		x -= r                                    # 화면 밖에서 들어와 반대편으로 나감(끊김 없이 순환)
-		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - FAR_LIFT
+		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - _far_lift
 		var col := FOG_COL
 		col.a = float(fb["a"])
 		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
 
 
-## 가운데가 진하고 가장자리로 부드럽게 사라지는 원형 안개 텍스처(1회 생성).
+## 빈티지 망점(halftone) 안개 텍스처 — 흰 점들이 가운데 모이고 가장자리로 사라짐(1회 생성).
+const FOG_CELL := 9.0      # 망점 간격(px)
+const FOG_DOT := 3.2       # 망점 반지름(px)
 func _make_fog_tex() -> ImageTexture:
-	var n := 96
+	var n := 160
 	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
 	var c := (n - 1) * 0.5
 	for y in n:
 		for x in n:
 			var d: float = Vector2(x - c, y - c).length() / c
-			var a: float = clampf(1.0 - d, 0.0, 1.0)
-			a = a * a * (3.0 - 2.0 * a)            # smoothstep — 가장자리 더 부드럽게
-			img.set_pixel(x, y, Color(1, 1, 1, a))
+			var radial: float = clampf(1.0 - d, 0.0, 1.0)
+			radial = radial * radial * (3.0 - 2.0 * radial)   # 가장자리 부드럽게(smoothstep)
+			# 망점: 격자 셀 중심에서 FOG_DOT 안이면 점(흰색), 밖이면 투명
+			var dx: float = fmod(float(x), FOG_CELL) - FOG_CELL * 0.5
+			var dy: float = fmod(float(y), FOG_CELL) - FOG_CELL * 0.5
+			var dot: float = 1.0 if Vector2(dx, dy).length() <= FOG_DOT else 0.0
+			img.set_pixel(x, y, Color(1, 1, 1, radial * dot))
 	return ImageTexture.create_from_image(img)
 
 
@@ -178,7 +187,7 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
 	var w := t.x * sc
 	var h := t.y * sc
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - FAR_LIFT), Vector2(w, h)), false)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _far_lift), Vector2(w, h)), false)
 
 
 ## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
