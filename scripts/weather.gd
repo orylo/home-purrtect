@@ -43,13 +43,13 @@ func _make(vp: Vector2, scatter: bool) -> Dictionary:
 		return {
 			"x": randf() * (vp.x + 120.0) - 60.0, "y": y,
 			"spd": randf_range(1000.0, 1500.0), "len": randf_range(16.0, 30.0),
-			"land": randf_range(0.0, 36.0),   # ground_y로부터 착지 오프셋(깊이감)
+			"land": randf_range(-30.0, 30.0),   # ground_y ±30px 랜덤 착지(깊이감)
 		}
 	return {  # snow
 		"x": randf() * (vp.x + 80.0) - 40.0, "y": y,
 		"spd": randf_range(70.0, 150.0), "r": randf_range(2.0, 4.2),
 		"amp": randf_range(8.0, 24.0), "sw": randf_range(0.5, 1.3), "ph": randf() * TAU,
-		"land": randf_range(-6.0, 30.0),
+		"land": randf_range(-30.0, 30.0),   # ground_y ±30px 랜덤 착지
 	}
 
 
