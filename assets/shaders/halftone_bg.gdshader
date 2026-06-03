@@ -14,7 +14,9 @@ uniform float dot_max : hint_range(0.1, 0.75) = 0.58;          // 최대 점 반
 
 group_uniforms field;
 uniform float noise_scale : hint_range(0.3, 8.0) = 2.0;        // 밝기 덩어리 크기(작을수록 큰 구름)
-uniform float anim_speed : hint_range(0.0, 2.0) = 0.35;        // 흐르는 속도(천천히 흐름). 너무 작으면 멈춘 듯 보임.
+uniform float anim_speed : hint_range(0.0, 3.0) = 0.7;        // 흐르는 속도. 너무 작으면 멈춘 듯 보임.
+uniform float warp_strength : hint_range(0.0, 3.0) = 1.8;     // 도메인 워프 세기(안개처럼 물결·소용돌이). 0=직선 흐름.
+uniform float drift : hint_range(-1.0, 1.0) = 0.15;          // 전체 흐름 방향(가로). +우 / -좌
 uniform float u_time = 0.0;                                   // 시간(스크립트가 매 프레임 주입 — TIME 대신 확실히 흐르게)
 uniform float contrast : hint_range(0.2, 4.0) = 1.6;          // 밝고 어두움 대비
 uniform float brightness : hint_range(0.0, 1.0) = 0.5;        // 전체 밝기(점 평균 크기)
@@ -63,10 +65,14 @@ void fragment() {
 	// 밝기 필드: 셀 중심에서 1회 샘플(→ 점은 셀에 고정) + TIME으로 흐름
 	vec2 field_uv = (cell_id + 0.5) / grid;
 	float t = u_time * anim_speed;
-	// 두 방향으로 흐르는 fbm을 겹쳐 구름처럼 일렁이게
 	vec2 q = field_uv * noise_scale * vec2(aspect, 1.0);
-	float n = fbm(q + vec2(t, t * 0.6));
-	n = mix(n, fbm(q * 1.7 + vec2(-t * 0.5, t * 0.9)), 0.4);
+	// 도메인 워프 — 안개가 물결치며 소용돌이/billow 하게 흐름.
+	//   먼저 흐르는 노이즈로 좌표를 휘게 한 뒤, 그 휜 좌표로 다시 노이즈 샘플.
+	vec2 warp = vec2(
+		fbm(q + vec2(1.7, 9.2) + 0.5 * t),
+		fbm(q + vec2(8.3, 2.8) + 0.4 * t)
+	);
+	float n = fbm(q + warp_strength * warp + vec2(drift * t, 0.0));
 
 	// 대비/밝기 적용
 	float b = clamp((n - 0.5) * contrast + brightness, 0.0, 1.0);
