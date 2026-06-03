@@ -42,6 +42,11 @@ const SIZE_MULT := {
 const FOOT_NUDGE := {"spider": 0.14}
 const WINDUP_MELEE := 0.22    # 근접: 모션 시작 후 타격까지
 const WINDUP_RANGED := 0.30   # 원거리: 모션 시작 후 발사까지
+# 투척쥐: 매 공격 attack 전체(자루에서 줍기~) 대신 [시작, 발사, 끝] 프레임만 짧게 재생.
+const THROW_WINDOW := {
+	"gray_thrower": [6, 8, 10],
+	"black_thrower": [6, 8, 10],
+}
 
 # def에서 채워지는 행동/외형
 var def: Dictionary = {}
@@ -83,6 +88,7 @@ const DIVE_DUR := 0.5
 var _windup: float = 0.0           # 공격 모션 후 실제 타격까지 남은 시간
 var _windup_pending: bool = false
 var _windup_ranged: bool = false
+var _throw_end: int = -1           # >=0이면 attack 재생 중 이 프레임에서 이동모션 복귀(투척 짧은재생)
 var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y(공중 다이브 계산용)
 var _size_mult: float = 1.0        # 화면 크기 배율(그림자 크기에도 반영)
 var _popups: Array = []
@@ -256,6 +262,10 @@ func _physics_process(delta: float) -> void:
 			anim.modulate = Color(0.6, 0.75, 1.1)
 		else:
 			anim.modulate = _base_modulate
+		# 투척 짧은재생: 발사 끝나고 끝프레임 도달하면 더 안 돌리고 이동모션 복귀
+		if _throw_end >= 0 and anim.animation == "attack" and not _windup_pending and anim.frame >= _throw_end:
+			_throw_end = -1
+			_play_move_anim()
 	elif _flash > 0.0:
 		_flash -= delta
 
@@ -279,15 +289,27 @@ func _attack_release_time(is_ranged: bool) -> float:
 func _start_attack(is_ranged: bool) -> void:
 	_windup_pending = true
 	_windup_ranged = is_ranged
+	_throw_end = -1
 	_lunge = 0.16
 	if not is_ranged and _kind == "dive":
 		# 참새: 먼저 급강하(walk/flap 유지) → 최저점에서 쪼기 모션+타격
 		_dive = DIVE_DUR
 		_windup = DIVE_DUR * 0.5
-	else:
-		if _use_sprite and _has_attack and not _hit:
-			anim.play("attack")
-		_windup = _attack_release_time(is_ranged)
+		return
+	if is_ranged and _use_sprite and _has_attack and not _hit and THROW_WINDOW.has(_id):
+		# 투척쥐: 줍기 동작 생략, 던지는 구간[시작→발사→끝]만 짧게 재생.
+		var w: Array = THROW_WINDOW[_id]
+		var spd: float = anim.sprite_frames.get_animation_speed("attack")
+		if spd <= 0.0:
+			spd = 10.0
+		anim.play("attack")
+		anim.frame = int(w[0])                      # 던지기 직전 프레임부터
+		_throw_end = int(w[2])
+		_windup = float(int(w[1]) - int(w[0])) / spd   # 시작→발사 프레임까지 시간
+		return
+	if _use_sprite and _has_attack and not _hit:
+		anim.play("attack")
+	_windup = _attack_release_time(is_ranged)
 
 
 ## 와인드업 종료 — 실제 데미지/발사. 그 사이 죽거나 경직/스턴되면 취소.
@@ -493,6 +515,7 @@ func apply_stun(dur: float) -> void:
 
 ## 이동/정지 애니(idle 있으면 정지 시 idle, 아니면 walk).
 func _play_move_anim() -> void:
+	_throw_end = -1
 	# 원거리 적이 사거리 안에서 교전 중이면(멈춰 발사) 발사 사이에 idle 유지.
 	var engaged := (_kind == "lob" or _kind == "shoot") and _atk_range > 0.0 and _dist_to_player() <= _atk_range
 	if _has_idle and (not _walking or engaged):
