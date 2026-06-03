@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -22,6 +22,7 @@
 [ext_resource type="Material" path="res://assets/shaders/halftone_bg.tres" id="16_halftone"]
 [ext_resource type="Script" path="res://scripts/ground_layer.gd" id="17_ground"]
 [ext_resource type="Script" path="res://scripts/halftone_bg.gd" id="18_ht"]
+[ext_resource type="Script" path="res://scripts/weather.gd" id="19_weather"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(80, 300)
@@ -112,6 +113,10 @@ enemy_scene = ExtResource("4_mouse")
 [node name="Foreground" type="Node2D" parent="." groups=["foreground"]]
 z_index = 50
 script = ExtResource("7_fg")
+
+[node name="Weather" type="Node2D" parent="."]
+z_index = 55
+script = ExtResource("19_weather")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 process_mode = 3
