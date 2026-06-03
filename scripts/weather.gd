@@ -331,24 +331,41 @@ func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null and pl is Node2D:
 		px = clampf((pl as Node2D).global_position.x / maxf(vp.x, 1.0), 0.0, 1.0) - 0.5
-	var center := Vector2(vp.x * 0.5 + px * 70.0, vp.y * 0.62)
+	# 플레어 축: 태양(우상단) → 화면을 가로질러 좌하단으로
+	var center := Vector2(vp.x * 0.44 + px * 70.0, vp.y * 0.66)
 	_soft_disc(ci, sun, vp.x * 0.40, Color(1, 1, 1), 0.14 * a)            # 거대 후광(블러)
 	var rtot: float = Layout.SKILL_BTN_R / 0.30                          # 스킬슬롯(38px) 솔리드 코어 → 블러
 	_soft_disc(ci, sun, rtot, Color(1, 1, 1), a, _sun)                   # 코어: 중심 불투명 화이트 + 가장자리 블러
-	for i in range(12):                                                  # 스타버스트(은은)
+	for i in range(12):                                                  # 스타버스트 광선
 		var ang := TAU * float(i) / 12.0 + 0.05 * sin(_t * 0.3)
-		var Ln: float = (vp.x * 0.5 if i % 3 == 0 else vp.x * 0.22) * (0.9 + 0.1 * sin(_t * 0.7 + i))
+		var Ln: float = (vp.x * 0.55 if i % 3 == 0 else vp.x * 0.24) * (0.9 + 0.1 * sin(_t * 0.7 + i))
 		var dir := Vector2(cos(ang), sin(ang))
 		var perp := Vector2(-dir.y, dir.x) * 5.0
-		ci.draw_colored_polygon(PackedVector2Array([sun + perp, sun - perp, sun + dir * Ln]), Color(1, 1, 1, 0.06 * a))
-	var v := center - sun                                                # 렌즈 플레어 고스트(중~하단, 또렷하게)
-	var pal := [Color(0.6, 0.72, 1.0), Color(1.0, 0.82, 0.6), Color(0.75, 1.0, 0.8), Color(1.0, 0.7, 0.85), Color(0.85, 0.85, 1.0)]
-	var gs := [0.35, 0.6, 0.85, 1.05, 1.35, 1.7, 2.0]
-	var rr := [22.0, 13.0, 36.0, 17.0, 54.0, 26.0, 42.0]
-	for i in range(gs.size()):
-		var pos: Vector2 = sun + v * float(gs[i])
-		var col: Color = pal[i % pal.size()]
-		_soft_disc(ci, pos, float(rr[i]), Color(col.r, col.g, col.b), 0.22 * a)
+		ci.draw_colored_polygon(PackedVector2Array([sun + perp, sun - perp, sun + dir * Ln]), Color(1, 1, 1, 0.08 * a))
+	_draw_flare(ci, sun, center - sun, a)                                # 렌즈 플레어 고스트 체인
+
+
+## 렌즈 플레어 고스트 — 태양→반대편 축을 따라 컬러풀한 원/링이 줄지어. (첨부 레퍼런스 톤)
+func _draw_flare(ci: CanvasItem, sun: Vector2, v: Vector2, a: float) -> void:
+	var gpos := [0.30, 0.45, 0.60, 0.74, 0.86, 1.00, 1.16, 1.34, 1.55, 1.80]   # 축 위 위치(0=태양,1=중심)
+	var grad := [30.0, 16.0, 46.0, 12.0,  9.0, 34.0, 64.0, 20.0, 30.0, 80.0]   # 반경
+	var galp := [0.45, 0.55, 0.34, 0.60, 0.75, 0.40, 0.26, 0.50, 0.45, 0.22]   # 알파
+	var gring := [false, false, true, false, false, true, true, false, false, true]  # 빈 링 여부
+	var gcol := [
+		Color(1.0, 0.84, 0.30), Color(0.55, 1.0, 0.40), Color(0.40, 0.92, 0.55), Color(1.0, 1.0, 0.85),
+		Color(1.0, 0.34, 0.34), Color(0.45, 0.80, 1.0), Color(0.40, 0.65, 1.0), Color(0.75, 0.45, 1.0),
+		Color(1.0, 0.55, 0.85), Color(0.55, 0.45, 0.95),
+	]
+	for i in range(gpos.size()):
+		var pos: Vector2 = sun + v * float(gpos[i])
+		var rad: float = float(grad[i])
+		var col: Color = gcol[i]
+		var al: float = float(galp[i]) * a
+		if gring[i]:
+			_soft_disc(ci, pos, rad, col, al * 0.35)                                 # 옅은 채움
+			ci.draw_arc(pos, rad, 0.0, TAU, 56, Color(col.r, col.g, col.b, al), 3.0, true)  # 컬러 링
+		else:
+			_soft_disc(ci, pos, rad, col, al)
 
 
 ## 노을 태양 — 따뜻한 화이트 솔리드 코어(스킬슬롯 크기) + 블러 후광. z49(근경 아래).
