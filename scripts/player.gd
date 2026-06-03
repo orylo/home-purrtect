@@ -29,8 +29,8 @@ extends CharacterBody2D
 @export var ranged_damage: float = 8.0        # 맨몸 치즈 원거리공격력(돌) 8
 @export var near_damage: float = 12.0         # 맨몸 치즈 근거리공격력(할퀴기) 12
 @export var attack_interval: float = 1.0      # 공격속도 1.0/s → 누르고 있으면 1초에 1번
-@export var melee_range: float = 340.0        # 이 안이면 근접, 밖이면 원거리(2배로 넓힘)
-const MELEE_MAX_TARGETS := 3                  # 한 번에 때리는 최대 적 수(가까운 순)
+@export var melee_range: float = 300.0        # 근접 사거리(이 안이면 근접). 조금 줄임
+var melee_targets: int = 2                    # 근접 한 번에 때리는 최대 적 수(직업 스탯 melee_targets, 기본 2)
 @export var melee_hit_delay: float = 0.10     # 근접: 공격 시작 후 이만큼 뒤에 딜(빠른 모션에 맞춰 단축)
 @export var muzzle_offset: Vector2 = Vector2(70, -112)  # 총구 위치(치즈 기준)
 
@@ -138,6 +138,7 @@ func _ready() -> void:
 			max_health *= 1.0 + GameState.blessing_pct("hp")
 	attack_interval = 1.0 / float(st["atk_spd"])
 	move_multiplier = st["move"]
+	melee_targets = int(st.get("melee_targets", 2))   # 근접 최대 타겟(직업별, 기본 2)
 	crit_chance = st["crit"]
 	crit_type = st["crit_type"]
 	crit_mult = st["crit_mult"]
@@ -452,9 +453,9 @@ func _melee_attack() -> void:
 		var d := global_position.distance_to((e as Node2D).global_position)
 		if d <= melee_range:
 			targets.append({"e": e, "d": d})
-	# 가까운 순 정렬 후 최대 MELEE_MAX_TARGETS마리만 타격
+	# 가까운 순 정렬 후 최대 melee_targets마리만 타격(직업별)
 	targets.sort_custom(func(a, b): return a["d"] < b["d"])
-	var n := mini(targets.size(), MELEE_MAX_TARGETS)
+	var n := mini(targets.size(), melee_targets)
 	for i in range(n):
 		var e = targets[i]["e"]
 		if e.has_method("take_damage"):
@@ -522,10 +523,11 @@ func _fire_ranged() -> void:
 		cfg["speed"] = spd
 		cfg["max_range"] = get_viewport_rect().size.x * ranged_limit_frac
 		cfg["fade_start"] = JAZZ_FADE_START
-		# 빠른 음표는 물결을 작게(스냅 있게), 느린 음표는 크게 출렁
+		# 빠른 음표일수록 위아래 출렁임을 작게 + 파장 길게(완만) → 덜 방정맞게
 		var wf: float = 1.0 - (spd - JAZZ_SPEED_MIN) / maxf(1.0, SHERIFF_BULLET_SPEED - JAZZ_SPEED_MIN)  # 느릴수록 1
-		cfg["wave_amp"] = lerp(JAZZ_WAVE_AMP_MIN, JAZZ_WAVE_AMP_MAX, wf)
-		cfg["wave_freq"] = TAU / randf_range(JAZZ_WAVE_LEN_MIN, JAZZ_WAVE_LEN_MAX)
+		cfg["wave_amp"] = lerp(6.0, JAZZ_WAVE_AMP_MAX, wf)        # 빠름 6px ~ 느림 32px
+		var wl: float = lerp(320.0, JAZZ_WAVE_LEN_MAX, wf)       # 빠름 파장 320(완만) ~ 느림 165
+		cfg["wave_freq"] = TAU / wl
 	var bullet := bullet_scene.instantiate()
 	bullet.global_position = global_position + muzzle_offset
 	get_parent().add_child(bullet)

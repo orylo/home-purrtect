@@ -99,12 +99,12 @@ func _draw() -> void:
 		_draw_wasd(rest, 0.85)
 
 
-## 베이스 패드 — 카데라 톤(크림 바탕 + 진한 크림 안쪽 + 두꺼운 잉크 외곽선 + 단색 그림자)
+const TEX_BASE := preload("res://assets/ui/slots/slot2_act.png")   # 전투 HUD 슬롯 에셋
+
+## 베이스 패드 — 전투 HUD 슬롯 텍스처(공격 버튼 아래 슬롯과 동일 톤)
 func _draw_pad(c: Vector2, op: float) -> void:
-	draw_circle(c + Vector2(0, 5), base_radius, _col(Design.INK, 0.22 * op))   # 그림자
-	draw_circle(c, base_radius, _col(Design.PAPER, 0.96 * op))                  # 크림 바탕
-	draw_arc(c, base_radius - 9.0, 0.0, TAU, 64, _col(Design.PAPER_DEEP, 0.9 * op), 4.0)  # 안쪽 음영링
-	draw_arc(c, base_radius, 0.0, TAU, 72, _col(Design.INK, op), 5.0)           # 잉크 외곽선
+	var s := base_radius * 2.3
+	draw_texture_rect(TEX_BASE, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false, Color(1, 1, 1, op))
 
 
 ## 노브(손잡이) — 골든 + 잉크 외곽선 + 하이라이트

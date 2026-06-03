@@ -55,6 +55,10 @@ func _build_ui() -> void:
 	_btn(left, "적 즉사 토글", func(): GameState.cheats["enemy_oneshot"] = not GameState.cheats.get("enemy_oneshot", false))
 	_btn(left, "적 전멸", _kill_all)
 
+	_sec(left, "스킬/동료(전투 중)")
+	_btn(left, "스킬 지급+장착", func(): GameState.dev_grant_skills())
+	_btn(left, "동료 지급+장착", func(): GameState.dev_grant_companions())
+
 	_sec(left, "스테이지 이동")
 	var srow := HBoxContainer.new()
 	var spin := SpinBox.new()
