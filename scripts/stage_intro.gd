@@ -199,11 +199,7 @@ func play_outro() -> void:
 	await _walk_to(vp.x + 220.0, "run", WALK_SPEED * 2.2)   # 분해서 달려 퇴장
 	if is_instance_valid(_npc):
 		_npc.queue_free()
-	if _data.has("reward"):                             # ⑤ 보상 획득 안내
-		_build_ui(0.55)
-		var rt: String = String(_data.get("reward_text", ""))
-		await _play_beats([{"text": "%s 획득!  %s" % [_data["reward"], rt], "name": "획득"}])
-		_close_ui()
+	# (⑤ 보상 획득은 전투결과 팝업 [확인] 후 game.gd의 궤짝 컷씬에서 처리)
 	if _hud != null:
 		_hud.visible = true
 	_set_cat_idle(false)

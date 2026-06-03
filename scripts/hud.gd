@@ -2,6 +2,12 @@ extends CanvasLayer
 ## 전투 HUD — 상단 정보바 + 일시정지/클리어/게임오버 패널
 ##   좌: ♥ 체력 + 숫자 / 우: 웨이브·남은 적 + 일시정지[II]
 
+## 전투결과 [확인]을 눌렀고, 그 스테이지가 "전투 씬 내 컷씬"이면 발신(game.gd가 받아 처리).
+signal inscene_event_requested
+
+# 전투 씬 안에서(씬전환 없이) 컷씬을 재생하는 스테이지(보안관=1-3 등)
+const INSCENE_EVENT_STAGES := [3]
+
 # 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
 const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 
@@ -24,6 +30,7 @@ var _wave_cur: int = 0
 var _wave_total: int = 0
 var _event_pending: bool = false   # 클리어 이벤트 [확인] 대기 중
 var _event_text: String = ""
+var _inscene_event: bool = false   # 그 이벤트가 "전투 씬 내 컷씬"인지
 var coin_label: Label   # 상단 코인 표시(💰)
 
 
@@ -152,6 +159,7 @@ func show_clear(bonus: int = 0) -> void:
 		_event_text = ev
 		clear_next.text = "확인 ▶"
 		clear_restart.visible = false
+		_inscene_event = GameState.stage_minor in INSCENE_EVENT_STAGES
 	else:
 		_event_pending = false
 		clear_next.text = "다음 ▶"
@@ -183,6 +191,13 @@ func _on_to_select_pressed() -> void:
 
 ## [다음 ▶ / 확인 ▶] — 이벤트 스테이지면 [확인]→이벤트 씬으로 랜딩, 아니면 다음 스테이지
 func _on_clear_next() -> void:
+	# 전투 씬 내 컷씬(보안관 등): 씬전환·언포즈 없이 결과창만 닫고 game.gd에 위임
+	if _inscene_event:
+		_inscene_event = false
+		_event_pending = false
+		clear_panel.visible = false
+		inscene_event_requested.emit()
+		return
 	get_tree().paused = false
 	if _event_pending:
 		_event_pending = false
