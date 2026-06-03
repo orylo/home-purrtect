@@ -2,8 +2,6 @@ extends Control
 ## 홈 화면 (메인 허브) — 카툰 톤(design.md): 크림 패널·잉크 외곽선·빨강 CTA·골든 강조.
 ##   상단: 코인(골든)·스테이지 / 가방·설정 / 중앙: 치즈·펄·맥스 진입 / 하단: 전투준비·맵·출격(CTA)
 
-const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
-
 var _toast: Label
 var _toast_t := 0.0
 
@@ -15,70 +13,81 @@ func _ready() -> void:
 
 func _build() -> void:
 	var vp := get_viewport().get_visible_rect().size
+	var E := float(Design.EDGE)   # 24
 
-	var bg := TextureRect.new()
-	bg.texture = BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	add_child(bg)
+	# ── 배경(실내 플레이스홀더) — 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
+	_room_placeholder(vp)
 
-	# 치즈(대기) — 선택 직업 idle
+	# ── 중앙: 치즈(대기) — 레퍼런스만큼 크게 ──
 	var frames := load(GameState.job_frames_path())
 	if frames:
 		var spr := AnimatedSprite2D.new()
 		spr.sprite_frames = frames
 		if (frames as SpriteFrames).has_animation("idle"):
 			spr.play("idle")
-		spr.position = Vector2(vp.x * 0.52, vp.y * 0.78)
+		spr.scale = Vector2(2.1, 2.1)                       # ★확대(기존보다 크게)
+		spr.position = Vector2(vp.x * 0.5, vp.y * 0.66)     # 받침 위 중앙
 		add_child(spr)
 
-	# 상단 바 — 코인(골든)·스테이지(크림), 잉크 외곽선으로 배경 위 가독
-	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
-	coin.position = Vector2(32, 24)
-	add_child(coin)
-	var stage := Design.label("1막   ·   " + GameState.stage_label(), "num", Design.INK_CREAM)
-	stage.position = Vector2(vp.x * 0.5 - 96, 24)
+	# ── 좌상단: "N막 N스테이지"(옛 게이지 위치) ──
+	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
+	stage.position = Vector2(E, E)
 	add_child(stage)
-	_btn("가방", Vector2(vp.x - 296, 24), Vector2(120, 48), "paper", Design.FS_BODY, _show_bag)
-	_btn("설정", Vector2(vp.x - 160, 24), Vector2(120, 48), "paper", Design.FS_BODY,
-			func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐")))
 
-	# 좌하단 버튼 스택(좌정렬) — 위: 펄·맥스 나란히 / 아래: 전투 준비.
-	#   각 버튼은 해당 스테이지 클리어 후에만 노출(해금 전엔 안 보임). 클리어 직후 첫 홈 = 코치마크.
-	var prep_pos := Vector2(40, vp.y - 120)
-	var prep_sz := Vector2(240, 80)
-	var npc_sz := Vector2(114, 64)
-	var npc_y := prep_pos.y - npc_sz.y - 12.0
-	var pearl_pos := Vector2(40, npc_y)
-	var max_pos := Vector2(40 + npc_sz.x + 12.0, npc_y)
+	# ── 우상단: 종/편지/친구/설정/메뉴 5버튼(우→좌) + 그 왼쪽에 보유 코인 ──
+	var ic_w := 84.0     # 버튼 텍스트(2글자)가 넘치지 않게 고정폭 → 균일·비겹침
+	var ic_h := 56.0
+	var istep := ic_w + 10.0
+	var top_specs := [   # 오른쪽부터: 메뉴, 설정, 친구, 편지, 종
+		["메뉴", func(): _show_bag()],
+		["설정", func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐"))],
+		["친구", func(): _toast_msg("친구 — 준비중")],
+		["편지", func(): _toast_msg("메시지 — 준비중")],
+		["종",   func(): _toast_msg("알림 — 준비중")],
+	]
+	var leftmost := vp.x
+	for i in top_specs.size():
+		var x := vp.x - E - ic_w - i * istep
+		leftmost = x
+		_btn(String(top_specs[i][0]), Vector2(x, E), Vector2(ic_w, ic_h), "paper", Design.FS_CAPTION, top_specs[i][1])
+	# 보유 코인 — 5버튼 왼쪽에(우측정렬)
+	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
+	coin.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	coin.size = Vector2(240, ic_h)
+	coin.position = Vector2(leftmost - 240 - 16, E)
+	coin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	add_child(coin)
 
-	var coach := []   # 해금된 버튼 중 코치마크 미열람 항목(첫 1개만 표시)
-	# 펄(1-5 클리어)
+	# ── 좌측 중앙: 펄·맥스 세로 스택(해금 게이팅) ──
+	var npc_sz := Vector2(160, 64)
+	var pearl_pos := Vector2(E, vp.y * 0.40)
+	var max_pos := Vector2(E, vp.y * 0.40 + npc_sz.y + 14.0)
+	# ── 좌하단: 전투 준비("내 쿠키들" 위치, 해금 게이팅) ──
+	var prep_pos := Vector2(E, vp.y - E - 84.0)
+	var prep_sz := Vector2(240, 84)
+
+	var coach := []
 	if GameState.cleared_stages.has(5):
-		_btn("펄", pearl_pos, npc_sz, "paper", Design.FS_BODY,
+		_btn("펄", pearl_pos, npc_sz, "paper", Design.FS_TITLE,
 				func(): get_tree().change_scene_to_file("res://scenes/pearl.tscn"))
 		coach.append({"id": "pearl", "rect": Rect2(pearl_pos, npc_sz),
 				"text": "펄에게 가면, 출격 전 축복을 하나 받을 수 있어요."})
-	# 맥스(1-7 클리어)
 	if GameState.cleared_stages.has(7):
-		_btn("맥스", max_pos, npc_sz, "paper", Design.FS_BODY,
+		_btn("맥스", max_pos, npc_sz, "paper", Design.FS_TITLE,
 				func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
 		coach.append({"id": "max", "rect": Rect2(max_pos, npc_sz),
 				"text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
-	# 전투 준비(1-3 클리어 — 그 전엔 길냥이 고정이라 세팅할 게 없음)
 	if GameState.cleared_stages.has(3):
-		_btn("전투 준비", prep_pos, prep_sz, "paper", Design.FS_TITLE,
+		_btn("전투 준비", prep_pos, prep_sz, "secondary", Design.FS_TITLE,
 				func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
 		coach.append({"id": "prep", "rect": Rect2(prep_pos, prep_sz),
 				"text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
 
-	# 우하단: 맵(보조) / 출격(CTA=빨강, 화면당 1개)
-	_btn("맵", Vector2(vp.x - 416, vp.y - 120), Vector2(120, 80), "paper", Design.FS_TITLE,
-			func(): _toast_msg("스테이지 맵(파밍) — 준비중"))
-	_btn("출격 ▶", Vector2(vp.x - 272, vp.y - 120), Vector2(232, 80), "cta", Design.FS_DISPLAY_S,
+	# ── 우하단: 출격(CTA=빨강, "PLAY" 위치) ──
+	_btn("출격 ▶", Vector2(vp.x - E - 256.0, vp.y - E - 84.0), Vector2(256, 84), "cta", Design.FS_DISPLAY_S,
 			func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
 
-	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(전투준비 우선 → 펄 → 맥스 순서로 자연 안내)
+	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(전투준비 → 펄 → 맥스 순)
 	for c in [_coach_find(coach, "prep"), _coach_find(coach, "pearl"), _coach_find(coach, "max")]:
 		if c != null and not GameState.coachmark_seen.has(c["id"]):
 			call_deferred("_show_coachmark", c)
@@ -167,6 +176,30 @@ func _toast_msg(msg: String) -> void:
 	_toast.text = msg
 	_toast.visible = true
 	_toast_t = 1.6
+
+
+# --- 실내 배경 플레이스홀더(벽/바닥 2톤 + 중앙 받침) ---
+func _room_placeholder(vp: Vector2) -> void:
+	var wall := ColorRect.new()
+	wall.color = Color("3b2f4a")                  # 어둑한 실내 벽(보라톤)
+	wall.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(wall)
+	var floor := ColorRect.new()
+	floor.color = Color("5a4636")                 # 나무 바닥(갈색)
+	floor.position = Vector2(0, vp.y * 0.66)
+	floor.size = Vector2(vp.x, vp.y * 0.34)
+	add_child(floor)
+	# 중앙 받침(러그/접시 느낌 — 치즈 발밑)
+	var rug := ColorRect.new()
+	rug.color = Color("8a3b5e")                   # 러그
+	rug.size = Vector2(vp.x * 0.40, vp.y * 0.16)
+	rug.position = Vector2(vp.x * 0.5 - rug.size.x * 0.5, vp.y * 0.66 - rug.size.y * 0.5)
+	add_child(rug)
+	var tag := Design.label("(실내 배경 — 플레이스홀더)", "caption", Design.PAPER_DEEP)
+	tag.position = Vector2(vp.x * 0.5 - 120, vp.y - 28)
+	tag.size = Vector2(240, 24)
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(tag)
 
 
 # --- 코치마크(전체 딤 + 버튼 위치만 원형 마스킹) ---
