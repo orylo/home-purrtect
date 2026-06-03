@@ -40,6 +40,18 @@ func _ready() -> void:
 			$DevButton.add_theme_stylebox_override(st, circle)   # 모든 상태 동일 → 호버 변화 없음
 
 
+	# [이야기] = 프롤로그 컷씬 다시보기(좌하단)
+	var vp := get_viewport_rect().size
+	var story := Design.button("이야기", "secondary", Design.FS_BODY)
+	story.custom_minimum_size = Vector2(150, 52)
+	story.position = Vector2(40, vp.y - 80)
+	story.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
+	add_child(story)
+	# 첫 실행이면 프롤로그 자동 재생(본 뒤엔 prologue_seen=true → 안 뜸)
+	if not GameState.prologue_seen:
+		get_tree().change_scene_to_file.call_deferred("res://scenes/prologue.tscn")
+
+
 func _layout_title() -> void:
 	if title.texture == null:
 		return

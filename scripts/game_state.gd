@@ -3,7 +3,7 @@ extends Node
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.42"
+const BUILD := "0.43"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -27,6 +27,7 @@ var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
+var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 자동재생 게이트)
 
 ## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
 ## ★새 모델: 등급 = 별개 장비. 전투 배율은 "장착된 등급"(equipped_grade) 기준.
@@ -642,6 +643,7 @@ func save_game() -> void:
 		"pearl_favor": pearl_favor,              # 펄 호감도(로드맵 6단계)
 		"selected_blessing": selected_blessing,
 		"bgm_enabled": bgm_enabled,              # 배경음악 켜짐 여부
+		"prologue_seen": prologue_seen,          # 프롤로그 봤는지
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -661,6 +663,7 @@ func load_game() -> void:
 		stage_minor = int(data.get("stage_minor", 1))
 		coins = int(data.get("coins", 0))
 		bgm_enabled = bool(data.get("bgm_enabled", true))
+		prologue_seen = bool(data.get("prologue_seen", false))
 		cleared_stages = []
 		var cs = data.get("cleared_stages", [])
 		if typeof(cs) == TYPE_ARRAY:

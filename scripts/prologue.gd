@@ -1,0 +1,260 @@
+extends Control
+## 프롤로그 컷씬 — 입양과 운명의 교차 (브리프 §6-B + 세계관 기둥1 "빗속 상실")
+##   탭/클릭/스페이스로 다음 장면. [건너뛰기]로 종료. 임시 비주얼(도형·빗줄기·기호) — 그림은 나중에 교체.
+##   음악: 슬픔(prologue_sad) → 온기(prologue_warm). 자체 재생(Music 오토로드는 이 씬에서 무음).
+##   끝나면 GameState.prologue_seen=true 저장 후 시작화면으로.
+
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const SAD := preload("res://assets/music/prologue_sad.wav")
+const WARM := preload("res://assets/music/prologue_warm.wav")
+
+# 장면 데이터 (순서대로)
+const BEATS := [
+	{"bg": Color(0.10, 0.12, 0.18), "rain": 2.0, "music": "sad",
+		"cap": "비 오는 거리, 종이박스 속 —\n어린 치즈는 혼자가 아니었다.", "vis": "two_cats"},
+	{"bg": Color(0.06, 0.07, 0.11), "rain": 3.2, "music": "sad",
+		"cap": "어느 거센 비 오는 밤,\n재난이 둘을 갈라놓았다…", "vis": "loss"},
+	{"bg": Color(0.16, 0.16, 0.21), "rain": 1.6, "music": "warm",
+		"cap": "검은 우산 하나가 다가와,\n젖은 길냥이에게 손을 내밀었다.", "vis": "umbrella"},
+	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
+		"cap": "따뜻한 저택. 그때 벽 구멍에서\n쥐 한 마리와 눈이 마주쳤다 — 뻥!", "vis": "house", "fx": "light_bulb"},
+	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
+		"speaker": "골드 영감", "line": "허허! 쥐를 잡는 솜씨가 제법이야.\n너, 마음에 든다.", "vis": "oldman"},
+	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
+		"speaker": "골드 영감", "line": "세계일주를 다녀오마. 길게 걸릴 게야.\n이 집에 쥐새끼 한 마리라도 들이는 날엔 — 넌 그날로 길바닥이야.", "vis": "oldman"},
+]
+
+var _i := -1
+var _bg := Color(0.10, 0.12, 0.18)
+var _bg_target := Color(0.10, 0.12, 0.18)
+var _rain_amt := 0.0
+var _vis := ""
+var _drops: Array = []                  # [{x,y,len,spd}]
+var _music: AudioStreamPlayer
+var _cur_music := ""
+
+var _cap: Label
+var _dlg: Panel
+var _dlg_name: Label
+var _dlg_line: Label
+var _hint: Label
+
+
+func _ready() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_music = AudioStreamPlayer.new()
+	_music.bus = "Master"
+	_music.volume_db = -12.0
+	add_child(_music)
+	# 빗방울 풀
+	var vp := get_viewport().get_visible_rect().size
+	for i in 90:
+		_drops.append({
+			"x": randf() * (vp.x + 200.0) - 100.0,
+			"y": randf() * vp.y,
+			"len": randf_range(14.0, 30.0),
+			"spd": randf_range(700.0, 1100.0),
+		})
+	_build_ui()
+	_goto(0)
+	set_process(true)
+
+
+func _build_ui() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	# 자막(상단 가운데)
+	_cap = _mklabel(36, Color(0.97, 0.95, 0.90))
+	_cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cap.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_cap.position = Vector2(vp.x * 0.5 - 600, 70)
+	_cap.size = Vector2(1200, 160)
+	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_cap.add_theme_constant_override("outline_size", 8)
+	add_child(_cap)
+	# 영감 대화창(하단)
+	_dlg = Panel.new()
+	_dlg.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 5, 16))
+	_dlg.position = Vector2(vp.x * 0.5 - 560, vp.y - 220)
+	_dlg.size = Vector2(1120, 156)
+	add_child(_dlg)
+	_dlg_name = _mklabel(26, Design.RED)
+	_dlg_name.position = Vector2(32, 14)
+	_dlg.add_child(_dlg_name)
+	_dlg_line = _mklabel(30, Design.INK)
+	_dlg_line.position = Vector2(32, 56)
+	_dlg_line.size = Vector2(1056, 90)
+	_dlg_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_dlg.add_child(_dlg_line)
+	_dlg.visible = false
+	# 건너뛰기
+	var skip := Design.button("건너뛰기", "secondary", Design.FS_BODY)
+	skip.custom_minimum_size = Vector2(150, 52)
+	skip.position = Vector2(vp.x - 174, 24)
+	skip.pressed.connect(_finish)
+	add_child(skip)
+	# 진행 힌트
+	_hint = _mklabel(22, Color(1, 1, 1, 0.75))
+	_hint.text = "탭하여 계속 ▶"
+	_hint.position = Vector2(vp.x - 240, vp.y - 48)
+	_hint.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.7))
+	_hint.add_theme_constant_override("outline_size", 5)
+	add_child(_hint)
+
+
+func _mklabel(fs: int, col: Color) -> Label:
+	var l := Label.new()
+	l.add_theme_font_override("font", FONT)
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", col)
+	return l
+
+
+func _goto(idx: int) -> void:
+	if idx >= BEATS.size():
+		_finish()
+		return
+	_i = idx
+	var b: Dictionary = BEATS[idx]
+	_bg_target = b.get("bg", _bg_target)
+	_rain_amt = float(b.get("rain", 0.0))
+	_vis = String(b.get("vis", ""))
+	# 자막 / 대화창
+	if b.has("cap"):
+		_cap.text = String(b["cap"])
+		_cap.visible = true
+	else:
+		_cap.visible = false
+	if b.has("speaker"):
+		_dlg_name.text = String(b["speaker"])
+		_dlg_line.text = String(b.get("line", ""))
+		_dlg.visible = true
+	else:
+		_dlg.visible = false
+	# 음악 큐
+	_set_music(String(b.get("music", "")))
+	# 만화 기호 이펙트
+	if b.has("fx"):
+		var vp := get_viewport().get_visible_rect().size
+		Fx.burst(String(b["fx"]), Vector2(vp.x * 0.5 + 120, vp.y * 0.5 - 40), 0.7, 80)
+	queue_redraw()
+
+
+func _set_music(cue: String) -> void:
+	if cue == "" or cue == _cur_music:
+		return
+	_cur_music = cue
+	_music.stream = SAD if cue == "sad" else WARM
+	_music.play()
+
+
+func _process(delta: float) -> void:
+	_bg = _bg.lerp(_bg_target, clampf(delta * 2.5, 0.0, 1.0))
+	if _rain_amt > 0.0:
+		var vp := get_viewport().get_visible_rect().size
+		for d in _drops:
+			d.y += d.spd * delta * (0.6 + _rain_amt * 0.2)
+			d.x -= d.spd * delta * 0.18
+			if d.y > vp.y + 30.0:
+				d.y = -30.0
+				d.x = randf() * (vp.x + 200.0) - 100.0
+	queue_redraw()
+
+
+func _input(event: InputEvent) -> void:
+	var adv := false
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		adv = true
+	elif event is InputEventScreenTouch and event.pressed:
+		adv = true
+	elif event is InputEventKey and event.pressed and event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+		adv = true
+	if adv:
+		accept_event()
+		_goto(_i + 1)
+
+
+func _finish() -> void:
+	GameState.prologue_seen = true
+	GameState.save_game()
+	get_tree().change_scene_to_file("res://scenes/start.tscn")
+
+
+# ───────── 임시 비주얼(도형) ─────────
+func _draw() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	draw_rect(Rect2(Vector2.ZERO, vp), _bg, true)
+	var gy := vp.y * 0.78   # 바닥선
+	match _vis:
+		"two_cats":
+			_draw_box(Vector2(vp.x * 0.5, gy), 360.0)
+			_draw_cat(Vector2(vp.x * 0.5 - 70, gy - 8), 1.0, Design.CHEESE)        # 치즈
+			_draw_cat(Vector2(vp.x * 0.5 + 70, gy - 8), 0.95, Color(0.7, 0.7, 0.72)) # 닮은 친구
+		"loss":
+			_draw_cat(Vector2(vp.x * 0.42, gy - 8), 1.0, Design.CHEESE)            # 홀로 남은 치즈
+			# 사라진 친구 = 흐릿한 잔상 + 물살 줄
+			_draw_cat(Vector2(vp.x * 0.66, gy - 30), 0.9, Color(0.7, 0.7, 0.72, 0.18))
+			for k in range(5):
+				var yy := gy - 10 + k * 10
+				draw_line(Vector2(vp.x * 0.56, yy), Vector2(vp.x * 0.80, yy - 6),
+						Color(0.55, 0.6, 0.75, 0.5), 3.0)
+		"umbrella":
+			# 검은 우산(반원) + 손잡이 + 코트 실루엣 + 작은 치즈
+			var uc := Vector2(vp.x * 0.56, gy - 250)
+			draw_arc(uc, 150.0, PI, TAU, 32, Color(0.05, 0.05, 0.08), 0.0)
+			draw_colored_polygon(_half_disk(uc, 150.0), Color(0.06, 0.06, 0.09))
+			draw_line(uc, uc + Vector2(0, 250), Color(0.05, 0.05, 0.08), 6.0)
+			draw_rect(Rect2(uc.x - 55, gy - 230, 110, 230), Color(0.08, 0.08, 0.11), true) # 코트
+			_draw_cat(Vector2(vp.x * 0.40, gy - 8), 0.85, Design.CHEESE)
+		"house":
+			# 따뜻한 창문(빛) + 벽 구멍 + 쥐 + 치즈
+			draw_rect(Rect2(vp.x * 0.62, gy - 320, 240, 200), Color(0.96, 0.82, 0.45, 0.85), true)
+			draw_rect(Rect2(vp.x * 0.62, gy - 320, 240, 200), Color(0.25, 0.16, 0.09), false, 8.0)
+			draw_circle(Vector2(vp.x * 0.30, gy - 6), 46.0, Color(0.03, 0.02, 0.02))   # 벽 구멍
+			_draw_cat(Vector2(vp.x * 0.50, gy - 8), 1.0, Design.CHEESE)
+			# 쥐(작은 회색 덩이 + 꼬리)
+			draw_circle(Vector2(vp.x * 0.30, gy - 14), 22.0, Color(0.55, 0.5, 0.5))
+			draw_line(Vector2(vp.x * 0.30 + 18, gy - 8), Vector2(vp.x * 0.30 + 60, gy + 2),
+					Color(0.55, 0.5, 0.5), 4.0)
+		"oldman":
+			# 뒷모습 실루엣(코트 + 모자) — 얼굴 안 보임
+			var cx := vp.x * 0.62
+			draw_rect(Rect2(cx - 90, gy - 300, 180, 300), Color(0.10, 0.10, 0.13), true)  # 코트
+			draw_circle(Vector2(cx, gy - 320), 56.0, Color(0.12, 0.12, 0.15))             # 머리
+			draw_rect(Rect2(cx - 78, gy - 372, 156, 34), Color(0.08, 0.08, 0.10), true)   # 모자챙
+			draw_rect(Rect2(cx - 46, gy - 410, 92, 44), Color(0.08, 0.08, 0.10), true)    # 모자
+			_draw_cat(Vector2(vp.x * 0.32, gy - 8), 0.95, Design.CHEESE)
+	# 비
+	if _rain_amt > 0.0:
+		var col := Color(0.7, 0.78, 0.95, clampf(0.12 + _rain_amt * 0.12, 0.1, 0.5))
+		for d in _drops:
+			draw_line(Vector2(d.x, d.y), Vector2(d.x - d.len * 0.3, d.y + d.len), col, 2.0)
+
+
+func _draw_box(center: Vector2, w: float) -> void:
+	var h := w * 0.42
+	draw_rect(Rect2(center.x - w * 0.5, center.y - h, w, h), Color(0.30, 0.22, 0.14), true)
+	draw_rect(Rect2(center.x - w * 0.5, center.y - h, w, h), Color(0.18, 0.12, 0.07), false, 5.0)
+
+
+func _draw_cat(foot: Vector2, s: float, col: Color) -> void:
+	# 발 기준, 위로 그림 (몸 타원 + 머리 원 + 귀 삼각 + 꼬리)
+	var body := foot + Vector2(0, -42 * s)
+	draw_circle(body, 40 * s, col)
+	var head := foot + Vector2(0, -96 * s)
+	draw_circle(head, 30 * s, col)
+	draw_colored_polygon(PackedVector2Array([
+		head + Vector2(-26 * s, -10 * s), head + Vector2(-8 * s, -38 * s), head + Vector2(0, -14 * s)]), col)
+	draw_colored_polygon(PackedVector2Array([
+		head + Vector2(26 * s, -10 * s), head + Vector2(8 * s, -38 * s), head + Vector2(0, -14 * s)]), col)
+	draw_line(body + Vector2(34 * s, 0), body + Vector2(64 * s, -28 * s), col, 7 * s)
+	# 눈 두 점
+	draw_circle(head + Vector2(-10 * s, -2 * s), 3.5 * s, Color(0.05, 0.04, 0.04))
+	draw_circle(head + Vector2(10 * s, -2 * s), 3.5 * s, Color(0.05, 0.04, 0.04))
+
+
+func _half_disk(center: Vector2, r: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for k in range(17):
+		var a := PI + PI * (float(k) / 16.0)
+		pts.append(center + Vector2(cos(a), sin(a)) * r)
+	return pts

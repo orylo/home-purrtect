@@ -11,9 +11,10 @@ const TRACKS := {
 	"menu":   preload("res://assets/music/menu.wav"),
 	"battle": preload("res://assets/music/battle.wav"),
 }
-## 씬 파일 → 트랙. 목록에 없는 씬은 모두 "menu".
+## 씬 파일 → 트랙. 목록에 없는 씬은 모두 "menu". "none"=무음(그 씬이 직접 음악 재생).
 const SCENE_TRACK := {
 	"res://scenes/main.tscn": "battle",
+	"res://scenes/prologue.tscn": "none",   # 프롤로그는 자체 음악(슬픔→온기) 재생
 }
 
 var _player: AudioStreamPlayer
@@ -41,13 +42,15 @@ func _process(_delta: float) -> void:
 	var key: String = SCENE_TRACK.get(sc.scene_file_path, "menu")
 	if key != _cur:
 		_cur = key
-		if GameState.bgm_enabled:
+		if key == "none":
+			_player.stop()
+		elif GameState.bgm_enabled:
 			_play_cur()
 
 
 func _play_cur() -> void:
 	if _cur == "" or not TRACKS.has(_cur):
-		return
+		return   # "none" 등은 재생 안 함(그 씬이 직접 음악 처리)
 	_player.stream = TRACKS[_cur]
 	_player.play()
 
