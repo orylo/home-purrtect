@@ -1,12 +1,23 @@
 extends Node
-## Sfx (오토로드) — 절차적 생성 효과음. 외부 에셋·라이선스 0(코드로 PCM 합성).
+## Sfx (오토로드) — 효과음.
 ##   Sfx.play("click" / "coin" / "hit" / "crit" / "pop" / "jump" / "shoot" / "heal" / "buff")
-##   기존 player.gd 불발음과 같은 방식(AudioStreamWAV 코드 생성) + 폴링 플레이어로 동시재생.
+##   · 실제 음원(assets/sfx/, Kenney CC0)이 있으면 그걸 재생 — click·coin·hit·crit·heal·buff.
+##   · 없으면 코드 합성음으로 폴백 — pop·jump·shoot(직업별 피치 변주가 살아서 합성 유지).
+##   폴링 플레이어로 동시재생 + 미세 피치 변주.
 
 const RATE := 22050
+# 실제 음원 파일(있으면 합성보다 우선). 배열=변주(랜덤 1개 선택).
+const FILES := {
+	"click": ["res://assets/sfx/click_a.wav", "res://assets/sfx/click_b.wav"],
+	"coin":  ["res://assets/sfx/coin.ogg"],
+	"hit":   ["res://assets/sfx/hit.ogg"],
+	"crit":  ["res://assets/sfx/crit.ogg"],
+	"heal":  ["res://assets/sfx/heal.ogg"],
+	"buff":  ["res://assets/sfx/buff.ogg"],
+}
 var _players: Array = []
 var _idx := 0
-var _cache := {}        # name -> AudioStreamWAV (1회 생성 후 재사용)
+var _cache := {}        # key(name 또는 res경로) -> AudioStream (1회 로드/생성 후 재사용)
 
 
 func _ready() -> void:
@@ -18,14 +29,30 @@ func _ready() -> void:
 
 
 func play(name: String, pitch: float = 1.0, vol_db: float = -4.0) -> void:
-	if not _cache.has(name):
-		_cache[name] = _gen(name)
+	var stream := _stream_for(name)
+	if stream == null:
+		return
 	var p: AudioStreamPlayer = _players[_idx]
 	_idx = (_idx + 1) % _players.size()
-	p.stream = _cache[name]
+	p.stream = stream
 	p.pitch_scale = pitch * randf_range(0.96, 1.05)   # 미세 피치 변주(반복 단조로움 방지)
 	p.volume_db = vol_db
 	p.play()
+
+
+## 실제 음원 파일이 있으면 그걸(변주 랜덤), 없으면 코드 합성음을 돌려준다.
+func _stream_for(name: String) -> AudioStream:
+	if FILES.has(name):
+		var paths: Array = FILES[name]
+		var path: String = paths[randi() % paths.size()]
+		if not _cache.has(path):
+			_cache[path] = load(path)   # 임포트된 AudioStream(ogg/wav)
+		if _cache[path] != null:
+			return _cache[path]
+	# 폴백: 코드 합성
+	if not _cache.has(name):
+		_cache[name] = _gen(name)
+	return _cache[name]
 
 
 # ── 합성 헬퍼 ───────────────────────────────────────────

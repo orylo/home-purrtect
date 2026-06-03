@@ -1,0 +1,17 @@
+Home Purrtect — 효과음 출처/라이선스
+======================================
+
+이 폴더의 음원은 전부 Kenney(kenney.nl)의 게임 오디오 팩에서 가져왔습니다.
+라이선스: CC0 1.0 (퍼블릭 도메인) — 상업적 사용 자유, 출처 표기 의무 없음.
+
+| 파일            | 원본 파일        | 팩                  |
+|-----------------|------------------|---------------------|
+| click_a.wav     | click1.wav       | Kenney UI Audio     |
+| click_b.wav     | click3.wav       | Kenney UI Audio     |
+| coin.ogg        | handle_coins.ogg | Kenney RPG Audio    |
+| hit.ogg         | chop.ogg         | Kenney RPG Audio    |
+| crit.ogg        | knife_slice.ogg  | Kenney RPG Audio    |
+| heal.ogg        | power_up_2.ogg   | Kenney Digital Audio|
+| buff.ogg        | power_up_7.ogg   | Kenney Digital Audio|
+
+처치(pop)·점프(jump)·사격(shoot)은 scripts/sfx.gd 의 코드 합성음을 사용(직업별 피치 변주).
