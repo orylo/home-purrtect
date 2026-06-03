@@ -459,9 +459,11 @@ func _melee_attack() -> void:
 		var e = targets[i]["e"]
 		if e.has_method("take_damage"):
 			e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"], false)  # 마리별 소리 X
-	# 펀치 소리는 휘두름당 1번만(여러 마리 때려도 한 번) — 맞았을 때만
+	# 펀치 소리는 휘두름당 1번만(여러 마리 때려도 한 번) — 맞았을 때만.
+	# 휘두름 소리와 안 겹치게 0.05초 뒤 재생(근접·원거리 공통 impact, 크리=퍼벅)
 	if n > 0:
-		Sfx.play("crit" if hit["crit"] else "punch")
+		var was_crit: bool = hit["crit"]
+		get_tree().create_timer(0.05).timeout.connect(func(): Sfx.impact(was_crit))
 
 
 ## 직업별 원거리 발사.

@@ -353,7 +353,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 			_stun_timer = stun
 		Fx.request_shake(7.0 if crit else 3.0)
 		if play_sfx:
-			Sfx.play("crit" if crit else "hit")
+			Sfx.impact(crit)   # 근접·원거리 통일(punch), 크리=퍼벅
 		var _fy := -50.0 - (AIR_HEIGHT if _air else 0.0)
 		if crit:
 			Fx.burst("critical_hit", global_position + Vector2(0, _fy), 0.62, 45)

@@ -22,7 +22,8 @@ const FILES := {
 }
 ## 사운드별 추가 음량(dB) — 파일 음량이 다른 소리와 안 맞을 때 보정.
 const VOL := {
-	"hit": 6.0,   # 돌/평타 맞는 소리(짧은 충격음이라 작게 들려 +6dB 더)
+	"swing": -9.0,   # 근접 휘두르는 소리(너무 커서 줄임)
+	"punch": -6.0,   # 근접·원거리 공통 타격음(너무 커서 줄임)
 }
 var _players: Array = []
 var _idx := 0
@@ -47,6 +48,17 @@ func play(name: String, pitch: float = 1.0, vol_db: float = -4.0) -> void:
 	p.pitch_scale = pitch * randf_range(0.96, 1.05)   # 미세 피치 변주(반복 단조로움 방지)
 	p.volume_db = vol_db + float(VOL.get(name, 0.0))
 	p.play()
+
+
+## 타격 효과음 — 근접·원거리 공통(맞는 소리 통일 = punch).
+##   크리는 punch를 아주 빠르게 2연타(볼륨 살짝 다르게) = "퍼벅!".
+func impact(crit: bool) -> void:
+	if not crit:
+		play("punch")
+		return
+	play("punch", 1.0, -5.0)   # 퍼(살짝 작게)
+	# 벅 — 0.045초 뒤, 살짝 높고 크게(두 번 볼륨 다르게)
+	get_tree().create_timer(0.045).timeout.connect(func(): play("punch", 1.07, -1.5))
 
 
 ## 실제 음원 파일이 있으면 그걸(변주 랜덤), 없으면 코드 합성음을 돌려준다.
