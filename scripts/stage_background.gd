@@ -6,9 +6,11 @@ extends Node2D
 ## · 바닥 라인은 Layout.ground_y()와 항상 일치 → 캐릭터 발이 그림의 땅에 딱 맞음.
 
 @export var stage_texture: Texture2D
-## 2레이어 배경(둘 다 넣으면 stage_texture 대신 사용): far=원경(가운데 정렬·고정) / ground=전경 바닥(하단 고정, 마젠타 제거 PNG).
+## 3레이어 배경(테마 풀에서 _ready가 랜덤 선택해 채움): far=원경(가운데) / ground=지면(하단) / near=근경(캐릭터 앞, Foreground 노드가 그림).
+##   에디터에서 직접 지정하면 그 값이 우선(보스 등 고정 연출용).
 @export var far_texture: Texture2D
 @export var ground_texture: Texture2D
+@export var near_texture: Texture2D
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
 @export var show_ground_line: bool = true
 ## 배경 추가 확대 배율(1.0 = 기본, 비율 유지 커버). 필요 시만 키움.
@@ -22,20 +24,81 @@ const FOG_COL := Color(0.88, 0.92, 0.97)   # 안개 색(옅은 차가운 흰색)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
 #   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
 const FOG_BLOBS := [
-	{"x0": 0.10, "y0": 0.17, "r": 0.40, "spd": 5.0,  "bob_s": 0.25, "bob_a": 0.015, "a": 0.36, "ph": 0.0},
-	{"x0": 0.55, "y0": 0.22, "r": 0.50, "spd": 3.5,  "bob_s": 0.18, "bob_a": 0.012, "a": 0.34, "ph": 1.7},
-	{"x0": 0.85, "y0": 0.13, "r": 0.34, "spd": 8.0,  "bob_s": 0.34, "bob_a": 0.016, "a": 0.40, "ph": 3.1},
-	{"x0": 0.30, "y0": 0.25, "r": 0.32, "spd": 11.0, "bob_s": 0.40, "bob_a": 0.020, "a": 0.36, "ph": 4.6},
-	{"x0": 0.70, "y0": 0.19, "r": 0.44, "spd": 6.5,  "bob_s": 0.22, "bob_a": 0.013, "a": 0.32, "ph": 2.2},
+	{"x0": 0.10, "y0": 0.17, "r": 0.40, "spd": 5.0,  "bob_s": 0.25, "bob_a": 0.015, "a": 0.48, "ph": 0.0},
+	{"x0": 0.55, "y0": 0.22, "r": 0.50, "spd": 3.5,  "bob_s": 0.18, "bob_a": 0.012, "a": 0.46, "ph": 1.7},
+	{"x0": 0.85, "y0": 0.13, "r": 0.34, "spd": 8.0,  "bob_s": 0.34, "bob_a": 0.016, "a": 0.52, "ph": 3.1},
+	{"x0": 0.30, "y0": 0.25, "r": 0.32, "spd": 11.0, "bob_s": 0.40, "bob_a": 0.020, "a": 0.48, "ph": 4.6},
+	{"x0": 0.70, "y0": 0.19, "r": 0.44, "spd": 6.5,  "bob_s": 0.22, "bob_a": 0.013, "a": 0.44, "ph": 2.2},
 ]
 var _t := 0.0
 var _fog_tex: ImageTexture
+
+# ── 스테이지 배경 풀(테마별) ─────────────────────────────────
+## 같은 막=같은 테마. 한 판마다 far/ground/near를 풀에서 랜덤으로 뽑는다.
+## 새 배경은 폴더에 넣고 아래 배열에 경로만 추가하면 됨.
+const THEMES := {
+	"wall": {
+		"far": [
+			"res://assets/backgrounds/wall/far/far01.jpg", "res://assets/backgrounds/wall/far/far02.jpg",
+			"res://assets/backgrounds/wall/far/far03.jpg", "res://assets/backgrounds/wall/far/far04.jpg",
+			"res://assets/backgrounds/wall/far/far05.jpg", "res://assets/backgrounds/wall/far/far06.jpg",
+			"res://assets/backgrounds/wall/far/far07.jpg", "res://assets/backgrounds/wall/far/far08.jpg",
+			"res://assets/backgrounds/wall/far/far09.jpg", "res://assets/backgrounds/wall/far/far10.jpg",
+			"res://assets/backgrounds/wall/far/far11.jpg", "res://assets/backgrounds/wall/far/far12.jpg",
+		],
+		"ground": ["res://assets/backgrounds/wall/ground/ground01.png"],  # 추후 더 추가
+		"near": [],   # 근경 — 추후 추가(있으면 캐릭터 앞에 그려짐)
+	},
+}
+## 특정 스테이지 배경 고정(보스 등). 키="막-스테이지". 지정되면 랜덤 대신 이걸 사용.
+const FIXED := {
+	# 예) "1-10": {"theme": "wall", "far": "res://...far05.jpg", "ground": "res://...ground01.png", "near": ""},
+}
 
 
 func _ready() -> void:
 	# 화면 크기가 바뀌면(회전·창 크기) 다시 그림
 	get_viewport().size_changed.connect(queue_redraw)
 	_fog_tex = _make_fog_tex()
+	add_to_group("stage_bg")     # 근경(Foreground) 노드가 near_texture를 읽어감
+	_pick_backgrounds()
+
+
+## 현재 스테이지에 맞는 배경 3종을 정한다(에디터에서 직접 지정했으면 그대로 둠).
+func _pick_backgrounds() -> void:
+	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
+	if FIXED.has(key):                       # 보스 등 고정
+		var fx: Dictionary = FIXED[key]
+		far_texture = _load_tex(fx.get("far", ""))
+		ground_texture = _load_tex(fx.get("ground", ""))
+		near_texture = _load_tex(fx.get("near", ""))
+		return
+	var th: Dictionary = THEMES.get(_theme_for(GameState.stage_major, GameState.stage_minor), {})
+	# 에디터에서 미리 지정한 슬롯은 존중, 비어있으면 풀에서 랜덤
+	if far_texture == null:
+		far_texture = _pick_from(th.get("far", []))
+	if ground_texture == null:
+		ground_texture = _pick_from(th.get("ground", []))
+	if near_texture == null:
+		near_texture = _pick_from(th.get("near", []))
+
+
+## 막·스테이지 → 테마. (1막 = 담벼락. 추후 막별 분기)
+func _theme_for(_major: int, _minor: int) -> String:
+	return "wall"
+
+
+func _pick_from(pool: Array) -> Texture2D:
+	if pool.is_empty():
+		return null
+	return _load_tex(String(pool[randi() % pool.size()]))
+
+
+func _load_tex(path: String) -> Texture2D:
+	if path == "":
+		return null
+	var t = load(path)
+	return t if t is Texture2D else null
 
 
 func _process(delta: float) -> void:

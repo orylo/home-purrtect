@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxq4bebqokp3r"
-path="res://.godot/imported/ground1.png-78cc833f540a84b9469e1628679f1661.ctex"
+uid="uid://bqn08pqihcnmb"
+path="res://.godot/imported/far09.jpg-ae90debaa28f3925a3d8b528ad748e35.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/stage1/ground1.png"
-dest_files=["res://.godot/imported/ground1.png-78cc833f540a84b9469e1628679f1661.ctex"]
+source_file="res://assets/backgrounds/wall/far/far09.jpg"
+dest_files=["res://.godot/imported/far09.jpg-ae90debaa28f3925a3d8b528ad748e35.ctex"]
 
 [params]
 
