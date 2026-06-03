@@ -53,7 +53,8 @@ var _flash2 := 0.0      # 잔섬광 대기
 var _flash_delay := 0.0 # 천둥 소리 후 섬광까지 대기(소리 먼저)
 var _trans := 0.0       # 전환 진행(0=밤+비 → 1=아침)
 var _layers: Array = [] # [WLayer ...]
-var _glow: GradientTexture2D    # 라디얼 그라데이션(진짜 가우시안풍 블러용)
+var _glow: GradientTexture2D    # 라디얼 그라데이션(부드러운 글로우/고스트용, 중심부터 falloff)
+var _sun: GradientTexture2D     # 태양 코어용 — 중심에 불투명 평지대(스킬슬롯 크기) → 블러 falloff
 
 
 func _ready() -> void:
@@ -62,6 +63,7 @@ func _ready() -> void:
 		set_process(false)
 		return
 	_glow = _make_glow()
+	_sun = _make_sun()
 	for spec in [["particles", Z_PARTICLES], ["tint", Z_TINT], ["light", Z_LIGHT]]:
 		var n := WLayer.new()
 		n.w = self
@@ -209,7 +211,7 @@ func _paint_particles(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 		"sunny":
 			_draw_sun(ci, vp, 1.0)
 		"sunset":
-			_draw_soft_sun(ci, Vector2(vp.x * 0.86, vp.y * 0.15), Color(1.0, 0.9, 0.6), 0.5)  # 태양은 근경 아래
+			_draw_warm_sun(ci, vp)  # 태양(또렷한 코어+블러)은 근경 아래 z49
 		"transition":
 			var rainA: float = 1.0 - smoothstep(0.2, 0.5, _trans)   # 비 먼저 그침
 			var sunA: float = smoothstep(0.55, 1.0, _trans)         # 해는 아침에 떠오름
@@ -280,8 +282,9 @@ func _draw_light_particles(ci: CanvasItem, _gy: float, gA: float) -> void:
 		if d.k != "fly":
 			continue
 		var bl: float = 0.15 + 0.85 * pow(maxf(0.0, sin(_t * float(d.bs) + float(d.ph))), 2.0)
-		ci.draw_circle(Vector2(d.x, d.y), float(d.r) * 2.2, Color(0.9, 1.0, 0.4, 0.10 * bl * gA))
-		ci.draw_circle(Vector2(d.x, d.y), float(d.r), Color(1.0, 1.0, 0.5, 0.9 * bl * gA))
+		var pos := Vector2(d.x, d.y)
+		_soft_disc(ci, pos, float(d.r) * 5.0, Color(0.85, 1.0, 0.4), 0.16 * bl * gA)   # 큰 글로우(블러)
+		_soft_disc(ci, pos, float(d.r) * 2.2, Color(1.0, 1.0, 0.6), 0.85 * bl * gA)    # 밝은 심(블러, 외곽선 없음)
 
 
 ## 잎 — 잎자루+주맥+측맥+톱니. 외곽·잎맥 모두 같은 갈색·같은 두께 스트로크.
@@ -298,9 +301,9 @@ func _draw_leaf(ci: CanvasItem, c: Vector2, r: float, rot: float, col: Color) ->
 		pts.append(c + dir * lerp(-r, r, t2) - perp * _leaf_w(t2) * r)
 	ci.draw_colored_polygon(pts, col)
 	var ink := Color(LEAF_INK.r, LEAF_INK.g, LEAF_INK.b, col.a)
-	var lw: float = maxf(1.0, r * 0.08)            # 외곽·잎맥 공통 두께
-	var outline := pts.duplicate(); outline.append(pts[0])
-	ci.draw_polyline(outline, ink, lw, true)        # 외곽
+	var lw: float = maxf(1.0, r * 0.08)            # 외곽·잎맥·잎자루·측맥 공통 두께
+	for i in range(pts.size()):                    # 외곽: 잎맥과 똑같이 draw_line으로(렌더 차이 제거)
+		ci.draw_line(pts[i], pts[(i + 1) % pts.size()], ink, lw)
 	ci.draw_line(c - dir * r, c - dir * r * 1.4, ink, lw)        # 잎자루
 	ci.draw_line(c - dir * r * 0.92, c + dir * r * 0.92, ink, lw)  # 주맥
 	for sv in [-0.45, -0.1, 0.28]:                  # 측맥 3쌍
@@ -329,43 +332,61 @@ func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
 	if pl != null and pl is Node2D:
 		px = clampf((pl as Node2D).global_position.x / maxf(vp.x, 1.0), 0.0, 1.0) - 0.5
 	var center := Vector2(vp.x * 0.5 + px * 70.0, vp.y * 0.62)
-	_soft_disc(ci, sun, vp.x * 0.42, Color(1, 1, 1), 0.16 * a)   # 거대 후광(블러)
-	_soft_disc(ci, sun, 170.0, Color(1, 1, 1), a)               # 코어: 중심 퓨어화이트(불투명) → 가장자리 매끈 페이드
-	for i in range(12):                                          # 스타버스트(은은)
+	_soft_disc(ci, sun, vp.x * 0.40, Color(1, 1, 1), 0.14 * a)            # 거대 후광(블러)
+	var rtot: float = Layout.SKILL_BTN_R / 0.30                          # 스킬슬롯(38px) 솔리드 코어 → 블러
+	_soft_disc(ci, sun, rtot, Color(1, 1, 1), a, _sun)                   # 코어: 중심 불투명 화이트 + 가장자리 블러
+	for i in range(12):                                                  # 스타버스트(은은)
 		var ang := TAU * float(i) / 12.0 + 0.05 * sin(_t * 0.3)
 		var Ln: float = (vp.x * 0.5 if i % 3 == 0 else vp.x * 0.22) * (0.9 + 0.1 * sin(_t * 0.7 + i))
 		var dir := Vector2(cos(ang), sin(ang))
 		var perp := Vector2(-dir.y, dir.x) * 5.0
 		ci.draw_colored_polygon(PackedVector2Array([sun + perp, sun - perp, sun + dir * Ln]), Color(1, 1, 1, 0.06 * a))
-	var v := center - sun                                        # 렌즈 플레어 고스트
+	var v := center - sun                                                # 렌즈 플레어 고스트(중~하단, 또렷하게)
 	var pal := [Color(0.6, 0.72, 1.0), Color(1.0, 0.82, 0.6), Color(0.75, 1.0, 0.8), Color(1.0, 0.7, 0.85), Color(0.85, 0.85, 1.0)]
 	var gs := [0.35, 0.6, 0.85, 1.05, 1.35, 1.7, 2.0]
-	var rr := [18.0, 11.0, 30.0, 14.0, 46.0, 22.0, 36.0]
+	var rr := [22.0, 13.0, 36.0, 17.0, 54.0, 26.0, 42.0]
 	for i in range(gs.size()):
 		var pos: Vector2 = sun + v * float(gs[i])
 		var col: Color = pal[i % pal.size()]
-		_soft_disc(ci, pos, float(rr[i]), Color(col.r, col.g, col.b), 0.13 * a)
+		_soft_disc(ci, pos, float(rr[i]), Color(col.r, col.g, col.b), 0.22 * a)
 
 
-## 부드럽게 번진 원반(노을 태양 등) — 큰 원(낮은 알파)→작은 원(높은 알파) 겹침.
-func _draw_soft_sun(ci: CanvasItem, sun: Vector2, tint: Color, a: float) -> void:
-	_soft_disc(ci, sun, 200.0, tint, 0.16 * a)
-	_soft_disc(ci, sun, 70.0, Color(min(1.0, tint.r + 0.1), min(1.0, tint.g + 0.08), min(1.0, tint.b + 0.12)), 0.28 * a)
+## 노을 태양 — 따뜻한 화이트 솔리드 코어(스킬슬롯 크기) + 블러 후광. z49(근경 아래).
+func _draw_warm_sun(ci: CanvasItem, vp: Vector2) -> void:
+	var sun := Vector2(vp.x * 0.86, vp.y * 0.15)
+	_soft_disc(ci, sun, 240.0, Color(1.0, 0.82, 0.5), 0.18)              # 따뜻한 후광
+	var rtot: float = Layout.SKILL_BTN_R / 0.30
+	_soft_disc(ci, sun, rtot, Color(1.0, 0.95, 0.8), 0.95, _sun)         # 또렷한 코어 + 블러 가장자리
 
 
-## 가우시안풍 원반 — 알파가 중심→가장자리로 매끄럽게 0이 되는 라디얼 텍스처(진짜 블러). 딱딱한 외곽 없음.
-func _soft_disc(ci: CanvasItem, c: Vector2, rmax: float, rgb: Color, peak: float) -> void:
-	if _glow == null:
+## 가우시안풍 원반 — 알파가 매끄럽게 0이 되는 라디얼 텍스처(진짜 블러). 딱딱한 외곽 없음. tex 생략 시 _glow.
+func _soft_disc(ci: CanvasItem, c: Vector2, rmax: float, rgb: Color, peak: float, tex: Texture2D = null) -> void:
+	var t: Texture2D = tex if tex != null else _glow
+	if t == null:
 		return
 	var sz: float = rmax * 2.0
-	ci.draw_texture_rect(_glow, Rect2(c - Vector2(rmax, rmax), Vector2(sz, sz)), false, Color(rgb.r, rgb.g, rgb.b, peak))
+	ci.draw_texture_rect(t, Rect2(c - Vector2(rmax, rmax), Vector2(sz, sz)), false, Color(rgb.r, rgb.g, rgb.b, peak))
 
 
-## 라디얼 그라데이션 텍스처 — 중심 알파1 → 가장자리 알파0(가우시안풍 falloff).
+## 글로우 텍스처 — 중심 알파1 → 가장자리 알파0(가우시안풍 falloff, 평지대 없음).
 func _make_glow() -> GradientTexture2D:
+	return _radial([0.0, 0.25, 0.55, 1.0], [1.0, 0.55, 0.16, 0.0])
+
+
+## 태양 코어 텍스처 — 중심부 알파1 평지대(0~0.30) 유지 후 0으로 falloff = 솔리드 코어 + 블러 가장자리.
+func _make_sun() -> GradientTexture2D:
+	return _radial([0.0, 0.30, 0.62, 1.0], [1.0, 1.0, 0.30, 0.0])
+
+
+func _radial(offsets: Array, alphas: Array) -> GradientTexture2D:
 	var g := Gradient.new()
-	g.offsets = PackedFloat32Array([0.0, 0.25, 0.55, 1.0])
-	g.colors = PackedColorArray([Color(1, 1, 1, 1.0), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.16), Color(1, 1, 1, 0.0)])
+	var offs := PackedFloat32Array()
+	var cols := PackedColorArray()
+	for i in offsets.size():
+		offs.append(float(offsets[i]))
+		cols.append(Color(1, 1, 1, float(alphas[i])))
+	g.offsets = offs
+	g.colors = cols
 	var t := GradientTexture2D.new()
 	t.gradient = g
 	t.width = 256
