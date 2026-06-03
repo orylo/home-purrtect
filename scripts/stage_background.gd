@@ -6,6 +6,9 @@ extends Node2D
 ## · 바닥 라인은 Layout.ground_y()와 항상 일치 → 캐릭터 발이 그림의 땅에 딱 맞음.
 
 @export var stage_texture: Texture2D
+## 2레이어 배경(둘 다 넣으면 stage_texture 대신 사용): far=원경(상단 고정) / ground=전경 바닥(하단 고정, 마젠타 제거 PNG).
+@export var far_texture: Texture2D
+@export var ground_texture: Texture2D
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
 @export var show_ground_line: bool = true
 ## 배경 추가 확대 배율(1.0 = 기본, 비율 유지 커버). 필요 시만 키움.
@@ -27,7 +30,11 @@ func _draw() -> void:
 	var vis := get_viewport().get_visible_rect().size
 	var s := Layout.cover_scale()
 
-	if stage_texture != null:
+	if far_texture != null and ground_texture != null:
+		# 2레이어: 원경(상단 고정) 뒤 → 전경 바닥(하단 고정) 앞. 둘 다 가로 커버.
+		_draw_anchored(far_texture, vis, true)    # far = 상단(top) 고정
+		_draw_anchored(ground_texture, vis, false) # ground = 하단(bottom) 고정
+	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
 		# 가로/세로 비율 중 더 큰 쪽으로 맞춰 빈틈 없이 채우고, 넘치는 부분만 크롭.
 		var tex := stage_texture.get_size()
@@ -48,3 +55,14 @@ func _draw() -> void:
 	if show_ground_line:
 		var line_y := Layout.ground_y()
 		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
+
+
+## 가로를 꽉 채우는 커버 스케일로 그리되, top_anchor면 상단(y=0)·아니면 하단(바닥)에 붙임.
+func _draw_anchored(tex: Texture2D, vis: Vector2, top_anchor: bool) -> void:
+	var t := tex.get_size()
+	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom
+	var w := t.x * sc
+	var h := t.y * sc
+	var x := (vis.x - w) * 0.5
+	var y := 0.0 if top_anchor else (vis.y - h)
+	draw_texture_rect(tex, Rect2(Vector2(x, y), Vector2(w, h)), false)
