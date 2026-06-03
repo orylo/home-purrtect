@@ -47,6 +47,7 @@ const CRATE_X_FRAC := 0.25   # 1-3 배경 나무 궤짝 화면 x(뷰포트 비�
 func _on_inscene_event() -> void:
 	# 트리는 일시정지 상태 유지(치즈는 PROCESS_MODE_ALWAYS라 이벤트 도보 가능)
 	var vp := get_viewport().get_visible_rect().size
+	hud.visible = false                       # 깨끗한 컷씬(HP바 등 숨김)
 	if player.has_method("set_event_idle"):
 		player.set_event_idle(true)
 	# 1) 치즈가 궤짝 "옆"까지 자동 도보 — 궤짝 위에 겹치지 않게 근접면에 서서 궤짝을 바라봄.
@@ -59,20 +60,30 @@ func _on_inscene_event() -> void:
 			await get_tree().process_frame
 	await get_tree().create_timer(0.35).timeout   # 도착 후 한 박자
 
-	# 2) 치즈+궤짝이 한 화면에 들어오게 그 영역으로 카메라 줌인(치즈 확대 아님).
-	#    ★트리 일시정지 중이라 Tween은 안 돎 → 수동 lerp(process_frame는 pause에도 발신).
-	var cam := Camera2D.new()
-	cam.process_mode = Node.PROCESS_MODE_ALWAYS
-	var focus_x: float = (crate_x + stand_x) * 0.5       # 궤짝과 치즈 사이를 잡아 둘 다 프레임에
-	cam.global_position = Vector2(focus_x, Layout.ground_y() - 150.0)
-	add_child(cam)
-	cam.make_current()
-	var zt := 0.0
-	while zt < 1.0:
-		await get_tree().process_frame
-		zt = minf(zt + 1.0 / 50.0, 1.0)         # ~1초
-		var e := zt * zt * (3.0 - 2.0 * zt)     # smoothstep
-		cam.zoom = Vector2.ONE.lerp(Vector2(1.6, 1.6), e)   # 적당히 줌인(화면 영역 줌, 1.6배)
+	# 2) ★화면 전체(배경+치즈) 줌인. 배경은 CanvasLayer라 Camera2D가 안 먹음 →
+	#    현재 렌더 프레임을 통째로 캡처해 그 스냅샷을 궤짝+치즈 영역 기준으로 확대한다.
+	var focus := Vector2((crate_x + stand_x) * 0.5, Layout.ground_y() - 70.0)
+	await get_tree().process_frame            # 최신 상태(치즈 도착·HUD 숨김) 렌더 후 캡처
+	await get_tree().process_frame
+	var img := get_viewport().get_texture().get_image()
+	if img != null:
+		var snap := ImageTexture.create_from_image(img)
+		var zlayer := CanvasLayer.new()
+		zlayer.layer = 70
+		zlayer.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(zlayer)
+		var tr := TextureRect.new()
+		tr.texture = snap
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tr.stretch_mode = TextureRect.STRETCH_SCALE
+		tr.pivot_offset = focus                # 이 점을 중심으로 확대(궤짝+치즈)
+		zlayer.add_child(tr)
+		var zt := 0.0
+		while zt < 1.0:
+			await get_tree().process_frame
+			zt = minf(zt + 1.0 / 50.0, 1.0)    # ~1초
+			var e := zt * zt * (3.0 - 2.0 * zt)
+			tr.scale = Vector2.ONE * lerpf(1.0, 1.7, e)
 
 	# 3) 컷씬(플레이스홀더) — 풀스크린 패널 + [확인]
 	await _play_placeholder_cutscene()
