@@ -444,6 +444,7 @@ func _on_buy_levelup() -> void:
 	var job: String = GameState.selected_job
 	var ng := GameState.next_grade(job)
 	if GameState.craft_grade(job):
+		Sfx.play("coin")
 		_toast_msg("%s 제작!" % GameState.job_title(job, ng))
 		_refresh()
 	else:
@@ -451,6 +452,7 @@ func _on_buy_levelup() -> void:
 
 func _on_buy_consumable(id: String) -> void:
 	if GameState.buy_consumable(id):
+		Sfx.play("coin")
 		_toast_msg("%s 구매!" % String(GameState.CONSUMABLES[id]["name"]))
 		_refresh()
 	else:
@@ -474,6 +476,7 @@ func _on_buy_skill(sid: String) -> void:
 
 func _on_craft(job: String) -> void:
 	if GameState.craft_job(job):
+		Sfx.play("coin")
 		_toast_msg("%s 제작 완료! 전투 준비에서 선택 가능" % String(GameState.CRAFT_RECIPES[job]["name"]))
 		_rebuild_craft()
 		_refresh()

@@ -285,6 +285,7 @@ func _physics_process(delta: float) -> void:
 			velocity.y = -jump_force
 			on_ground = false
 			_jump_state = "air"
+			Sfx.play("jump")
 
 	if not on_ground:
 		velocity.y += gravity * delta
@@ -518,6 +519,7 @@ func _fire_ranged() -> void:
 	get_parent().add_child(bullet)
 	if bullet.has_method("setup"):
 		bullet.setup(cfg)
+	Sfx.play("shoot", 0.85 if is_lob else (1.15 if not is_gun else 1.0))   # 던지기=낮게/음표=높게/총=기본
 	# 보안관 총 발사: 큰 화염 + 화면 흔들림(불발과 확 차이)
 	if is_gun and is_instance_valid(muzzle_fx):
 		muzzle_fx.flash()   # 오른쪽으로 뻗는 직선 총구 화염(코드 드로잉) — 방사형 스프라이트는 손에서 터져 보여 제거
@@ -574,6 +576,7 @@ func heal(amount: float) -> void:
 		return
 	health = minf(max_health, health + amount)
 	Fx.burst("red_heart", global_position + Vector2(0, -185), 0.42, 60)
+	Sfx.play("heal")
 
 ## 말린 멸치: 공격력 버프 dur초(중첩 시 더 긴 쪽 유지)
 func apply_atk_buff(dur: float) -> void:
@@ -581,6 +584,7 @@ func apply_atk_buff(dur: float) -> void:
 		return
 	_atk_buff_t = maxf(_atk_buff_t, dur)
 	Fx.burst("shine_burst", global_position + Vector2(0, -110), 0.5, 60)
+	Sfx.play("buff")
 
 ## 폭죽: 살아있는 모든 적에게 고정 광역 데미지
 func aoe_damage(amount: float) -> void:
@@ -601,6 +605,7 @@ func apply_guard(dur: float, pct: float) -> void:
 	_guard_t = maxf(_guard_t, dur)
 	_guard_pct = pct
 	Fx.burst("sparkle", global_position + Vector2(0, -110), 0.5, 60)
+	Sfx.play("buff")
 
 ## 앵콜: dur초 동안 공속+40%·이속+20%
 func apply_encore(dur: float) -> void:
@@ -608,6 +613,7 @@ func apply_encore(dur: float) -> void:
 		return
 	_encore_t = maxf(_encore_t, dur)
 	Fx.burst("shine_burst", global_position + Vector2(0, -110), 0.55, 60)
+	Sfx.play("buff")
 
 
 ## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)

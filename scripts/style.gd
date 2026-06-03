@@ -167,6 +167,9 @@ func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> 
 	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		b.add_theme_color_override(cn, fg)
 	b.add_theme_color_override("font_disabled_color", INK.lerp(PAPER_DEEP, 0.5))
+	if not b.has_meta("_sfx"):
+		b.set_meta("_sfx", true)
+		b.pressed.connect(func(): Sfx.play("click"))
 
 func button(text: String, kind: String = "secondary", fs: int = FS_TITLE) -> Button:
 	var b := Button.new()

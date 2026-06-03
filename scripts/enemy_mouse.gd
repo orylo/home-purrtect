@@ -351,6 +351,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		if stun > 0.0:
 			_stun_timer = stun
 		Fx.request_shake(7.0 if crit else 3.0)
+		Sfx.play("crit" if crit else "hit")
 		var _fy := -50.0 - (AIR_HEIGHT if _air else 0.0)
 		if crit:
 			Fx.burst("critical_hit", global_position + Vector2(0, _fy), 0.62, 45)
@@ -401,6 +402,7 @@ func _die() -> void:
 	Fx.request_shake(7.0)
 	Fx.request_hitstop(0.05)
 	Fx.burst("poof_explosion", global_position + Vector2(0, -45.0 - (AIR_HEIGHT if _air else 0.0)), 0.6, 47)
+	Sfx.play("pop")
 	if _use_sprite:
 		anim.modulate = Color(1, 1, 1)
 		anim.play("ghost")
