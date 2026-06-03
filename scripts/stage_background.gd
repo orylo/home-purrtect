@@ -31,9 +31,9 @@ func _draw() -> void:
 	var s := Layout.cover_scale()
 
 	if far_texture != null and ground_texture != null:
-		# 2레이어: 원경(상단 고정) 뒤 → 전경 바닥(하단 고정) 앞. 둘 다 가로 커버.
-		_draw_anchored(far_texture, vis, true)    # far = 상단(top) 고정
-		_draw_anchored(ground_texture, vis, false) # ground = 하단(bottom) 고정
+		# 2레이어: 원경(상단 고정·1.5배·치즈 따라 미세 패럴럭스) 뒤 → 전경 바닥(하단 고정) 앞.
+		_draw_far(far_texture, vis)               # far = 상단 + 패럴럭스
+		_draw_anchored(ground_texture, vis, false) # ground = 하단 고정(움직임 X)
 	elif stage_texture != null:
 		# 그림 원본 비율 그대로 화면을 "커버"(꽉 채움) + 가로 가운데 + 바닥 고정.
 		# 가로/세로 비율 중 더 큰 쪽으로 맞춰 빈틈 없이 채우고, 넘치는 부분만 크롭.
@@ -55,6 +55,22 @@ func _draw() -> void:
 	if show_ground_line:
 		var line_y := Layout.ground_y()
 		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
+
+
+## 원경(far) — 상단 고정 + 1.5배 확대 + 치즈 좌우 위치에 따라 미세 패럴럭스(같은 방향).
+const FAR_ZOOM := 1.5         # 원경 추가 확대
+const FAR_PARALLAX := 50.0    # 치즈가 화면 끝까지 갈 때 far가 움직이는 최대 px(미세하게)
+func _draw_far(tex: Texture2D, vis: Vector2) -> void:
+	var t := tex.get_size()
+	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
+	var w := t.x * sc
+	var h := t.y * sc
+	var px := 0.0
+	var p := get_tree().get_first_node_in_group("player")
+	if p != null and p is Node2D:
+		var f: float = clampf((p as Node2D).global_position.x / maxf(vis.x, 1.0), 0.0, 1.0)
+		px = (f - 0.5) * 2.0 * FAR_PARALLAX   # 가운데=0, 오른쪽 끝=+, 왼쪽 끝=−(치즈와 같은 방향)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5 + px, 0.0), Vector2(w, h)), false)
 
 
 ## 가로를 꽉 채우는 커버 스케일로 그리되, top_anchor면 상단(y=0)·아니면 하단(바닥)에 붙임.
