@@ -7,6 +7,7 @@ var _grav := 0.0
 var damage := 5.0
 var status := ""           # ""/"poison"/"slow"
 var color := Color(0.8, 0.3, 0.2)
+var shape := "dot"              # dot(원) / stone(회색 돌-투척쥐) / cone(원뿔 독침-벌)
 var hit_y_offset := -90.0       # 치즈 어디 높이를 맞히는지(기본 몸통 -90 / 박쥐 머리 -180)
 var dodge_by_crouch := false    # 박쥐 음파: 앉으면(crouching) 회피
 var _ground_y := 0.0
@@ -31,6 +32,10 @@ func _physics_process(delta: float) -> void:
 		_vel.y += _grav * delta
 	global_position += _vel * delta
 	_life -= delta
+	if shape == "stone":
+		rotation += delta * 6.0            # 돌멩이: 날아가며 빙글
+	elif shape == "cone":
+		rotation = _vel.angle()            # 원뿔 독침: 진행 방향 향함
 	queue_redraw()
 
 	var p := get_tree().get_first_node_in_group("player")
@@ -53,5 +58,34 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 11.0, color)
-	draw_arc(Vector2.ZERO, 11.0, 0.0, TAU, 14, Color(0, 0, 0, 0.5), 1.5, true)
+	match shape:
+		"stone": _draw_stone()
+		"cone":  _draw_cone()
+		_:
+			draw_circle(Vector2.ZERO, 11.0, color)
+			draw_arc(Vector2.ZERO, 11.0, 0.0, TAU, 14, Color(0, 0, 0, 0.5), 1.5, true)
+
+
+## 회색 돌멩이 — 치즈(길냥이) 평타 돌멩이와 동일.
+func _draw_stone() -> void:
+	var r := 16.0
+	var body := Color(0.55, 0.55, 0.58)
+	var edge := Color(0.28, 0.28, 0.30)
+	var shade := Color(0.42, 0.42, 0.45)
+	var hi := Color(0.72, 0.72, 0.75)
+	draw_circle(Vector2.ZERO, r, body)
+	draw_circle(Vector2(r * 0.28, r * 0.3), r * 0.55, shade)   # 아래쪽 그림자
+	draw_circle(Vector2(-r * 0.32, -r * 0.32), r * 0.28, hi)   # 위쪽 하이라이트
+	draw_arc(Vector2.ZERO, r, 0.0, TAU, 24, edge, 2.0, true)
+
+
+## 원뿔 독침 — 벌 전용(진행 방향 +X로 그리고 rotation으로 정렬).
+func _draw_cone() -> void:
+	var body := color                                # 벌 노란 몸
+	var tip := Color(0.30, 0.22, 0.05)               # 어두운 침 끝
+	var pts := PackedVector2Array([Vector2(15, 0), Vector2(-11, -8), Vector2(-11, 8)])
+	draw_colored_polygon(pts, body)
+	var outline := PackedVector2Array([Vector2(15, 0), Vector2(-11, -8), Vector2(-11, 8), Vector2(15, 0)])
+	draw_polyline(outline, Color(0, 0, 0, 0.55), 1.6, true)
+	draw_circle(Vector2(13, 0), 2.6, tip)            # 침 끝 강조
+	draw_circle(Vector2(-6, 0), 3.2, Color(1, 1, 1, 0.5))   # 몸 하이라이트

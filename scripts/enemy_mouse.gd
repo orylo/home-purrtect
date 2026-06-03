@@ -30,6 +30,8 @@ const ENEMY_FRAMES := {
 	"sparrow":       "res://assets/sprites/enemies/sparrow/sparrow_frames.tres",
 	"spider":        "res://assets/sprites/enemies/spider/spider_frames.tres",
 }
+const BLACK_IDS := ["black", "black_roller", "black_thrower"]   # 회색 프레임 리스킨
+const DARK_SHADER := preload("res://assets/shaders/enemy_darken.gdshader")
 
 # def에서 채워지는 행동/외형
 var def: Dictionary = {}
@@ -129,10 +131,16 @@ func _apply_def() -> void:
 			_has_attack = sf.has_animation("attack")
 			var fh: float = float(sf.get_frame_texture("walk", 0).get_height())
 			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0)   # 화면 표시 높이 = 몸크기 기준
+			if _id in BLACK_IDS:
+				sc *= 1.12                                     # 검은쥐 3종 = 회색보다 약간 크게
 			anim.scale = Vector2(sc, sc)
 			anim.position = Vector2(0, -fh * sc * 0.5)         # 발이 원점(바닥선)
-	if _use_sprite and _color.v < 0.45:
-		_base_modulate = _color   # 검은쥐 = 쥐 스프라이트 어둡게
+			if _id in BLACK_IDS:
+				var mat := ShaderMaterial.new()                # 회색 몸통만 어둡게(흰 손·눈 유지)
+				mat.shader = DARK_SHADER
+				anim.material = mat
+	if _use_sprite and _color.v < 0.45 and not ENEMY_FRAMES.has(_id):
+		_base_modulate = _color   # 프레임 없는 어두운 placeholder만 곱연산 다크(검은쥐는 셰이더가 처리)
 	# 보스: 큰 덩치에 맞춰 히트박스(탄환 명중)를 몸 중심으로 확대
 	if _big:
 		var hb_shape := RectangleShape2D.new()
@@ -242,6 +250,10 @@ func _fire_projectile() -> void:
 		return
 	_lunge = 0.16
 	var b := ENEMY_BULLET.instantiate()
+	if _kind == "lob":
+		b.shape = "stone"          # 투척쥐 2종 = 길냥이 돌멩이와 동일
+	elif _id == "bee":
+		b.shape = "cone"           # 벌 = 원뿔 독침
 
 	# 박쥐: 머리 높이 수평 음파 — 치즈가 서 있으면 맞고, 앉으면(숙이면) 회피
 	if _high:
