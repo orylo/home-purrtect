@@ -24,7 +24,8 @@ func _setup(m: ShaderMaterial) -> void:
 		m.set_shader_parameter("drift", -0.8)          # 한쪽으로 세게 부는 바람
 		m.set_shader_parameter("noise_scale", 2.7)
 		m.set_shader_parameter("contrast", 2.0)
-		m.set_shader_parameter("alpha", 0.6)           # 더 짙게(몰아치는 느낌)
+		m.set_shader_parameter("brightness", 0.5)      # 폭풍은 더 꽉 차게(몰아치는 느낌)
+		m.set_shader_parameter("alpha", 0.6)
 	else:
 		# 일반: 스테이지(이번 판)마다 모션·속도 랜덤
 		m.set_shader_parameter("anim_speed", randf_range(0.4, 1.0))
@@ -32,6 +33,7 @@ func _setup(m: ShaderMaterial) -> void:
 		m.set_shader_parameter("drift", randf_range(-0.4, 0.4))
 		m.set_shader_parameter("noise_scale", randf_range(1.6, 2.6))
 		m.set_shader_parameter("contrast", 1.6)
+		m.set_shader_parameter("brightness", randf_range(0.30, 0.40))   # 낮게 = 잔잔한 영역 많게
 		m.set_shader_parameter("alpha", 0.45)
 
 

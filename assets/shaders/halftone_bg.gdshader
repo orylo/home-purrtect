@@ -19,7 +19,7 @@ uniform float warp_strength : hint_range(0.0, 3.0) = 1.8;     // 도메인 워�
 uniform float drift : hint_range(-1.0, 1.0) = 0.15;          // 전체 흐름 방향(가로). +우 / -좌
 uniform float u_time = 0.0;                                   // 시간(스크립트가 매 프레임 주입 — TIME 대신 확실히 흐르게)
 uniform float contrast : hint_range(0.2, 4.0) = 1.6;          // 밝고 어두움 대비
-uniform float brightness : hint_range(0.0, 1.0) = 0.5;        // 전체 밝기(점 평균 크기)
+uniform float brightness : hint_range(0.0, 1.0) = 0.35;       // 전체 밝기. 낮을수록 빈/잔잔한 영역 많아짐(꽉 찬 부분 적게).
 
 group_uniforms look;
 uniform float alpha : hint_range(0.0, 1.0) = 0.45;            // 전체 불투명도(게임 안 가리게 약하게)
