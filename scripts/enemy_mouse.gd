@@ -32,6 +32,16 @@ const ENEMY_FRAMES := {
 }
 const BLACK_IDS := ["black", "black_roller", "black_thrower"]   # 회색 프레임 리스킨
 const DARK_SHADER := preload("res://assets/shaders/enemy_darken.gdshader")
+# 종류별 화면 크기 배율(쥐·투척쥐 제외하고 키움). 기본 1.0.
+const SIZE_MULT := {
+	"gray_roller": 1.28, "black_roller": 1.28,
+	"black": 1.18, "black_thrower": 1.12,
+	"bat": 1.35, "bee": 1.40, "sparrow": 1.32, "spider": 1.32,
+}
+# 발 위치 미세조정(양수=아래로 내려 지면에 더 가깝게). fh*sc 비율.
+const FOOT_NUDGE := {"spider": 0.14}
+const WINDUP_MELEE := 0.22    # 근접: 모션 시작 후 타격까지
+const WINDUP_RANGED := 0.30   # 원거리: 모션 시작 후 발사까지
 
 # def에서 채워지는 행동/외형
 var def: Dictionary = {}
@@ -70,6 +80,10 @@ var _eslow_factor: float = 1.0   # 둔화 시 이동 배율
 var _lunge: float = 0.0        # 근접 찌르기 모션 타이머
 var _dive: float = 0.0         # 참새 급강하(공격 때 내려갔다 올라옴) 타이머
 const DIVE_DUR := 0.5
+var _windup: float = 0.0           # 공격 모션 후 실제 타격까지 남은 시간
+var _windup_pending: bool = false
+var _windup_ranged: bool = false
+var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y(공중 다이브 계산용)
 var _popups: Array = []
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -131,10 +145,11 @@ func _apply_def() -> void:
 			_has_attack = sf.has_animation("attack")
 			var fh: float = float(sf.get_frame_texture("walk", 0).get_height())
 			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0)   # 화면 표시 높이 = 몸크기 기준
-			if _id in BLACK_IDS:
-				sc *= 1.12                                     # 검은쥐 3종 = 회색보다 약간 크게
+			sc *= float(SIZE_MULT.get(_id, 1.0))              # 종류별 크기 보정
 			anim.scale = Vector2(sc, sc)
-			anim.position = Vector2(0, -fh * sc * 0.5)         # 발이 원점(바닥선)
+			var nudge: float = float(FOOT_NUDGE.get(_id, 0.0)) * fh * sc
+			_sprite_foot_y = -fh * sc * 0.5 + nudge           # 발이 원점(+nudge=지면에 더 가깝게)
+			anim.position = Vector2(0, _sprite_foot_y)
 			if _id in BLACK_IDS:
 				var mat := ShaderMaterial.new()                # 회색 몸통만 어둡게(흰 손·눈 유지)
 				mat.shader = DARK_SHADER
@@ -206,31 +221,33 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_vx = 0.0
 
-	# 공격
+	# 공격: 트리거 시 모션(attack)만 먼저 재생 → 와인드업 후 _resolve_attack에서 실제 타격/발사
 	_attack_timer -= delta
-	if not stunned and not dead and _attack_timer <= 0.0:
+	if not stunned and not dead and not _windup_pending and _attack_timer <= 0.0:
 		if ranged:
 			if _atk_range > 0.0 and dist <= _atk_range:
 				_attack_timer = attack_interval
-				_fire_projectile()
-				if _use_sprite and _has_attack and not _hit:
-					anim.play("attack")
+				_start_attack(true)
 		elif _is_touching_player():
 			_attack_timer = attack_interval
-			_lunge = 0.16
-			if _use_sprite and _has_attack and not _hit:
-				anim.play("attack")
-			if _kind == "dive":
-				_dive = DIVE_DUR     # 참새: 공격 때 급강하(내려갔다 올라옴)
-			var player := get_tree().get_first_node_in_group("player")
-			if player and player.has_method("take_damage"):
-				player.take_damage(damage)
-				if _status != "" and player.has_method("apply_status"):
-					player.apply_status(_status)
+			_start_attack(false)
+	if _windup_pending:
+		_windup -= delta
+		if _windup <= 0.0:
+			_windup_pending = false
+			_resolve_attack()
 
 	# 스프라이트 적: 근접 찌르기 + 번쩍/스턴 색
 	if _use_sprite:
 		anim.position.x = -(_lunge / 0.16) * 16.0 if _lunge > 0.0 else 0.0
+		if _air:
+			# 참새 급강하: _dive 동안 바닥까지 내려갔다 떠오름. 평소엔 AIR_HEIGHT에 떠 있음.
+			var lift := 0.0
+			if _dive > 0.0:
+				lift = sin((1.0 - _dive / DIVE_DUR) * PI) * AIR_HEIGHT
+			anim.position.y = _sprite_foot_y - AIR_HEIGHT + lift
+		else:
+			anim.position.y = _sprite_foot_y
 		if _flash > 0.0:
 			_flash -= delta
 			anim.modulate = Color(2.0, 1.7, 0.4) if _flash_crit else Color(1.9, 1.9, 1.9)
@@ -242,6 +259,35 @@ func _physics_process(delta: float) -> void:
 		_flash -= delta
 
 	queue_redraw()
+
+
+## 공격 트리거 — 모션만 먼저 재생하고 타격/발사는 와인드업 뒤로 미룬다.
+func _start_attack(is_ranged: bool) -> void:
+	_windup_pending = true
+	_windup_ranged = is_ranged
+	_lunge = 0.16
+	if _use_sprite and _has_attack and not _hit:
+		anim.play("attack")
+	if not is_ranged and _kind == "dive":
+		_dive = DIVE_DUR              # 참새: 급강하 시작
+		_windup = DIVE_DUR * 0.5      # 바닥에 닿는 순간(다이브 최저점)에 타격
+	else:
+		_windup = WINDUP_RANGED if is_ranged else WINDUP_MELEE
+
+
+## 와인드업 종료 — 실제 데미지/발사. 그 사이 죽거나 경직/스턴되면 취소.
+func _resolve_attack() -> void:
+	if dead or _stun_timer > 0.0 or _hit:
+		return
+	if _windup_ranged:
+		if _atk_range > 0.0 and _dist_to_player() <= _atk_range * 1.2:
+			_fire_projectile()
+	elif _is_touching_player() or _kind == "dive":
+		var player := get_tree().get_first_node_in_group("player")
+		if player and player.has_method("take_damage"):
+			player.take_damage(damage)
+			if _status != "" and player.has_method("apply_status"):
+				player.apply_status(_status)
 
 
 func _fire_projectile() -> void:
