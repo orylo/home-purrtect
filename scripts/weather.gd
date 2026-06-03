@@ -13,7 +13,10 @@ extends Node2D
 ##   빛(z52 색감 위):     "fireflies" 반딧불 · "lightning" 번개(천둥→섬광+비)
 ##   화면 색감(z51 근경 위): "sunny" 쾌청(렌즈플레어+워밍) · "sunset" 노을(주황→분홍+태양) · "night" 밤(네이비→하늘색) · "overcast" 흐림(회색)
 ##   복합 전환:           "transition" 밤+비 → 여명 → 아침
-const WEATHER := {}
+##                        "shower" 흐림+비 → (웨이브3 시작 신호) 천천히 걷히고 → 쾌청(태양)
+const WEATHER := {
+	"1-3": "shower",   # 흐림색감+비로 시작, 마지막 웨이브 진입 시 비→태양 극적 전환
+}
 
 const RAIN_COL := Color(0.72, 0.80, 0.95, 0.55)
 const SNOW_COL := Color(1.0, 1.0, 1.0, 0.92)
@@ -48,7 +51,8 @@ var _flash := 0.0
 var _flash_next := 3.0
 var _flash2 := 0.0      # 잔섬광 대기
 var _flash_delay := 0.0 # 천둥 소리 후 섬광까지 대기(소리 먼저)
-var _trans := 0.0       # 전환 진행(0=밤+비 → 1=아침)
+var _trans := 0.0       # 전환 진행(0=시작 → 1=완료). transition/shower 공용
+var _clearing := false  # shower: 웨이브3 시작 후 비→태양 전환 진행 플래그
 var _layers: Array = [] # [WLayer ...]
 var _glow: GradientTexture2D    # 라디얼 그라데이션(부드러운 글로우/고스트용, 중심부터 falloff)
 var _sun: GradientTexture2D     # 태양 코어용 — 중심에 불투명 평지대(스킬슬롯 크기) → 블러 falloff
@@ -74,10 +78,21 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_rebuild)
 	_rebuild()
 	_flash_next = randf_range(1.5, 5.0)
+	# 소나기: 스포너의 웨이브 신호를 받아 마지막 웨이브(3) 진입 때 비→태양 전환 시작
+	if _mode == "shower":
+		var sp := get_parent().get_node_or_null("Spawner")
+		if sp != null and sp.has_signal("wave_started"):
+			sp.wave_started.connect(_on_wave_started)
+
+
+## 웨이브 시작 신호 — 소나기 모드에서 마지막 웨이브(3) 진입 시 전환 시작.
+func _on_wave_started(current: int, _total: int) -> void:
+	if _mode == "shower" and current >= 3:
+		_clearing = true
 
 
 func _is_particle(m: String) -> bool:
-	return m in ["rain", "snow", "leaves", "motes", "fireflies", "lightning", "transition"]
+	return m in ["rain", "snow", "leaves", "motes", "fireflies", "lightning", "transition", "shower"]
 
 
 func _rebuild() -> void:
@@ -85,7 +100,7 @@ func _rebuild() -> void:
 	_splash.clear()
 	if _is_particle(_mode):
 		var vp := get_viewport().get_visible_rect().size
-		var counts := {"rain": 140, "snow": 100, "leaves": 46, "motes": 70, "fireflies": 36, "lightning": 90, "transition": 140}
+		var counts := {"rain": 140, "snow": 100, "leaves": 46, "motes": 70, "fireflies": 36, "lightning": 90, "transition": 140, "shower": 140}
 		for i in int(counts.get(_mode, 0)):
 			_p.append(_make(vp, true))
 	_redraw_all()
@@ -98,7 +113,7 @@ func _redraw_all() -> void:
 
 func _make(vp: Vector2, scatter: bool) -> Dictionary:
 	var base := _mode
-	if base == "lightning" or base == "transition":
+	if base == "lightning" or base == "transition" or base == "shower":
 		base = "rain"
 	var y := (randf() * vp.y) if scatter else (-randf_range(10.0, vp.y * 0.4))
 	match base:
@@ -160,6 +175,8 @@ func _process(delta: float) -> void:
 			_flash_next = randf_range(1.4, 7.5)
 	if _mode == "transition":
 		_trans = minf(1.0, _trans + delta / 12.0)
+	if _mode == "shower" and _clearing:
+		_trans = minf(1.0, _trans + delta / 8.0)   # 웨이브3 후 8초에 걸쳐 비→태양
 	_redraw_all()
 
 
@@ -216,6 +233,11 @@ func _paint_particles(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 			var sunA: float = smoothstep(0.55, 1.0, _trans)         # 해는 아침에 떠오름
 			_draw_ground_particles(ci, gy, rainA)
 			if sunA > 0.0: _draw_sun(ci, vp, sunA)
+		"shower":
+			var rA: float = 1.0 - smoothstep(0.15, 0.55, _trans)    # 비 걷힘
+			var sA: float = smoothstep(0.5, 1.0, _trans)            # 태양 떠오름
+			_draw_ground_particles(ci, gy, rA)
+			if sA > 0.0: _draw_sun(ci, vp, sA)
 		_:
 			_draw_ground_particles(ci, gy, 1.0)
 
@@ -231,6 +253,12 @@ func _paint_tint(ci: CanvasItem, vp: Vector2) -> void:
 			_draw_vgradient(ci, vp, _NIGHT)
 		"overcast":
 			_draw_vgradient(ci, vp, _OVERCAST)  # 흐림(회색 틴트로 채도↓·납작)
+		"shower":
+			# 흐림 → (전환) → 쾌청 워밍. 흐림 걷히고 따뜻한 빛이 듦
+			var ocA: float = 1.0 - smoothstep(0.0, 0.5, _trans)
+			var warmA: float = smoothstep(0.5, 1.0, _trans)
+			if ocA > 0.0: _draw_vgradient(ci, vp, _OVERCAST, ocA)
+			if warmA > 0.0: ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(1, 1, 1, 0.06 * warmA))
 		"fireflies":
 			_draw_vgradient(ci, vp, _NIGHT)     # 반딧불은 밤 색감 위에서 반짝
 		"transition":
