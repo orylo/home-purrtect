@@ -5,7 +5,7 @@ extends Node
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy_mouse._die에서 emit.
 
 ## 빌드 버전 — 시작/선택 화면에 "0.0N ver." 로 표시(배포 때마다 올림)
-const BUILD := "0.55"
+const BUILD := "0.56"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -32,14 +32,21 @@ var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Mu
 var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 자동재생 게이트)
 
 ## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
-## ★새 모델: 등급 = 별개 장비. 전투 배율은 "장착된 등급"(equipped_grade) 기준.
+## ★합성 승급 모델(2026-06-04): 다음 등급 = 직전 등급 장비 + 재료(+코인). 합성 시 직전 등급 소모(등급당 0/1개).
+##   배율은 "장착된 등급"(equipped_grade) 기준. (자산관리 §2 / 시스템밸런스 §2.2)
 const LV_MULT := [1.0, 1.5, 2.2, 3.2, 4.5]
 func level_mult() -> float:
 	return LV_MULT[clampi(equipped_grade - 1, 0, 4)]
 
-## --- 등급 제작 (★레벨업 폐기, 시스템밸런스 §5.2-C/§2.2) ---
-## 각 상위 등급은 *별개 장비*로 제작. 비용: 2등급 1,000 / 3 2,500 / 4 5,000 / 5 10,000
-const GRADE_COST := [1000, 2500, 5000, 10000]   # index = (만들 등급 - 2)
+## --- 등급 합성 승급 (시스템밸런스 §5.2-C/§2.2) ---
+## 코인 비용: 2등급 1,000 / 3 2,500 / 4 5,000 / 5 10,000 (index = 만들 등급 - 2)
+const GRADE_COST := [1000, 2500, 5000, 10000]
+## 2등급 승급 재료(자산관리 §2.5 / 시스템밸런스 §5.2-B). 3~5등급 재료는 2막 TBD(현재 코인만).
+const GRADE_CRAFT := {
+	"sheriff": {2: {"fur_black": 10, "button": 3, "safety_pin": 2}},
+	"maid":    {2: {"fur_black": 10, "sack": 3, "thread_spool": 2}},
+	"jazz":    {2: {"fur_black": 10, "wheel": 3, "nail": 2}},
+}
 
 ## job이 보유한 최고 등급(없으면 0)
 func top_grade(job: String) -> int:
@@ -67,17 +74,34 @@ func craft_grade_cost(job: String) -> int:
 	var ng := next_grade(job)
 	return GRADE_COST[ng - 2] if ng >= 2 else 0
 
-func can_craft_grade(job: String) -> bool:
-	var c := craft_grade_cost(job)
-	return c > 0 and coins >= c
+## 다음 등급 승급에 필요한 재료(없으면 {}) — 2등급만 정의, 3~5는 코인만.
+func grade_mats(job: String) -> Dictionary:
+	var ng := next_grade(job)
+	return GRADE_CRAFT.get(job, {}).get(ng, {})
 
-## 상위 등급을 별개 장비로 제작(보유 등급 세트에 추가). 기존 직업을 "올리는" 게 아님.
+func can_craft_grade(job: String) -> bool:
+	var ng := next_grade(job)
+	if ng < 2 or coins < craft_grade_cost(job):
+		return false
+	var mats := grade_mats(job)
+	for mid in mats:
+		if mat_count(mid) < int(mats[mid]):
+			return false
+	return true
+
+## 합성 승급: 직전 등급 장비 + 재료 + 코인 → 다음 등급. 직전 등급은 소모(0/1개).
 func craft_grade(job: String) -> bool:
 	if not can_craft_grade(job):
 		return false
 	var ng := next_grade(job)
 	coins -= craft_grade_cost(job)
+	var mats := grade_mats(job)
+	for mid in mats:
+		materials[mid] = mat_count(mid) - int(mats[mid])
+	_remove_grade(job, ng - 1)              # 직전 등급 소모
 	_add_grade(job, ng)
+	if job == selected_job and equipped_grade == ng - 1:
+		equipped_grade = ng                 # 소모된 등급을 장착 중이었으면 새 등급 장착
 	if mode != "dev" and AUTOSAVE:
 		save_game()
 	return true
@@ -88,6 +112,12 @@ func _add_grade(job: String, g: int) -> void:
 	if g >= 1 and not a.has(g):
 		a.append(g)
 		a.sort()
+	owned_grades[job] = a
+
+## 보유 등급 세트에서 등급 제거(합성 소모)
+func _remove_grade(job: String, g: int) -> void:
+	var a: Array = owned_grades.get(job, [])
+	a.erase(g)
 	owned_grades[job] = a
 
 ## [개발자] 직업+등급 즉시 장착(1~grade 전부 보유 처리)

@@ -356,7 +356,7 @@ func _picker_entries() -> Array:
 			for sid in GameState.owned_for(GameState.selected_job):
 				out.append([sid, String(GameState.SKILLS[sid]["name"]), "스킬", Design.BLUE])
 		"item":
-			for id in ["bandage", "anchovy", "firecracker"]:
+			for id in GameState.CONSUMABLES:
 				if int(GameState.inventory.get(id, 0)) > 0:
 					out.append([id, String(GameState.CONSUMABLES[id]["name"]), "보유 %d" % int(GameState.inventory.get(id, 0)), Design.CHEESE_DEEP])
 	return out

@@ -430,8 +430,15 @@ func _refresh() -> void:
 	else:
 		var cur_mult: float = GameState.LV_MULT[clampi(maxi(1, g) - 1, 0, 4)]
 		var next_mult: float = GameState.LV_MULT[clampi(ng - 1, 0, 4)]
-		_lv_lbl.text = "%s 제작  (배율 ×%.1f → ×%.1f)" % [GameState.rank_label(ng, job), cur_mult, next_mult]
-		_buy_btn.text = "%s 제작  —  %s 코인" % [GameState.rank_label(ng, job), _commafy(cost)]
+		var mats: Dictionary = GameState.grade_mats(job)
+		var matstr := ""
+		if not mats.is_empty():
+			var parts: Array = []
+			for mid in mats:
+				parts.append("%s %d/%d" % [String(GameState.MATERIALS[mid]["name"]), GameState.mat_count(mid), int(mats[mid])])
+			matstr = "   ·   " + "  ".join(parts) + "   ·   직전 등급 소모"
+		_lv_lbl.text = "%s 합성  (배율 ×%.1f → ×%.1f)%s" % [GameState.rank_label(ng, job), cur_mult, next_mult, matstr]
+		_buy_btn.text = "%s 합성  —  %s 코인" % [GameState.rank_label(ng, job), _commafy(cost)]
 		_buy_btn.disabled = not GameState.can_craft_grade(job)
 	for id in _inv_lbls.keys():
 		_inv_lbls[id].text = "보유 %d" % int(GameState.inventory.get(id, 0))
@@ -445,10 +452,10 @@ func _on_buy_levelup() -> void:
 	var ng := GameState.next_grade(job)
 	if GameState.craft_grade(job):
 		Sfx.play("coin")
-		_toast_msg("%s 제작!" % GameState.job_title(job, ng))
+		_toast_msg("%s 합성! (직전 등급 소모)" % GameState.job_title(job, ng))
 		_refresh()
 	else:
-		_toast_msg("코인이 부족해요 (%s 필요)" % _commafy(GameState.craft_grade_cost(job)))
+		_toast_msg("코인·재료가 부족해요 (%s 코인 필요)" % _commafy(GameState.craft_grade_cost(job)))
 
 func _on_buy_consumable(id: String) -> void:
 	if GameState.buy_consumable(id):
