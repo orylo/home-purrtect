@@ -137,8 +137,36 @@ func _add(a: PackedFloat32Array, b: PackedFloat32Array) -> PackedFloat32Array:
 	return s
 
 
+## 트럼펫(브라스) 한 음 — 배음 풍부 + 어택에 살짝 'blat' 노이즈 + 미세 비브라토.
+##   음악가 평타. play 시 pitch_scale로 음표 종류별 음높이 차이.
+func _trumpet(dur := 0.30) -> PackedFloat32Array:
+	var n := int(RATE * dur)
+	var s := PackedFloat32Array(); s.resize(n)
+	var f0 := 392.0   # G4 기준(pitch 1.0)
+	var harm := [1.0, 0.7, 0.55, 0.42, 0.3, 0.2]   # 배음 진폭(브라스답게 풍부)
+	var atk := 0.012
+	var rel := 0.07
+	for i in n:
+		var t := float(i) / RATE
+		var f := f0 * (1.0 + 0.006 * sin(TAU * 5.5 * t))   # 살짝 비브라토
+		var v := 0.0
+		for h in harm.size():
+			v += harm[h] * sin(TAU * f * float(h + 1) * t)
+		v /= 3.0
+		var env := 0.85 + 0.15 * exp(-(t - atk) * 3.0)
+		if t < atk:
+			env = t / atk
+		elif t > dur - rel:
+			env = (dur - t) / rel
+		if t < 0.02:                                   # 어택 순간 'blat'
+			v += (randf() * 2.0 - 1.0) * 0.22 * (1.0 - t / 0.02)
+		s[i] = clampf(v * env * 0.6, -1.0, 1.0)
+	return s
+
+
 func _gen(name: String) -> AudioStreamWAV:
 	match name:
+		"trumpet": return _wav(_trumpet())                                      # 음악가 평타(트럼펫)
 		"click": return _wav(_noise(0.045, 80.0, 0.5))                          # UI 틱
 		"pop":   return _wav(_add(_noise(0.12, 28.0, 0.7), _sweep(420, 120, 0.12, 22.0)))  # 처치 펑
 		"hit":   return _wav(_add(_noise(0.06, 55.0, 0.55), _sweep(180, 70, 0.07, 40.0)))  # 타격 퍽

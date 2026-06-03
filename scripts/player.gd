@@ -533,7 +533,12 @@ func _fire_ranged() -> void:
 	get_parent().add_child(bullet)
 	if bullet.has_method("setup"):
 		bullet.setup(cfg)
-	Sfx.play("shoot", 0.85 if is_lob else (1.15 if not is_gun else 1.0))   # 던지기=낮게/음표=높게/총=기본
+	if ranged_shape == "note":
+		# 음악가 = 트럼펫. 음표 종류별 음높이(빠른 잇단=높게 / 4분=낮게).
+		var note_pitch: Array = [1.0, 1.5, 0.78]   # [0]8분 [1]잇단 [2]4분
+		Sfx.play("trumpet", note_pitch[int(cfg.get("note_type", 0))], -3.0)
+	else:
+		Sfx.play("shoot", 0.85 if is_lob else (1.15 if not is_gun else 1.0))   # 던지기=낮게/총=기본
 	# 보안관 총 발사: 큰 화염 + 화면 흔들림(불발과 확 차이)
 	if is_gun and is_instance_valid(muzzle_fx):
 		muzzle_fx.flash()   # 오른쪽으로 뻗는 직선 총구 화염(코드 드로잉) — 방사형 스프라이트는 손에서 터져 보여 제거
