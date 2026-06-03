@@ -45,7 +45,7 @@ const WINDUP_RANGED := 0.30   # 원거리(placeholder 폴백): 모션 시작 후
 # attack 애니에서 발사/타격이 일어나는 프레임(스프라이트 분석값).
 const ATK_RELEASE := {
 	"gray_thrower": 8, "black_thrower": 8,
-	"bee": 7, "spider": 3, "bat": 4, "sparrow": 6,
+	"bee": 7, "spider": 9, "bat": 4, "sparrow": 6,
 }
 # 사거리 안에서 attack 사이클을 루프하며 연속발사(발사=ATK_RELEASE 프레임).
 const LOOP_SHOOTERS := ["gray_thrower", "black_thrower", "spider", "bee"]
@@ -54,7 +54,7 @@ const EMIT_OFFSET := {
 	"gray_thrower":  Vector2(-118, 0),    # 던지는 손
 	"black_thrower": Vector2(-118, 0),
 	"bee":           Vector2(-110, 72),   # 엉덩이 침(좌하단)
-	"spider":        Vector2(55, -12),    # 복부(엉덩이, 우후방)
+	"spider":        Vector2(-115, 30),   # 엉덩이가 좌측 향할 때(#9) 뾰족한 끝(좌하단)
 	"bat":           Vector2(-51, -15),   # 입(좌)
 }
 # 공중 상하진동: c=평균 높이(px,위로) / a=진폭 / s=각속도. 최저점(바닥)=c-a.
