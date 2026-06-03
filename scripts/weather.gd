@@ -55,6 +55,7 @@ var _trans := 0.0       # 전환 진행(0=밤+비 → 1=아침)
 var _layers: Array = [] # [WLayer ...]
 var _glow: GradientTexture2D    # 라디얼 그라데이션(부드러운 글로우/고스트용, 중심부터 falloff)
 var _sun: GradientTexture2D     # 태양 코어용 — 중심에 불투명 평지대(스킬슬롯 크기) → 블러 falloff
+var _ring: GradientTexture2D    # 도넛(링) 고스트용 — 가운데 비고 가장자리 블러
 
 
 func _ready() -> void:
@@ -64,6 +65,7 @@ func _ready() -> void:
 		return
 	_glow = _make_glow()
 	_sun = _make_sun()
+	_ring = _radial([0.0, 0.50, 0.76, 1.0], [0.0, 0.0, 1.0, 0.0])   # 블러리 도넛(가운데 빔)
 	for spec in [["particles", Z_PARTICLES], ["tint", Z_TINT], ["light", Z_LIGHT]]:
 		var n := WLayer.new()
 		n.w = self
@@ -362,8 +364,8 @@ func _draw_flare(ci: CanvasItem, sun: Vector2, v: Vector2, a: float) -> void:
 		var col: Color = gcol[i]
 		var al: float = float(galp[i]) * a
 		if gring[i]:
-			_soft_disc(ci, pos, rad, col, al * 0.35)                                 # 옅은 채움
-			ci.draw_arc(pos, rad, 0.0, TAU, 56, Color(col.r, col.g, col.b, al), 3.0, true)  # 컬러 링
+			_soft_disc(ci, pos, rad, col, al * 0.30)              # 옅은 채움(블러)
+			_soft_disc(ci, pos, rad / 0.72, col, al, _ring)       # 블러리 도넛(딱딱한 외곽 없음)
 		else:
 			_soft_disc(ci, pos, rad, col, al)
 
