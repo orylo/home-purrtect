@@ -74,6 +74,8 @@ home-purrtect/
 - `GameState` (`game_state.gd`) — ★중심. 직업/스탯/Lv배율/명칭·등급/스테이지 진행/런 설정(mode·difficulty·cheats)/세이브(`user://save.json`)/`const BUILD`.
 - `RotateGate` (`rotate_gate.gd`) — 세로 화면일 때 "가로로 돌려주세요" 게이트.
 - `Enemies` (`enemy_data.gd`) — 적 10종 정의(ENEMY_DEFS) + 스테이지별 웨이브(STAGE_WAVES, §6-B).
+- `Sfx` (`sfx.gd`) — 효과음(Kenney CC0 파일 + 절차적 합성). `Sfx.play(name,pitch,vol)` / `Sfx.impact(crit)`. 트럼펫·퍼벅 등.
+- `Music` (`music.gd`) — BGM 화면별 자동전환(메뉴/전투/보스/프롤로그=무음). 보스 스테이지·음소거(`GameState.bgm_enabled`) 관리.
 
 ### 코드 맵 (주요 스크립트)
 - `player.gd` — 치즈: 이동/점프/앉기, 근접·원거리 자동전환 평타, 크리, 몸으로 밀기, 상태이상(독·둔화), 발밑 그림자·데미지 숫자.
@@ -86,7 +88,9 @@ home-purrtect/
 - `bottom_hud.gd` / `joystick.gd` / `attack_button.gd` — 하단 모바일 조작 UI.
 - `dev_menu.gd` / `debug_overlay.gd` — 개발자 메뉴 / 인게임 디버그 오버레이(🐞), 둘 다 DEV 게이트.
 - `start.gd` / `select.gd` — 시작·직업선택 화면.
-- `stage_background.gd` — 배경/바닥 정렬.
+- `prologue.gd` — 프롤로그 컷씬(6장면, 임시 비주얼+슬픔→온기 음악, 반응형·건너뛰기).
+- **배경 3레이어**: `stage_background.gd`(원경 far 그림 + 테마 랜덤풀/고정 선택 + 안개 데이터) / `ground_layer.gd`(지면 ground, 발선 자동정렬) / `foreground.gd`(근경 near 코너 식물, 바람 살랑). 풀/고정은 `stage_background`의 `POOL_COUNT`·`FIXED_GROUND`·`FIXED_FAR`.
+- `halftone_bg.gd`(+`assets/shaders/halftone_bg.gdshader`) — AM 하프톤 배경 셰이더(도메인워프 흐름·스테이지 랜덤·폭풍 프리셋), ColorRect에 부착.
 
 ---
 

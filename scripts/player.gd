@@ -546,7 +546,7 @@ func _fire_ranged() -> void:
 		bullet.setup(cfg)
 	if ranged_shape == "note":
 		# 음악가 = 트럼펫. 음표 종류별 음높이(빠른 잇단=높게 / 4분=낮게).
-		var note_pitch: Array = [1.0, 1.5, 0.78]   # [0]8분 [1]잇단 [2]4분
+		var note_pitch: Array = [0.85, 0.95, 0.78]   # [0]8분 [1]잇단 [2]4분 — 너무 높지 않게(모기소리 방지), 4분이 가장 듣기 좋음
 		Sfx.play("trumpet", note_pitch[int(cfg.get("note_type", 0))], -3.0)
 	else:
 		Sfx.play("shoot", 0.85 if is_lob else (1.15 if not is_gun else 1.0))   # 던지기=낮게/총=기본
