@@ -20,7 +20,7 @@ extends Node2D
 ## 원경 안개(공기원근) — far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
 @export var fog_enabled: bool = true
 
-const BG_LIFT := 200.0                      # 배경 전체(원경·안개·지면·근경)를 위로 올리는 양(px)
+const FAR_LIFT := 200.0                     # 원경(+안개)만 위로 올리는 양(px). 지면·근경은 항상 바닥 고정.
 const FOG_COL := Color(0.88, 0.92, 0.97)   # 안개 색(옅은 차가운 흰색)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
 #   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
@@ -151,7 +151,7 @@ func _draw_fog(vis: Vector2) -> void:
 		if x < 0.0:
 			x += span
 		x -= r                                    # 화면 밖에서 들어와 반대편으로 나감(끊김 없이 순환)
-		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - BG_LIFT
+		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y - FAR_LIFT
 		var col := FOG_COL
 		col.a = float(fb["a"])
 		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
@@ -178,7 +178,7 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
 	var w := t.x * sc
 	var h := t.y * sc
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - BG_LIFT), Vector2(w, h)), false)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - FAR_LIFT), Vector2(w, h)), false)
 
 
 ## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
@@ -189,5 +189,5 @@ func _draw_anchored(tex: Texture2D, vis: Vector2, top_anchor: bool) -> void:
 	var w := t.x * sc
 	var h := t.y * sc
 	var x := (vis.x - w) * 0.5
-	var y := (0.0 if top_anchor else (vis.y - h)) - BG_LIFT
+	var y := 0.0 if top_anchor else (vis.y - h)   # 지면=항상 바닥 고정(올리지 않음)
 	draw_texture_rect(tex, Rect2(Vector2(x, y), Vector2(w, h)), false)

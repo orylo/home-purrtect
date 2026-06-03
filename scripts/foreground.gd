@@ -22,5 +22,4 @@ func _draw() -> void:
 	var sc := vis.x / t.x                       # 좌우폭 = 화면폭
 	var w := t.x * sc
 	var h := t.y * sc
-	var lift: float = bg.BG_LIFT               # 배경과 같은 양만큼 위로
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, vis.y - h - lift), Vector2(w, h)), false)  # 하단 고정 + 올림
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, vis.y - h), Vector2(w, h)), false)  # 근경=항상 바닥 고정
