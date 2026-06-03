@@ -5,7 +5,7 @@ extends ColorRect
 ## 하프톤 날씨 프리셋 — 셰이더 uniform 묶음. 점 크기/밀도는 셰이더 기본값 유지, 모션·농도만 바꿈.
 const PRESETS := {
 	"calm":    {"anim_speed": 0.25, "warp": 1.0, "drift": 0.05, "contrast": 1.5, "brightness": 0.30, "alpha": 0.35, "noise": 2.0},  # 잔잔
-	"fog":     {"anim_speed": 0.28, "warp": 1.2, "drift": 0.10, "contrast": 1.2, "brightness": 0.55, "alpha": 0.55, "noise": 1.2},  # 안개 자욱(큰 덩어리·짙음)
+	"fog":     {"anim_speed": 0.28, "warp": 1.3, "drift": 0.10, "contrast": 1.6, "brightness": 0.42, "alpha": 0.50, "noise": 1.3},  # 안개 자욱(큰 덩어리, 빈틈 있게)
 	"windy":   {"anim_speed": 0.80, "warp": 0.8, "drift": 0.65, "contrast": 1.6, "brightness": 0.40, "alpha": 0.45, "noise": 1.6},  # 빠른 구름(옆으로 좍좍)
 	"shimmer": {"anim_speed": 0.60, "warp": 2.7, "drift": 0.00, "contrast": 1.7, "brightness": 0.35, "alpha": 0.40, "noise": 2.4},  # 아지랑이(제자리 일렁)
 	"storm":   {"anim_speed": 1.70, "warp": 2.9, "drift": 0.80, "contrast": 2.0, "brightness": 0.50, "alpha": 0.60, "noise": 2.7},  # 폭풍
