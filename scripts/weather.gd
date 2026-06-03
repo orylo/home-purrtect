@@ -11,7 +11,7 @@ extends Node2D
 ## ─ 구현된 날씨 종류 ─────────────────────────────────────────────
 ##   입자(z49 근경 아래): "rain" 비 · "snow" 눈 · "leaves" 낙엽 · "motes" 먼지(갈/회 알갱이)
 ##   빛(z52 색감 위):     "fireflies" 반딧불 · "lightning" 번개(천둥→섬광+비)
-##   화면 색감(z51 근경 위): "sunny" 쾌청(렌즈플레어+워밍) · "sunset" 노을(주황→분홍+태양) · "night" 밤(네이비→하늘색)
+##   화면 색감(z51 근경 위): "sunny" 쾌청(렌즈플레어+워밍) · "sunset" 노을(주황→분홍+태양) · "night" 밤(네이비→하늘색) · "overcast" 흐림(회색)
 ##   복합 전환:           "transition" 밤+비 → 여명 → 아침
 const WEATHER := {}
 
@@ -28,6 +28,7 @@ const _SUNSET := [[0.0, Color(0.94, 0.34, 0.06, 0.55)], [0.42, Color(1.0, 0.74, 
 const _NIGHT := [[0.0, Color(0.04, 0.05, 0.22, 0.62)], [0.45, Color(0.12, 0.22, 0.46, 0.42)], [1.0, Color(0.55, 0.74, 0.92, 0.20)]]
 const _DAWN := [[0.0, Color(0.22, 0.16, 0.34, 0.55)], [0.5, Color(0.95, 0.48, 0.30, 0.40)], [1.0, Color(1.0, 0.72, 0.58, 0.22)]]
 const _MORNING := [[0.0, Color(0.55, 0.74, 0.95, 0.20)], [1.0, Color(1.0, 0.93, 0.72, 0.12)]]
+const _OVERCAST := [[0.0, Color(0.52, 0.55, 0.59, 0.46)], [1.0, Color(0.72, 0.74, 0.76, 0.30)]]   # 흐림(채도 낮은 회색)
 
 
 ## 하위 레이어 — 자식 캔버스. 자기 _draw 때 부모(w)의 paint를 호출(자기 자신에 그림).
@@ -228,6 +229,8 @@ func _paint_tint(ci: CanvasItem, vp: Vector2) -> void:
 			_draw_vgradient(ci, vp, _SUNSET)
 		"night":
 			_draw_vgradient(ci, vp, _NIGHT)
+		"overcast":
+			_draw_vgradient(ci, vp, _OVERCAST)  # 흐림(회색 틴트로 채도↓·납작)
 		"fireflies":
 			_draw_vgradient(ci, vp, _NIGHT)     # 반딧불은 밤 색감 위에서 반짝
 		"transition":
