@@ -22,11 +22,11 @@ const FOG_COL := Color(0.88, 0.92, 0.97)   # 안개 색(옅은 차가운 흰색)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
 #   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
 const FOG_BLOBS := [
-	{"x0": 0.10, "y0": 0.17, "r": 0.40, "spd": 5.0,  "bob_s": 0.25, "bob_a": 0.015, "a": 0.30, "ph": 0.0},
-	{"x0": 0.55, "y0": 0.22, "r": 0.50, "spd": 3.5,  "bob_s": 0.18, "bob_a": 0.012, "a": 0.28, "ph": 1.7},
-	{"x0": 0.85, "y0": 0.13, "r": 0.34, "spd": 8.0,  "bob_s": 0.34, "bob_a": 0.016, "a": 0.34, "ph": 3.1},
-	{"x0": 0.30, "y0": 0.25, "r": 0.32, "spd": 11.0, "bob_s": 0.40, "bob_a": 0.020, "a": 0.30, "ph": 4.6},
-	{"x0": 0.70, "y0": 0.19, "r": 0.44, "spd": 6.5,  "bob_s": 0.22, "bob_a": 0.013, "a": 0.26, "ph": 2.2},
+	{"x0": 0.10, "y0": 0.17, "r": 0.40, "spd": 5.0,  "bob_s": 0.25, "bob_a": 0.015, "a": 0.36, "ph": 0.0},
+	{"x0": 0.55, "y0": 0.22, "r": 0.50, "spd": 3.5,  "bob_s": 0.18, "bob_a": 0.012, "a": 0.34, "ph": 1.7},
+	{"x0": 0.85, "y0": 0.13, "r": 0.34, "spd": 8.0,  "bob_s": 0.34, "bob_a": 0.016, "a": 0.40, "ph": 3.1},
+	{"x0": 0.30, "y0": 0.25, "r": 0.32, "spd": 11.0, "bob_s": 0.40, "bob_a": 0.020, "a": 0.36, "ph": 4.6},
+	{"x0": 0.70, "y0": 0.19, "r": 0.44, "spd": 6.5,  "bob_s": 0.22, "bob_a": 0.013, "a": 0.32, "ph": 2.2},
 ]
 var _t := 0.0
 var _fog_tex: ImageTexture
@@ -87,6 +87,7 @@ func _draw_fog(vis: Vector2) -> void:
 		if x < 0.0:
 			x += span
 		x -= r                                    # 화면 밖에서 들어와 반대편으로 나감(끊김 없이 순환)
+		x += _parallax_px(vis) * 1.4              # 안개는 far보다 살짝 더 움직임(깊이감)
 		var y: float = float(fb["y0"]) * vis.y + sin(_t * float(fb["bob_s"]) + float(fb["ph"])) * float(fb["bob_a"]) * vis.y
 		var col := FOG_COL
 		col.a = float(fb["a"])
@@ -107,14 +108,24 @@ func _make_fog_tex() -> ImageTexture:
 	return ImageTexture.create_from_image(img)
 
 
-## 원경(far) — 세로·가로 가운데 정렬(고정, 패럴럭스 없음).
-const FAR_ZOOM := 1.0         # 원경 추가 확대(1.0 = 확대 없음, 커버 스케일 그대로)
+## 원경(far) — 가운데 정렬 + 치즈 위치에 따라 아주 약한 패럴럭스(인지할랑말랑).
+const FAR_ZOOM := 1.0          # 원경 추가 확대(1.0 = 커버 스케일 그대로)
+const FAR_PARALLAX := 14.0     # 치즈 화면 끝까지 갈 때 far 이동 최대 px(아주 약하게)
 func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()
 	var sc := maxf(vis.x / t.x, vis.y / t.y) * bg_zoom * FAR_ZOOM
 	var w := t.x * sc
 	var h := t.y * sc
-	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5), Vector2(w, h)), false)
+	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5 + _parallax_px(vis), (vis.y - h) * 0.5), Vector2(w, h)), false)
+
+
+## 치즈 가로위치(0~1)에 비례한 패럴럭스 오프셋(가운데=0, 같은 방향). 플레이어 없으면 0.
+func _parallax_px(vis: Vector2) -> float:
+	var p := get_tree().get_first_node_in_group("player")
+	if p != null and p is Node2D:
+		var f: float = clampf((p as Node2D).global_position.x / maxf(vis.x, 1.0), 0.0, 1.0)
+		return (f - 0.5) * 2.0 * FAR_PARALLAX
+	return 0.0
 
 
 ## 좌우폭을 화면 폭에 딱 맞춰(가로 기준 스케일) 그리되, top_anchor면 상단·아니면 하단(바닥)에 붙임.
