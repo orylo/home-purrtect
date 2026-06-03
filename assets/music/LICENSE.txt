@@ -1,10 +1,14 @@
 Home Purrtect — 배경음악(BGM) 출처/라이선스
 =============================================
 
-bgm.wav — "Maple Leaf Rag" (Scott Joplin, 1899)
-  · 작곡: 퍼블릭 도메인(1899년 작, 저작권 만료)
-  · 음원: FreePD.com 컬렉션(현재 Internet Archive 보존: archive.org/details/freepd)
-    라이선스 CC0 1.0 (퍼블릭 도메인) — 상업적 사용 자유, 출처 표기 의무 없음.
-  · 가공: mp3(179초, 스테레오) → 모노 22050Hz wav 변환 + 앞뒤 무음 정리(174초).
-    Godot가 QOA로 압축 임포트 → 웹 빌드엔 약 1.6MB만 포함.
-  · 재생: scripts/music.gd (Music 오토로드), 전체 구간 이음새 없이 루프.
+전부 FreePD.com 컬렉션(현재 Internet Archive 보존: archive.org/details/freepd).
+라이선스 CC0 1.0 (퍼블릭 도메인) — 상업적 사용 자유, 출처 표기 의무 없음.
+
+| 파일        | 원곡             | 쓰임                         |
+|-------------|------------------|------------------------------|
+| battle.wav  | Drunken Party    | 전투(main) — 술집 피아노      |
+| menu.wav    | Going Bananas    | 시작·홈·상점 등 그 외 모든 화면 |
+
+가공: mp3 → 모노 22050Hz wav 변환 + 앞뒤 무음 정리.
+Godot가 QOA로 압축 임포트 → 웹 빌드엔 곡당 ~1.5MB 정도만 포함.
+재생: scripts/music.gd (Music 오토로드) — 현재 씬에 맞춰 자동 전환, 전체 구간 루프.
