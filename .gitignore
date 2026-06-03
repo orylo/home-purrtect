@@ -4,3 +4,6 @@
 
 # 웹 빌드 산출물(CI에서 생성)
 /build/
+
+# 컷씬용 BGM 라이브러리(후보 보관) — 용량 커서 git 제외, restore.sh로 복원
+assets/music/library/*.mp3
