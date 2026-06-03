@@ -20,8 +20,8 @@ var near_pieces: Array = []                  # 이번 판 근경 조각 [{corner
 ## 원경 안개(공기원근) — far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
 @export var fog_enabled: bool = true
 
-const FAR_LIFT_MIN := 100.0                 # 원경(+안개) 올림 범위(px). 매 판 이 사이 랜덤.
-const FAR_LIFT_MAX := 200.0
+const FAR_LIFT_MIN := 150.0                 # 원경(+안개) 올림 범위(px). 매 판 이 사이 랜덤.
+const FAR_LIFT_MAX := 400.0
 var _far_lift := 150.0                       # 이번 판 실제 올림값(_ready에서 랜덤). 지면·근경은 항상 바닥 고정.
 const FOG_COL := Color(0.97, 0.98, 1.0)    # 안개 색(거의 흰색 — 빈티지 망점)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
