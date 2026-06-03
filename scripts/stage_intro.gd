@@ -6,6 +6,7 @@ extends Node2D
 ##   v1: 1-1에서 "회색쥐" 스프라이트를 펑거스 대역으로 사용.
 
 const MFRAMES := preload("res://assets/sprites/enemies/mouse/mouse_frames.tres")
+const FUNGUS := preload("res://assets/sprites/fungus/fungus_frames.tres")
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 
 # design.md 색 토큰
@@ -55,6 +56,7 @@ var _first_kill_done := false
 # NPC 도보
 var _walking := false
 var _walk_target := 0.0
+var _walk_speed := WALK_SPEED
 
 
 func _ready() -> void:
@@ -76,8 +78,8 @@ func _process(delta: float) -> void:
 	if _walking and is_instance_valid(_npc):
 		var dir := signf(_walk_target - _npc.position.x)
 		_npc.flip_h = dir > 0.0                       # 오른쪽으로 가면 오른쪽 바라봄
-		_npc.position.x += dir * WALK_SPEED * delta
-		if absf(_npc.position.x - _walk_target) <= WALK_SPEED * delta:
+		_npc.position.x += dir * _walk_speed * delta
+		if absf(_npc.position.x - _walk_target) <= _walk_speed * delta:
 			_npc.position.x = _walk_target
 			_walking = false
 
@@ -102,7 +104,7 @@ func _run_intro() -> void:
 	_build_ui(0.0)                                      # 인트로는 Dim 없음
 	await _play_beats(_data["intro"])
 	_close_ui()
-	await _walk_to(vp.x + 200.0)                        # 우측으로 퇴장
+	await _walk_to(vp.x + 200.0, "run", WALK_SPEED * 2.2)   # 우측으로 달려 퇴장
 	if is_instance_valid(_npc):
 		_npc.queue_free()
 	if _hud != null:
@@ -138,22 +140,26 @@ func _run_popup(beats: Array) -> void:
 # ── NPC ────────────────────────────────────────────────
 func _spawn_npc(start_x: float) -> void:
 	_npc = AnimatedSprite2D.new()
-	_npc.sprite_frames = MFRAMES
-	_npc.scale = Vector2(0.65, 0.65)
-	_npc.position = Vector2(start_x, Layout.ground_y() - SPRITE_FOOT)
+	_npc.sprite_frames = FUNGUS                        # 펑거스 실제 스프라이트
+	var fh: float = float(FUNGUS.get_frame_texture("walk", 0).get_height())
+	var sc: float = 280.0 / maxf(fh, 1.0)              # 화면 표시 높이 ~280px
+	_npc.scale = Vector2(sc, sc)
+	_npc.position = Vector2(start_x, Layout.ground_y() - fh * sc * 0.5)   # 발이 바닥선
 	add_child(_npc)
 	_npc.play("walk")
 
 
-func _walk_to(tx: float) -> void:
+## anim: 이동 애니("walk"/"run"), speed: 이동 속도. 멈추면 idle.
+func _walk_to(tx: float, anim: String = "walk", speed: float = WALK_SPEED) -> void:
 	_walk_target = tx
+	_walk_speed = speed
 	_walking = true
 	if is_instance_valid(_npc):
-		_npc.play("walk")
+		_npc.play(anim)
 	while _walking:
 		await get_tree().process_frame
 	if is_instance_valid(_npc):
-		_npc.pause()                                   # 멈춰서 말하기
+		_npc.play("idle")                              # 멈춰서 말하기(idle)
 
 
 # ── 대화 UI(코드 생성) ──────────────────────────────────
@@ -210,7 +216,7 @@ func _build_ui(dim_alpha: float) -> void:
 	port.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(port)
 	var face := TextureRect.new()
-	face.texture = MFRAMES.get_frame_texture("walk", 0)
+	face.texture = FUNGUS.get_frame_texture("idle", 0)
 	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	face.set_anchors_preset(Control.PRESET_FULL_RECT)

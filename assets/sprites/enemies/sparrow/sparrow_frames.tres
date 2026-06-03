@@ -1,0 +1,109 @@
+[gd_resource type="SpriteFrames" load_steps=48 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_00.png" id="1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_01.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_02.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_03.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_04.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_05.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_06.png" id="7"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_07.png" id="8"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_08.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_09.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_10.png" id="11"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_11.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_12.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_13.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_14.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/attack/attack_15.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_00.png" id="17"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_01.png" id="18"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_02.png" id="19"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_03.png" id="20"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_04.png" id="21"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_05.png" id="22"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_06.png" id="23"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_07.png" id="24"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_08.png" id="25"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_09.png" id="26"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_10.png" id="27"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_11.png" id="28"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_12.png" id="29"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_13.png" id="30"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_14.png" id="31"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/hit/hit_15.png" id="32"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_00.png" id="33"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_01.png" id="34"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_02.png" id="35"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_03.png" id="36"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_04.png" id="37"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_05.png" id="38"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_06.png" id="39"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_07.png" id="40"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_08.png" id="41"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_09.png" id="42"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_10.png" id="43"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_11.png" id="44"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_12.png" id="45"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/sparrow/walk/walk_13.png" id="46"]
+
+[resource]
+animations = [{
+"frames": [{ "duration": 1.0, "texture": ExtResource("1") },
+{ "duration": 1.0, "texture": ExtResource("2") },
+{ "duration": 1.0, "texture": ExtResource("3") },
+{ "duration": 1.0, "texture": ExtResource("4") },
+{ "duration": 1.0, "texture": ExtResource("5") },
+{ "duration": 1.0, "texture": ExtResource("6") },
+{ "duration": 1.0, "texture": ExtResource("7") },
+{ "duration": 1.0, "texture": ExtResource("8") },
+{ "duration": 1.0, "texture": ExtResource("9") },
+{ "duration": 1.0, "texture": ExtResource("10") },
+{ "duration": 1.0, "texture": ExtResource("11") },
+{ "duration": 1.0, "texture": ExtResource("12") },
+{ "duration": 1.0, "texture": ExtResource("13") },
+{ "duration": 1.0, "texture": ExtResource("14") },
+{ "duration": 1.0, "texture": ExtResource("15") },
+{ "duration": 1.0, "texture": ExtResource("16") }],
+"loop": false,
+"name": &"attack",
+"speed": 10.0
+}, {
+"frames": [{ "duration": 1.0, "texture": ExtResource("17") },
+{ "duration": 1.0, "texture": ExtResource("18") },
+{ "duration": 1.0, "texture": ExtResource("19") },
+{ "duration": 1.0, "texture": ExtResource("20") },
+{ "duration": 1.0, "texture": ExtResource("21") },
+{ "duration": 1.0, "texture": ExtResource("22") },
+{ "duration": 1.0, "texture": ExtResource("23") },
+{ "duration": 1.0, "texture": ExtResource("24") },
+{ "duration": 1.0, "texture": ExtResource("25") },
+{ "duration": 1.0, "texture": ExtResource("26") },
+{ "duration": 1.0, "texture": ExtResource("27") },
+{ "duration": 1.0, "texture": ExtResource("28") },
+{ "duration": 1.0, "texture": ExtResource("29") },
+{ "duration": 1.0, "texture": ExtResource("30") },
+{ "duration": 1.0, "texture": ExtResource("31") },
+{ "duration": 1.0, "texture": ExtResource("32") }],
+"loop": false,
+"name": &"hit",
+"speed": 10.0
+}, {
+"frames": [{ "duration": 1.0, "texture": ExtResource("33") },
+{ "duration": 1.0, "texture": ExtResource("34") },
+{ "duration": 1.0, "texture": ExtResource("35") },
+{ "duration": 1.0, "texture": ExtResource("36") },
+{ "duration": 1.0, "texture": ExtResource("37") },
+{ "duration": 1.0, "texture": ExtResource("38") },
+{ "duration": 1.0, "texture": ExtResource("39") },
+{ "duration": 1.0, "texture": ExtResource("40") },
+{ "duration": 1.0, "texture": ExtResource("41") },
+{ "duration": 1.0, "texture": ExtResource("42") },
+{ "duration": 1.0, "texture": ExtResource("43") },
+{ "duration": 1.0, "texture": ExtResource("44") },
+{ "duration": 1.0, "texture": ExtResource("45") },
+{ "duration": 1.0, "texture": ExtResource("46") }],
+"loop": true,
+"name": &"walk",
+"speed": 10.0
+}]

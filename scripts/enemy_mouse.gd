@@ -17,6 +17,19 @@ const ENEMY_BULLET := preload("res://scenes/enemy_bullet.tscn")
 const ENEMY_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const DMG_POP_DUR := 0.8
 const AIR_HEIGHT := 230.0   # 공중 적이 떠 있는 높이(px)
+## 침입자별 SpriteFrames(검은 계열은 회색 프레임 재사용 + 어둡게 모듈레이트)
+const ENEMY_FRAMES := {
+	"gray":          "res://assets/sprites/enemies/gray/gray_frames.tres",
+	"gray_roller":   "res://assets/sprites/enemies/gray_roller/gray_roller_frames.tres",
+	"gray_thrower":  "res://assets/sprites/enemies/gray_thrower/gray_thrower_frames.tres",
+	"black":         "res://assets/sprites/enemies/gray/gray_frames.tres",
+	"black_roller":  "res://assets/sprites/enemies/gray_roller/gray_roller_frames.tres",
+	"black_thrower": "res://assets/sprites/enemies/gray_thrower/gray_thrower_frames.tres",
+	"bat":           "res://assets/sprites/enemies/bat/bat_frames.tres",
+	"bee":           "res://assets/sprites/enemies/bee/bee_frames.tres",
+	"sparrow":       "res://assets/sprites/enemies/sparrow/sparrow_frames.tres",
+	"spider":        "res://assets/sprites/enemies/spider/spider_frames.tres",
+}
 
 # def에서 채워지는 행동/외형
 var def: Dictionary = {}
@@ -26,6 +39,8 @@ var _high := false    # 박쥐: 머리 높이 수평 음파(서면 맞고 앉으
 var _big := false     # 보스: 큰 덩치 → 히트박스 확대 + 밀기 불가
 var _status := ""
 var _use_sprite := true
+var _has_idle := false      # 침입자 프레임에 idle 있나(공중=walk만)
+var _has_attack := false    # attack 애니 있나
 var _color := Color(0.6, 0.6, 0.62)
 var _bcolor := Color(0.7, 0.7, 0.7)
 var _body_r := 44.0
@@ -104,6 +119,18 @@ func _apply_def() -> void:
 	_id = String(def.get("id", ""))
 	_armor = float(def.get("armor", 0))
 	_ename = def.get("name", "침입자")
+	# 침입자별 SpriteFrames 로드(있으면 placeholder 대신 실제 스프라이트)
+	if ENEMY_FRAMES.has(_id):
+		var sf: SpriteFrames = load(ENEMY_FRAMES[_id])
+		if sf != null:
+			anim.sprite_frames = sf
+			_use_sprite = true
+			_has_idle = sf.has_animation("idle")
+			_has_attack = sf.has_animation("attack")
+			var fh: float = float(sf.get_frame_texture("walk", 0).get_height())
+			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0)   # 화면 표시 높이 = 몸크기 기준
+			anim.scale = Vector2(sc, sc)
+			anim.position = Vector2(0, -fh * sc * 0.5)         # 발이 원점(바닥선)
 	if _use_sprite and _color.v < 0.45:
 		_base_modulate = _color   # 검은쥐 = 쥐 스프라이트 어둡게
 	# 보스: 큰 덩치에 맞춰 히트박스(탄환 명중)를 몸 중심으로 확대
@@ -142,11 +169,13 @@ func _physics_process(delta: float) -> void:
 		if _hit_timer <= 0.0:
 			_hit = false
 
-	if not stunned:
+	if not stunned and not dead:
 		_phase_timer -= delta
 		if _phase_timer <= 0.0:
 			_walking = not _walking
 			_phase_timer = walk_time if _walking else stop_time
+			if _use_sprite and not _hit and not dead and anim.animation != "attack":
+				_play_move_anim()
 
 	var ranged := _kind == "lob" or _kind == "shoot"
 	var dist := _dist_to_player()
@@ -156,7 +185,7 @@ func _physics_process(delta: float) -> void:
 	if not stunned:
 		if _push_vx > 0.0:
 			base_vx = _push_vx
-		elif _walking and not _hit:
+		elif _walking and not _hit and not dead:
 			# 지상 원거리(투척쥐·거미)만 사거리에서 멈춰 발사(다가오지 않음).
 			# 공중 원거리(박쥐·벌)는 멈추지 않고 계속 비행하며 발사(§3.1 "비행(멈춤 없음)").
 			if ranged and not _air and _atk_range > 0.0 and dist <= _atk_range:
@@ -171,14 +200,18 @@ func _physics_process(delta: float) -> void:
 
 	# 공격
 	_attack_timer -= delta
-	if not stunned and _attack_timer <= 0.0:
+	if not stunned and not dead and _attack_timer <= 0.0:
 		if ranged:
 			if _atk_range > 0.0 and dist <= _atk_range:
 				_attack_timer = attack_interval
 				_fire_projectile()
+				if _use_sprite and _has_attack and not _hit:
+					anim.play("attack")
 		elif _is_touching_player():
 			_attack_timer = attack_interval
 			_lunge = 0.16
+			if _use_sprite and _has_attack and not _hit:
+				anim.play("attack")
 			if _kind == "dive":
 				_dive = DIVE_DUR     # 참새: 공격 때 급강하(내려갔다 올라옴)
 			var player := get_tree().get_first_node_in_group("player")
@@ -381,12 +414,21 @@ func apply_stun(dur: float) -> void:
 	Fx.burst("dizzy_stars", global_position + Vector2(0, -92.0 - (AIR_HEIGHT if _air else 0.0)), 0.46, 46, 14.0, true, dur)
 
 
+## 이동/정지 애니(idle 있으면 정지 시 idle, 아니면 walk).
+func _play_move_anim() -> void:
+	if _has_idle and not _walking:
+		if anim.animation != "idle":
+			anim.play("idle")
+	elif anim.animation != "walk":
+		anim.play("walk")
+
+
 func _on_anim_finished() -> void:
 	if dead:
 		queue_free()
-	elif _hit and anim.animation == "hit":
+	elif anim.animation == "hit" or anim.animation == "attack":
 		_hit = false
-		anim.play("walk")
+		_play_move_anim()
 
 
 func _die() -> void:
@@ -408,7 +450,11 @@ func _die() -> void:
 	Sfx.play("pop")
 	if _use_sprite:
 		anim.modulate = Color(1, 1, 1)
-		anim.play("ghost")
+		if anim.sprite_frames != null and anim.sprite_frames.has_animation("ghost"):
+			anim.play("ghost")               # 옛 mouse_frames(있으면)
+		else:
+			anim.play("hit")                 # 신규 침입자 프레임엔 ghost 없음 → hit 후 종료 시 free
+			get_tree().create_timer(0.5).timeout.connect(queue_free)
 	else:
 		var t := get_tree().create_timer(0.05)
 		t.timeout.connect(queue_free)
