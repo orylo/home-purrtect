@@ -22,6 +22,8 @@ func _version_plate() -> void:
 func _ready() -> void:
 	# [게임 시작] = 게임으로 "진입/수락" → 골드 브랜드 CTA(베벨). 전투 돌입 아니므로 빨강 아님(design.md §1 CTA규칙)
 	Design.style_button($StartButton, "brand", Design.FS_DISPLAY_S)
+	if GameState.has_save():
+		$StartButton.text = "이어하기"   # 세이브 있으면 이어하기로 표시
 	$StartButton.pressed.connect(_on_start)
 	# 버전 = 작은 금속 명판(물건화 데모, design.md §0-7). 원래 라벨은 숨김.
 	$Version.visible = false
@@ -47,6 +49,13 @@ func _ready() -> void:
 	story.position = Vector2(40, vp.y - 80)
 	story.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
 	add_child(story)
+	# [처음부터] = 진행 초기화(세이브 있을 때만 노출, 확인 팝업 거침). 이야기 버튼 오른쪽.
+	if GameState.has_save():
+		var fresh := Design.button("처음부터", "secondary", Design.FS_BODY)
+		fresh.custom_minimum_size = Vector2(150, 52)
+		fresh.position = Vector2(200, vp.y - 80)
+		fresh.pressed.connect(_confirm_new_game)
+		add_child(fresh)
 	# 첫 실행이면 프롤로그 자동 재생(본 뒤엔 prologue_seen=true → 안 뜸)
 	if not GameState.prologue_seen:
 		get_tree().change_scene_to_file.call_deferred("res://scenes/prologue.tscn")
@@ -69,13 +78,57 @@ func _layout_title() -> void:
 
 func _on_start() -> void:
 	GameState.mode = "player"
-	GameState.reset_progress()   # 항상 1-1부터(개발자 세션 잔여 해금 방지)
-	if GameState.AUTOSAVE:
-		GameState.load_game()    # (출시 빌드) 세이브 있으면 진행·해금 이어받기
+	# 세이브가 진실원천: 있으면 로드(개발자 세션 잔여 해금/코인 제거) = 이어하기 / 없으면 새 게임 1-1.
+	if GameState.AUTOSAVE and GameState.has_save():
+		GameState.load_game()
+	else:
+		GameState.reset_progress()
 	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 	GameState.difficulty = 1.0
 	GameState.sandbox = false   # 플레이어 모드는 항상 일반 스테이지
 	get_tree().change_scene_to_file("res://scenes/home.tscn")   # 홈 허브로
+
+
+func _on_new_game() -> void:
+	GameState.mode = "player"
+	GameState.new_game()         # 진행·별점·올스타 초기화 + 세이브 덮어쓰기
+	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
+	GameState.difficulty = 1.0
+	GameState.sandbox = false
+	get_tree().change_scene_to_file("res://scenes/home.tscn")
+
+
+## "처음부터" 확인 팝업(진행 삭제는 되돌릴 수 없어 한 번 묻는다)
+func _confirm_new_game() -> void:
+	var vp := get_viewport_rect().size
+	var ov := Control.new()
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(ov)
+	var dim := ColorRect.new()
+	dim.color = Color(Design.INK.r, Design.INK.g, Design.INK.b, 0.6)   # 모달 딤(§12)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.add_child(dim)
+	var panel := Panel.new()
+	panel.add_theme_stylebox_override("panel", Design.panel_box())
+	var pw := 520.0
+	var ph := 220.0
+	panel.position = Vector2((vp.x - pw) * 0.5, (vp.y - ph) * 0.5)
+	panel.size = Vector2(pw, ph)
+	ov.add_child(panel)
+	var msg := Design.label("처음부터 시작할까요?\n지금까지의 진행·별점이 모두 사라집니다.", "title", Design.INK)
+	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	msg.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	msg.offset_top = 28.0; msg.offset_bottom = 120.0
+	panel.add_child(msg)
+	var no := Design.button("아니오", "secondary", Design.FS_BODY)
+	no.position = Vector2(40, ph - 76.0); no.size = Vector2(200, 56); no.custom_minimum_size = no.size
+	no.pressed.connect(func(): ov.queue_free())
+	panel.add_child(no)
+	var yes := Design.button("처음부터", "danger", Design.FS_BODY)
+	yes.position = Vector2(pw - 240.0, ph - 76.0); yes.size = Vector2(200, 56); yes.custom_minimum_size = yes.size
+	yes.pressed.connect(_on_new_game)
+	panel.add_child(yes)
 
 
 func _on_dev() -> void:

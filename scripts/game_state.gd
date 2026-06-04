@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.85"
+const BUILD := "0.0.86"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -16,14 +16,18 @@ func _ready() -> void:
 	var f := load("res://assets/fonts/Pretendard-Regular.ttf")
 	if f:
 		ThemeDB.fallback_font = f
+	# 부팅 시 진행 복원(세이브 있으면) — 시작화면이 코인·프롤로그본여부 등 올바른 상태를 갖도록.
+	if AUTOSAVE:
+		load_game()   # 파일 없으면 무동작
 
 ## --- 개발 게이트 ---  출시 빌드 만들 때 false 또는 OS.has_feature("dev")로 교체
 const DEV := true
 func is_dev() -> bool:
 	return DEV
 
-## 진행 자동 저장/이어하기 — 개발 중엔 false(매번 1-1부터 순서대로 테스트). 출시 땐 true.
-const AUTOSAVE := false
+## 진행 자동 저장/이어하기 — 플레이어 모드 진행을 user://save.json에 저장(개발자 모드는 저장 안 함).
+##   true = 새로고침·재방문해도 이어하기. (개발자 모드 테스트는 항상 개발자 메뉴로 설정해 진입)
+const AUTOSAVE := true
 
 ## --- 이번 판 런 설정 (게임 본체가 이것만 읽어 실행) ---
 var mode: String = "player"        # "player" | "dev"
@@ -727,6 +731,19 @@ func finish_replay() -> void:
 
 
 ## 처음부터(필요 시) — 1-1, 맨몸만
+## 세이브 파일 존재 여부(시작화면 [이어하기]/[처음부터] 분기용)
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+## 새 게임 — 진행·별점·올스타 전부 초기화하고 세이브 덮어쓰기. (설정·프롤로그본여부는 유지)
+func new_game() -> void:
+	reset_progress()
+	stage_stars = {}
+	allstar_claimed = []
+	coachmark_seen = []
+	if AUTOSAVE:
+		save_game()
+
 func reset_progress() -> void:
 	stage_major = 1
 	stage_minor = 1
