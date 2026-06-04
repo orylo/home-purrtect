@@ -27,11 +27,17 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	# 세로로 긴 메뉴 → 스크롤 가능하게(작은 화면서 하단 [홈 화면]·[뒤로]가 잘려 안 보이던 문제 해결)
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED   # 세로만
+	add_child(scroll)
 	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 16)
+	box.add_theme_constant_override("separation", 14)
 	center.add_child(box)
 
 	box.add_child(_title("개발자 모드", 48))
@@ -153,9 +159,13 @@ func _ready() -> void:
 	box.add_child(_dim("↑ 침입자 안 나옴. 게임 중 🐞로 직접 스폰", 16))
 
 	# 홈 화면(개발) — 전투 대신 홈으로. 홈의 DEV 도구로 코인·스테이지·전리품 조작.
+	#   골드로 강조해 "전투(빨강 시작)와 별개의 목적지"임을 분명히(전엔 회색이라 못 보고 지나침).
+	box.add_child(_title("— 또는 —", 18))
 	var home_btn := Button.new()
-	home_btn.text = "홈 화면 (개발 도구)"
-	_font(home_btn, 24)
+	home_btn.text = "홈 화면으로 (개발 도구)"
+	_font(home_btn, 28)
+	Design.style_button(home_btn, "cheese", 28)
+	home_btn.custom_minimum_size = Vector2(0, 60)
 	home_btn.pressed.connect(_on_home)
 	box.add_child(home_btn)
 
