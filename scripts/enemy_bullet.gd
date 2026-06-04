@@ -74,13 +74,13 @@ func _draw() -> void:
 			draw_arc(Vector2.ZERO, 11.0, 0.0, TAU, 14, Color(0, 0, 0, 0.5), 1.5, true)
 
 
-## 회색 돌멩이 — 치즈(길냥이) 평타 돌멩이와 동일.
+## 밝은 회색 돌멩이 — 너무 까맣지 않게(따뜻한 톤).
 func _draw_stone() -> void:
 	var r := 16.0
-	var body := Color(0.55, 0.55, 0.58)
-	var edge := Color(0.28, 0.28, 0.30)
-	var shade := Color(0.42, 0.42, 0.45)
-	var hi := Color(0.72, 0.72, 0.75)
+	var body := Color(0.68, 0.66, 0.62)
+	var edge := Color(0.40, 0.38, 0.34)
+	var shade := Color(0.55, 0.53, 0.49)
+	var hi := Color(0.88, 0.86, 0.82)
 	draw_circle(Vector2.ZERO, r, body)
 	draw_circle(Vector2(r * 0.28, r * 0.3), r * 0.55, shade)   # 아래쪽 그림자
 	draw_circle(Vector2(-r * 0.32, -r * 0.32), r * 0.28, hi)   # 위쪽 하이라이트
