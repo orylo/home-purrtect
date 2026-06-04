@@ -110,6 +110,8 @@ var _hurt_flash_timer: float = 0.0
 var _poison_timer: float = 0.0   # 독(지속 데미지) 남은 시간
 var _poison_tick: float = 0.0    # 다음 독 틱까지
 var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
+var _poison_fx: AnimatedSprite2D # 독 이펙트(플레이어 자식 = 따라다님, 단일 노드 = 중첩 없음)
+var _slow_fx: AnimatedSprite2D   # 둔화 이펙트(상동)
 var _atk_buff_t: float = 0.0     # 말린 멸치: 공격력 버프 남은 시간
 const ATK_BUFF_MULT := 1.5       # 말린 멸치: +50%
 var _guard_t: float = 0.0        # 방패 자세: 피해감소 남은 시간
@@ -260,6 +262,7 @@ func _physics_process(delta: float) -> void:
 			_poison_damage(2.0)
 	if _slow_timer > 0.0:
 		_slow_timer -= delta
+	_drive_status_fx()
 	if _atk_buff_t > 0.0:
 		_atk_buff_t -= delta
 	if _guard_t > 0.0:
@@ -680,11 +683,11 @@ func apply_encore(dur: float) -> void:
 func apply_status(st: String) -> void:
 	if _dead or GameState.cheats.get("godmode", false):
 		return
+	# 재적용 = 타이머 갱신(중첩/스택 아님). 이펙트는 _drive_status_fx가 단일 노드로 표시.
 	match st:
 		"poison":
 			_poison_timer = 3.0
 			_poison_tick = 0.5
-			Fx.burst("poison_bubbles", global_position + Vector2(0, -90), 0.45, 46, 16.0, true, 3.0)
 		"slow":
 			_slow_timer = 2.5
 
@@ -699,6 +702,40 @@ func _poison_damage(amount: float) -> void:
 		health = 0.0
 		_dead = true
 		died.emit()
+
+
+## 상태이상 이펙트 갱신 — 플레이어 자식(따라다님)·단일 노드(중첩 없음). 타이머 살아있으면 표시.
+func _drive_status_fx() -> void:
+	if _poison_timer > 0.0:
+		if _poison_fx == null:
+			_poison_fx = _make_status_fx("poison_bubbles", Vector2(0, -105), 0.42, 46)
+		_poison_fx.visible = true
+	elif _poison_fx != null:
+		_poison_fx.visible = false
+	if _slow_timer > 0.0:
+		if _slow_fx == null:
+			_slow_fx = _make_status_fx("dizzy_stars", Vector2(0, -150), 0.40, 47)
+		_slow_fx.visible = true
+	elif _slow_fx != null:
+		_slow_fx.visible = false
+
+
+func _make_status_fx(anim: String, offset: Vector2, sc: float, z: int) -> AnimatedSprite2D:
+	var s := AnimatedSprite2D.new()
+	var sf := SpriteFrames.new()
+	for i in 9:
+		var t: Texture2D = load("res://assets/fx/%s/%d.png" % [anim, i])
+		if t:
+			sf.add_frame("default", t)
+	sf.set_animation_loop("default", true)
+	sf.set_animation_speed("default", 16.0)
+	s.sprite_frames = sf
+	s.position = offset
+	s.scale = Vector2(sc, sc)
+	s.z_index = z
+	add_child(s)
+	s.play("default")
+	return s
 
 
 func _update_animation(direction: float, delta: float) -> void:
