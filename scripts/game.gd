@@ -11,6 +11,7 @@ func _ready() -> void:
 	randomize()   # 매 판 적의 리듬·등장이 달라지게
 	GameState.start_battle_loot()   # 이번 판 전리품 집계 리셋(클리어 화면용)
 	spawner.wave_started.connect(hud.set_wave)
+	spawner.wave_started.connect(_on_wave_for_timing)
 	spawner.stage_cleared.connect(_on_stage_cleared)
 	player.died.connect(_on_player_died)
 	if hud.has_signal("inscene_event_requested"):
@@ -18,7 +19,22 @@ func _ready() -> void:
 	_spawn_event_chars()   # 1-5 펄·1-7 맥스 플레이스홀더 상주
 
 
+var _battle_time: float = 0.0   # 전투 실시간(별점용). 일시정지·이벤트 중엔 _process가 안 돌아 자동 제외.
+var _timing: bool = false
+
+
+func _on_wave_for_timing(current: int, _total: int) -> void:
+	if current == 1:                # 첫 웨이브 스폰 = 측정 시작(인트로 등은 이미 끝난 뒤)
+		_battle_time = 0.0
+		_timing = true
+
+
 func _process(delta: float) -> void:
+	# 별점 시간 누적 (이 _process는 트리 일시정지 중엔 안 돌아 이벤트·일시정지 자동 제외)
+	if _timing:
+		_battle_time += delta
+		if hud.has_method("set_battle_time"):
+			hud.set_battle_time(_battle_time)
 	# 화면 흔들림 — 월드(Main)와 배경(BG)을 같이 흔들고 HUD는 고정
 	var off := Vector2.ZERO
 	if Fx.shake > 0.0:
@@ -29,14 +45,30 @@ func _process(delta: float) -> void:
 
 
 func _on_stage_cleared() -> void:
-	if GameState.stage_minor == 5:
-		GameState.add_material("gem_pebble")     # 1-5 펄 해금: 💎빛나는(조약)돌 고정 지급(헌납 튜토)
-	var bonus := GameState.award_stage_clear()   # 첫 클리어 보너스 코인(파밍은 0)
-	var si := get_node_or_null("StageIntro")     # 클리어 퇴장 이벤트(있으면)가 먼저
+	# ★ 별점 판정 — 클리어 시점(전투 시간)으로 확정
+	_timing = false
+	var stg := GameState.stage_minor
+	var stars := GameState.rate_stars(stg, _battle_time)
+	var is_first := not GameState.cleared_stages.has(stg)
+	GameState.record_star(stg, stars)                 # 별 최고기록 max 갱신
+	var first_gem := ""
+	if is_first:
+		first_gem = GameState.first_clear_star_gem(stars)   # ★2/★3 첫클리어 보석
+		if first_gem != "":
+			GameState.add_material(first_gem)
+	var allstar: Array = GameState.check_allstar()    # 구간 올스타 보석(달성 시)
+	var star_info := {"stars": stars, "time": _battle_time, "first_gem": first_gem, "allstar": allstar}
+
+	if stg == 5:
+		GameState.add_material("gem_pebble")          # 1-5 펄 해금: 빛나는 조약돌 고정 지급(헌납 튜토)
+	var bonus := GameState.award_stage_clear(stars)   # 첫 클리어 보너스 코인(별 차등, 파밍은 0)
+	if GameState.mode != "dev" and GameState.AUTOSAVE:
+		GameState.save_game()                         # 별·보석 즉시 저장
+	var si := get_node_or_null("StageIntro")          # 클리어 퇴장 이벤트(있으면)가 먼저
 	if si != null and si.has_method("has_outro") and si.has_outro():
 		await si.play_outro()
 	get_tree().paused = true
-	hud.show_clear(bonus)
+	hud.show_clear(bonus, star_info)
 
 
 func _on_player_died() -> void:

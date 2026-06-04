@@ -35,6 +35,24 @@ var _event_text: String = ""
 var _inscene_event: bool = false   # 그 이벤트가 "전투 씬 내 컷씬"인지
 var _home_event: bool = false      # 컷씬 없이 홈+코치마크(D+)
 var coin_label: Label   # 상단 코인 표시(💰)
+var _time_label: Label  # 별점용 전투 경과시간(상단 중앙, 작게)
+
+
+## 전투 경과시간 표시(game._process가 매 프레임 호출). 라벨은 첫 호출 때 생성.
+func set_battle_time(t: float) -> void:
+	if _time_label == null:
+		_time_label = Label.new()
+		_time_label.add_theme_font_override("font", UI_FONT)
+		_time_label.add_theme_font_size_override("font_size", 20)
+		_time_label.add_theme_color_override("font_color", Color(1, 1, 1))
+		_time_label.add_theme_color_override("font_outline_color", Color("241f1b"))
+		_time_label.add_theme_constant_override("outline_size", 4)
+		_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var vp := get_viewport().get_visible_rect().size
+		_time_label.size = Vector2(140, 26)
+		_time_label.position = Vector2(vp.x * 0.5 - 70, 58)   # 스테이지 표기 아래, 가운데
+		add_child(_time_label)
+	_time_label.text = "%.1f초" % t
 
 
 func _ready() -> void:
@@ -143,11 +161,24 @@ func set_wave(current: int, total: int) -> void:
 	_wave_total = total
 
 
-func show_clear(bonus: int = 0) -> void:
+func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	Sfx.play("clear")
 	var msg := "스테이지 클리어!"
+	# ★ 별점 — 딴 별 + 클리어 시간(맨 위 강조)
+	if not star_info.is_empty():
+		var s := int(star_info.get("stars", 1))
+		msg += "\n%s   (★%d/3)   %.1f초" % ["★".repeat(s) + "·".repeat(3 - s), s, float(star_info.get("time", 0.0))]
 	if bonus > 0:
 		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
+	# 별 차등 보석 / 구간 올스타 보석
+	if not star_info.is_empty():
+		var fg := String(star_info.get("first_gem", ""))
+		if fg != "" and GameState.MATERIALS.has(fg):
+			msg += "\n[별 보상] %s ×1 획득!" % String(GameState.MATERIALS[fg]["name"])
+		for a in star_info.get("allstar", []):
+			var gid := String(a["gem"])
+			if GameState.MATERIALS.has(gid):
+				msg += "\n[구간 올스타] %s ×1 획득!" % String(GameState.MATERIALS[gid]["name"])
 	var loot := GameState.run_loot_summary()
 	if loot != "":
 		msg += "\n전리품: " + loot           # #2: 이번 판 얻은 전리품 표시

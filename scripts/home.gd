@@ -35,6 +35,11 @@ func _build() -> void:
 	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
 	stage.position = Vector2(E, E)
 	add_child(stage)
+	# 1막 별 진행도(올스타 컬렉션 안내)
+	var ap := GameState.allstar_progress()
+	var stars_lbl := Design.label("★ %d / %d" % [ap.x, ap.y], "num", Design.CHEESE)
+	stars_lbl.position = Vector2(E + 8.0, E + 112.0)
+	add_child(stars_lbl)
 
 	# ── 우상단: 종/편지/친구/설정/메뉴 5버튼(우→좌) + 그 왼쪽에 보유 코인 ──
 	var ic_w := 84.0     # 버튼 텍스트(2글자)가 넘치지 않게 고정폭 → 균일·비겹침

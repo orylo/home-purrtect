@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.78"
+const BUILD := "0.0.79"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -34,6 +34,8 @@ var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
 var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 자동재생 게이트)
 var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
+var stage_stars: Dictionary = {}   # 별 최고기록 {"1-1": best_star(1~3)} — 재도전으로 max 갱신
+var allstar_claimed: Array = []    # 구간 올스타 보상 1회 지급 플래그(act1_1_10/act1_11_20/act1_full)
 
 ## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
 ## ★합성 승급 모델(2026-06-04): 다음 등급 = 직전 등급 장비 + 재료(+코인). 합성 시 직전 등급 소모(등급당 0/1개).
@@ -507,19 +509,111 @@ func is_job_unlocked(job: String) -> bool:
 	return unlocked_jobs.has(job)
 
 
+## 첫 클리어 코인 = 별 차등(§5.7). base에 별 배수를 곱함. 계수는 상수(추후 튜닝).
+const FIRST_CLEAR_STAR2_MULT := 1.5   # ★2 = round(base × 1.5)
+const FIRST_CLEAR_STAR3_MULT := 2.0   # ★3 = base × 2
+
 ## 스테이지 클리어 보상 — 첫 클리어면 보너스 코인 지급(파밍은 0). 지급액 반환(연출용).
-##   첫 클리어 = 20 + 5×스테이지번호 (§5.1) + 보스 보너스(1-10 +100 / 1-20 +200)
-func award_stage_clear() -> int:
+##   base = 20 + 5×스테이지번호 (§5.1) + 보스 보너스(1-10 +100 / 1-20 +200)
+##   별 차등: ★1=base / ★2=round(base×1.5) / ★3=base×2 (첫 클리어 시점 별로 1회 고정).
+func award_stage_clear(stars: int = 1) -> int:
 	if cleared_stages.has(stage_minor):
 		return 0
 	cleared_stages.append(stage_minor)
-	var bonus := 20 + 5 * stage_minor
+	var base := 20 + 5 * stage_minor
 	if stage_minor == 10:
-		bonus += 100
+		base += 100
 	elif stage_minor == 20:
-		bonus += 200
+		base += 200
+	var mult := 1.0
+	if stars >= 3:
+		mult = FIRST_CLEAR_STAR3_MULT
+	elif stars == 2:
+		mult = FIRST_CLEAR_STAR2_MULT
+	var bonus := int(round(base * mult))
 	coins += bonus
 	return bonus
+
+
+# ── ★ 스테이지 별점 시스템 (시스템밸런스 §5.7) ──────────────────────────────
+#   클리어 "전투 실시간" 기준 ★1~3. 별=추가 당근일 뿐 진행 게이팅 금지(BM 원칙).
+#   계수는 상수(추후 난이도별 튜닝 가능). 시작값 — 플레이테스트 튜닝 대상.
+const STAR_PER_WAVE_T2 := 30.0   # 일반: ★2 기준 = 웨이브수 × 30s
+const STAR_PER_WAVE_T3 := 20.0   # 일반: ★3 기준 = 웨이브수 × 20s
+const STAR_BOSS_T2 := 180.0      # 보스(1-10/1-20): ★2 = 180s
+const STAR_BOSS_T3 := 120.0      # 보스: ★3 = 120s
+const BOSS_STAGES := [10, 20]
+const STAR2_GEMS := ["gem_gravel", "gem_pebble", "gem_shell"]                 # ★2 첫클리어 = 하급 보석 랜덤(사다리 #1~3)
+const STAR3_GEMS := ["gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz"] # ★3 = 중급 보석 랜덤(#4~7)
+## 구간 올스타(전부 ★3) 컬렉션 보상 — 각 1회
+const ALLSTAR_SEGMENTS := [
+	{"id": "act1_1_10",  "from": 1,  "to": 10, "gem": "gem_amethyst"},   # 자수정
+	{"id": "act1_11_20", "from": 11, "to": 20, "gem": "gem_rose"},        # 로즈쿼츠
+	{"id": "act1_full",  "from": 1,  "to": 20, "gem": "gem_sapphire"},    # 사파이어
+]
+
+func _stage_wave_count(stage: int) -> int:
+	if Enemies.STAGE_WAVES.has(stage):
+		return (Enemies.STAGE_WAVES[stage] as Array).size()
+	return 2
+
+func star_time_t3(stage: int) -> float:
+	return STAR_BOSS_T3 if stage in BOSS_STAGES else _stage_wave_count(stage) * STAR_PER_WAVE_T3
+func star_time_t2(stage: int) -> float:
+	return STAR_BOSS_T2 if stage in BOSS_STAGES else _stage_wave_count(stage) * STAR_PER_WAVE_T2
+
+## 클리어 시간(초) → ★1~3 (클리어만 하면 무조건 ★1).
+func rate_stars(stage: int, clear_time: float) -> int:
+	if clear_time <= star_time_t3(stage):
+		return 3
+	if clear_time <= star_time_t2(stage):
+		return 2
+	return 1
+
+func _star_key(stage: int) -> String:
+	return "%d-%d" % [stage_major, stage]
+
+func best_star(stage: int) -> int:
+	return int(stage_stars.get(_star_key(stage), 0))
+
+## 별 최고기록 갱신(max). 갱신된 best 반환.
+func record_star(stage: int, stars: int) -> int:
+	var k := _star_key(stage)
+	var b := maxi(int(stage_stars.get(k, 0)), stars)
+	stage_stars[k] = b
+	return b
+
+## 첫 클리어 별 차등 보석 id(★1=없음). 첫 클리어 1회만 호출(중복 지급 금지는 호출측 책임).
+func first_clear_star_gem(stars: int) -> String:
+	if stars >= 3:
+		return STAR3_GEMS[randi() % STAR3_GEMS.size()]
+	if stars == 2:
+		return STAR2_GEMS[randi() % STAR2_GEMS.size()]
+	return ""
+
+## 구간 올스타 체크 — 새로 달성한 구간의 보석을 지급하고 [{id,gem}] 반환(1회씩).
+func check_allstar() -> Array:
+	var got: Array = []
+	for seg in ALLSTAR_SEGMENTS:
+		if allstar_claimed.has(seg["id"]):
+			continue
+		var all3 := true
+		for s in range(int(seg["from"]), int(seg["to"]) + 1):
+			if best_star(s) < 3:
+				all3 = false
+				break
+		if all3:
+			allstar_claimed.append(seg["id"])
+			add_material(String(seg["gem"]))
+			got.append({"id": seg["id"], "gem": seg["gem"]})
+	return got
+
+## 1막 별 진행도(획득 별 합, 최대 60 = 20스테이지×3).
+func allstar_progress() -> Vector2i:
+	var earned := 0
+	for s in range(1, 21):
+		earned += best_star(s)
+	return Vector2i(earned, 60)
 
 
 ## 클리어 이벤트 텍스트(로드맵 2-B) — 해당 스테이지 클리어 시 띄울 해금 이벤트. 없으면 "".
@@ -715,6 +809,8 @@ func save_game() -> void:
 		"bgm_enabled": bgm_enabled,              # 배경음악 켜짐 여부
 		"prologue_seen": prologue_seen,          # 프롤로그 봤는지
 		"coachmark_seen": coachmark_seen,        # 홈 코치마크 본 항목
+		"stage_stars": stage_stars,              # 스테이지 별 최고기록
+		"allstar_claimed": allstar_claimed,      # 구간 올스타 보상 지급 플래그
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -740,6 +836,17 @@ func load_game() -> void:
 		if typeof(cms) == TYPE_ARRAY:
 			for c in cms:
 				coachmark_seen.append(String(c))
+		# 별점(마이그레이션: 없으면 빈 값 — 이미 클리어한 판은 best 0에서 재도전으로 갱신, 첫클리어 보상은 받은 것으로 간주)
+		stage_stars = {}
+		var ss = data.get("stage_stars", {})
+		if typeof(ss) == TYPE_DICTIONARY:
+			for k in ss:
+				stage_stars[String(k)] = int(ss[k])
+		allstar_claimed = []
+		var ac = data.get("allstar_claimed", [])
+		if typeof(ac) == TYPE_ARRAY:
+			for a in ac:
+				allstar_claimed.append(String(a))
 		cleared_stages = []
 		var cs = data.get("cleared_stages", [])
 		if typeof(cs) == TYPE_ARRAY:
