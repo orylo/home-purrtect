@@ -107,6 +107,12 @@ func _commafy(n: int) -> String:
 	return out
 
 
+## 초 → "MM:SS" (별점 클리어 시간 표기)
+func _fmt_mmss(t: float) -> String:
+	var sec := int(round(t))
+	return "%02d:%02d" % [sec / 60, sec % 60]
+
+
 ## 알약(pill) 스타일 박스 — bw>0이면 테두리(고스트)
 func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
@@ -164,21 +170,25 @@ func set_wave(current: int, total: int) -> void:
 func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	Sfx.play("clear")
 	var msg := "스테이지 클리어!"
-	# ★ 별점 — 딴 별 + 클리어 시간(맨 위 강조)
+	# ★ 별점 — 딴 별(채움/빈칸) + 클리어 시간 + 다음 도전 목표시간(맨 위 강조)
 	if not star_info.is_empty():
 		var s := int(star_info.get("stars", 1))
-		msg += "\n%s   (★%d/3)   %.1f초" % ["★".repeat(s) + "·".repeat(3 - s), s, float(star_info.get("time", 0.0))]
+		msg += "\n%s   (★%d/3)" % ["★".repeat(s) + "·".repeat(3 - s), s]
+		msg += "\n클리어 시간 %s" % _fmt_mmss(float(star_info.get("time", 0.0)))
+		var t2 := int(round(float(star_info.get("t2", 0.0))))
+		var t3 := int(round(float(star_info.get("t3", 0.0))))
+		if t2 > 0 and t3 > 0:
+			msg += "   (★★ %ds · ★★★ %ds)" % [t2, t3]
+		# 재도전 신기록(첫 클리어가 아닌데 별 기록을 갱신했을 때)
+		if not bool(star_info.get("is_first", true)) and bool(star_info.get("new_best", false)):
+			msg += "\n★ 신기록!  최고 ★%d 갱신" % s
 	if bonus > 0:
 		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
-	# 별 차등 보석 / 구간 올스타 보석
+	# 별 차등 보석(첫 클리어 ★2/★3). 구간 올스타 보석은 스테이지 맵 [받기]로 수령(여기 표시 안 함).
 	if not star_info.is_empty():
 		var fg := String(star_info.get("first_gem", ""))
 		if fg != "" and GameState.MATERIALS.has(fg):
 			msg += "\n[별 보상] %s ×1 획득!" % String(GameState.MATERIALS[fg]["name"])
-		for a in star_info.get("allstar", []):
-			var gid := String(a["gem"])
-			if GameState.MATERIALS.has(gid):
-				msg += "\n[구간 올스타] %s ×1 획득!" % String(GameState.MATERIALS[gid]["name"])
 	var loot := GameState.run_loot_summary()
 	if loot != "":
 		msg += "\n전리품: " + loot           # #2: 이번 판 얻은 전리품 표시
@@ -189,12 +199,16 @@ func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	var ev := GameState.clear_event_for(stg)
 	# 알림형(D/D+): 드랍 정산 결과창 하단에 해금 알림 한 줄(드랍과 사건 분리 — 가이드 §1-B).
 	#   인스씬 컷씬(A)·보스(C)는 사건을 컷씬/별도 씬이 알리므로 결과창엔 안 얹음.
-	var show_notice := ev != "" and not (stg in INSCENE_EVENT_STAGES) and not (stg in [10, 20])
+	var show_notice := ev != "" and not GameState.replaying and not (stg in INSCENE_EVENT_STAGES) and not (stg in [10, 20])
 	if show_notice:
 		msg += "\n\n✨ " + ev
 	clear_title.text = msg
-	# 라우팅: 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스 등) / 일반(D·없음)
-	if stg in INSCENE_EVENT_STAGES:
+	# 라우팅: (파밍 재도전) 맵 복귀 / 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스) / 일반(D·없음)
+	if GameState.replaying:                   # 스테이지 맵 [재도전] 파밍 — 진행 안 올리고 맵 복귀(이벤트 생략)
+		_event_pending = false; _inscene_event = false; _home_event = false
+		clear_next.text = "지도로 ▶"
+		clear_restart.visible = true; clear_restart.text = "다시 도전"
+	elif stg in INSCENE_EVENT_STAGES:
 		_event_pending = true; _inscene_event = true; _home_event = false
 		clear_next.text = "확인 ▶"; clear_restart.visible = false
 	elif stg in HOME_EVENT_STAGES:
@@ -233,6 +247,14 @@ func _on_to_select_pressed() -> void:
 
 ## [다음 ▶ / 확인 ▶] — 이벤트 스테이지면 [확인]→이벤트 씬으로 랜딩, 아니면 다음 스테이지
 func _on_clear_next() -> void:
+	# 파밍 재도전(스테이지 맵): 진행 안 올리고 맵으로 복귀(프론티어 복원).
+	if GameState.replaying:
+		get_tree().paused = false
+		GameState.finish_replay()
+		if GameState.mode != "dev" and GameState.AUTOSAVE:
+			GameState.save_game()
+		get_tree().change_scene_to_file("res://scenes/stagemap.tscn")
+		return
 	# 전투 씬 내 컷씬(보안관 등): 씬전환·언포즈 없이 결과창만 닫고 game.gd에 위임
 	if _inscene_event:
 		_inscene_event = false
@@ -264,9 +286,13 @@ func _on_clear_next() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
-## [홈으로] — 클리어 후 허브로 (개발자 모드는 개발자 메뉴로)
+## [홈으로 / 다시 도전] — 클리어 후 허브로 (개발자 모드는 개발자 메뉴로)
 func _on_clear_home() -> void:
 	get_tree().paused = false
+	# 파밍 재도전: 같은 스테이지 한 번 더(진행·replaying 유지).
+	if GameState.replaying:
+		get_tree().reload_current_scene()
+		return
 	GameState.advance_stage()
 	if GameState.mode != "dev" and GameState.AUTOSAVE:
 		GameState.save_game()

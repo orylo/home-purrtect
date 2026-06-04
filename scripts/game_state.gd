@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.79"
+const BUILD := "0.0.80"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -36,6 +36,7 @@ var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 �
 var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
 var stage_stars: Dictionary = {}   # 별 최고기록 {"1-1": best_star(1~3)} — 재도전으로 max 갱신
 var allstar_claimed: Array = []    # 구간 올스타 보상 1회 지급 플래그(act1_1_10/act1_11_20/act1_full)
+var replaying: bool = false        # (임시·비저장) 스테이지 맵 [재도전] 파밍 중 — true면 클리어해도 진행 안 올리고 맵 복귀
 
 ## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
 ## ★합성 승급 모델(2026-06-04): 다음 등급 = 직전 등급 장비 + 재료(+코인). 합성 시 직전 등급 소모(등급당 0/1개).
@@ -591,22 +592,43 @@ func first_clear_star_gem(stars: int) -> String:
 		return STAR2_GEMS[randi() % STAR2_GEMS.size()]
 	return ""
 
-## 구간 올스타 체크 — 새로 달성한 구간의 보석을 지급하고 [{id,gem}] 반환(1회씩).
-func check_allstar() -> Array:
-	var got: Array = []
+## 구간 정의 조회(id로). 없으면 {}.
+func allstar_segment(seg_id: String) -> Dictionary:
 	for seg in ALLSTAR_SEGMENTS:
-		if allstar_claimed.has(seg["id"]):
-			continue
-		var all3 := true
-		for s in range(int(seg["from"]), int(seg["to"]) + 1):
-			if best_star(s) < 3:
-				all3 = false
-				break
-		if all3:
-			allstar_claimed.append(seg["id"])
-			add_material(String(seg["gem"]))
-			got.append({"id": seg["id"], "gem": seg["gem"]})
-	return got
+		if String(seg["id"]) == seg_id:
+			return seg
+	return {}
+
+## 구간 진행도 Vector2i(★3 스테이지 수, 구간 스테이지 총수). 스테이지 맵 띠 표시용.
+func allstar_segment_progress(seg_id: String) -> Vector2i:
+	var seg := allstar_segment(seg_id)
+	if seg.is_empty():
+		return Vector2i.ZERO
+	var done := 0
+	for s in range(int(seg["from"]), int(seg["to"]) + 1):
+		if best_star(s) >= 3:
+			done += 1
+	return Vector2i(done, int(seg["to"]) - int(seg["from"]) + 1)
+
+## 구간 올스타 보상 수령 가능? (구간 전부 best★3 & 아직 미수령)
+func can_claim_allstar(seg_id: String) -> bool:
+	if allstar_claimed.has(seg_id):
+		return false
+	var p := allstar_segment_progress(seg_id)
+	return p.y > 0 and p.x >= p.y
+
+## [받기] 수령 — 보석 1개 지급 + allstar_claimed 기록(중복 방지). 지급한 보석 id 반환(실패 시 "").
+##   ※ 별점 로직(클리어)은 자동 지급하지 않음 — 수령은 오직 스테이지 맵 [받기]로(수동).
+func claim_allstar(seg_id: String) -> String:
+	if not can_claim_allstar(seg_id):
+		return ""
+	var seg := allstar_segment(seg_id)
+	var gem := String(seg["gem"])
+	allstar_claimed.append(seg_id)
+	add_material(gem)
+	if mode != "dev" and AUTOSAVE:
+		save_game()
+	return gem
 
 ## 1막 별 진행도(획득 별 합, 최대 60 = 20스테이지×3).
 func allstar_progress() -> Vector2i:
@@ -676,6 +698,25 @@ func stage_label() -> String:
 func advance_stage() -> void:
 	stage_minor += 1
 	_check_stage_unlocks()
+
+
+# ── 스테이지 맵 [재도전] 파밍 ───────────────────────────────────────────────
+## 진행 프론티어(가장 멀리 도달한 스테이지 = 최고 클리어+1, 1~20). 파밍 복귀 시 여기로 되돌림.
+func frontier_stage() -> int:
+	var top := 0
+	for s in cleared_stages:
+		top = maxi(top, int(s))
+	return clampi(top + 1, 1, 20)
+
+## 맵에서 특정 스테이지 파밍 시작 — 진행 포인터를 덮지 않도록 replaying 플래그로 격리.
+func begin_replay(n: int) -> void:
+	replaying = true
+	stage_minor = clampi(n, 1, 20)
+
+## 파밍 종료 — 진행 포인터를 프론티어로 복원(맵 진입 전 위치로).
+func finish_replay() -> void:
+	replaying = false
+	stage_minor = frontier_stage()
 
 
 ## 처음부터(필요 시) — 1-1, 맨몸만

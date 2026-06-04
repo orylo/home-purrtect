@@ -10,6 +10,7 @@ var _coin_lbl: Label   # 개발 도구에서 코인 즉시 갱신용
 func _ready() -> void:
 	if GameState.mode != "dev":     # 개발 모드면 유지(홈에서 DEV 도구 사용)
 		GameState.mode = "player"
+	GameState.replaying = false     # 홈 복귀 = 파밍 세션 종료(안전망)
 	_build()
 
 
@@ -35,11 +36,11 @@ func _build() -> void:
 	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
 	stage.position = Vector2(E, E)
 	add_child(stage)
-	# 1막 별 진행도(올스타 컬렉션 안내)
+	# 1막 별 진행도 → 스테이지 맵 진입 버튼(별점 허브)
 	var ap := GameState.allstar_progress()
-	var stars_lbl := Design.label("★ %d / %d" % [ap.x, ap.y], "num", Design.CHEESE)
-	stars_lbl.position = Vector2(E + 8.0, E + 112.0)
-	add_child(stars_lbl)
+	_btn("지도  ★ %d/%d" % [ap.x, ap.y], Vector2(E, E + 60.0), Vector2(220, 50),
+			"cheese", Design.FS_BODY,
+			func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
 
 	# ── 우상단: 종/편지/친구/설정/메뉴 5버튼(우→좌) + 그 왼쪽에 보유 코인 ──
 	var ic_w := 84.0     # 버튼 텍스트(2글자)가 넘치지 않게 고정폭 → 균일·비겹침
@@ -68,7 +69,7 @@ func _build() -> void:
 
 	# DEV 도구(개발 빌드 전용) — 좌상단 스테이지 플레이트 아래.
 	if GameState.is_dev():
-		_btn("DEV 도구", Vector2(E, E + 60.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
+		_btn("DEV 도구", Vector2(E, E + 118.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
 
 	# ── 좌측 중앙: 펄·맥스 세로 스택(해금 게이팅) ──
 	var npc_sz := Vector2(160, 64)

@@ -50,17 +50,22 @@ func _on_stage_cleared() -> void:
 	var stg := GameState.stage_minor
 	var stars := GameState.rate_stars(stg, _battle_time)
 	var is_first := not GameState.cleared_stages.has(stg)
+	var prev_best := GameState.best_star(stg)         # 신기록 판정용(갱신 전 기록)
 	GameState.record_star(stg, stars)                 # 별 최고기록 max 갱신
 	var first_gem := ""
 	if is_first:
 		first_gem = GameState.first_clear_star_gem(stars)   # ★2/★3 첫클리어 보석
 		if first_gem != "":
 			GameState.add_material(first_gem)
-	var allstar: Array = GameState.check_allstar()    # 구간 올스타 보석(달성 시)
-	var star_info := {"stars": stars, "time": _battle_time, "first_gem": first_gem, "allstar": allstar}
+	# 구간 올스타 보석은 자동 지급 안 함 — 스테이지 맵 [받기]로 수동 수령(claim_allstar).
+	var star_info := {
+		"stars": stars, "time": _battle_time, "first_gem": first_gem,
+		"is_first": is_first, "new_best": stars > prev_best,
+		"t2": GameState.star_time_t2(stg), "t3": GameState.star_time_t3(stg),
+	}
 
-	if stg == 5:
-		GameState.add_material("gem_pebble")          # 1-5 펄 해금: 빛나는 조약돌 고정 지급(헌납 튜토)
+	if stg == 5 and is_first:
+		GameState.add_material("gem_pebble")          # 1-5 펄 해금: 빛나는 조약돌 고정 지급(헌납 튜토, 첫 클리어만 — 재도전 파밍 중복 방지)
 	var bonus := GameState.award_stage_clear(stars)   # 첫 클리어 보너스 코인(별 차등, 파밍은 0)
 	if GameState.mode != "dev" and GameState.AUTOSAVE:
 		GameState.save_game()                         # 별·보석 즉시 저장
