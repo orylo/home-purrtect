@@ -219,9 +219,15 @@ func _apply_settings() -> void:
 
 
 # --- helpers ---
+## 글꼴·크기 + 글자색 INK 강제. (전역 테마는 밝은 톤이라 CheckBox/OptionButton/SpinBox 등
+##  타입별 색을 안 정해두면 엔진 기본=흰색 → 밝은 바탕에 흰 글씨로 안 보임. 그걸 막는다.)
 func _font(c: Control, fs: int) -> void:
 	c.add_theme_font_override("font", FONT)
 	c.add_theme_font_size_override("font_size", fs)
+	c.add_theme_color_override("font_color", INK)
+	c.add_theme_color_override("font_hover_color", INK)
+	c.add_theme_color_override("font_pressed_color", INK)
+	c.add_theme_color_override("font_focus_color", INK)
 
 func _label(text: String, fs: int) -> Label:
 	var l := Label.new()
@@ -233,7 +239,7 @@ func _label(text: String, fs: int) -> Label:
 
 func _dim(text: String, fs: int) -> Label:
 	var l := _label(text, fs)
-	l.add_theme_color_override("font_color", Color(0.45, 0.45, 0.45))
+	l.add_theme_color_override("font_color", Color(0.32, 0.30, 0.28))   # 밝은 바탕서 읽히는 진한 회갈
 	return l
 
 func _title(text: String, fs: int) -> Label:

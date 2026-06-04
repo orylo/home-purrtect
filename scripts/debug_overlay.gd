@@ -66,6 +66,7 @@ func _build_ui() -> void:
 	spin.max_value = 20
 	spin.value = GameState.stage_minor
 	spin.custom_minimum_size = Vector2(90, 0)
+	_font(spin, 18)   # 값 글자 INK(안 그러면 흰 글씨로 안 보임)
 	srow.add_child(spin)
 	var go := Button.new()
 	go.text = "이동"
@@ -130,7 +131,8 @@ func _sec(box: VBoxContainer, text: String) -> void:
 	l.text = text
 	l.add_theme_font_override("font", FONT)
 	l.add_theme_font_size_override("font_size", 16)
-	l.add_theme_color_override("font_color", Color(1.0, 0.7, 0.2))
+	# 섹션 헤더 = 빨강(밝은 패널 위 가독·강조). 기존 골드(1.0,0.7,0.2)는 크림 위 저대비라 교체(§14).
+	l.add_theme_color_override("font_color", Color(0.84, 0.25, 0.18))
 	box.add_child(l)
 
 
@@ -145,3 +147,5 @@ func _btn(box: VBoxContainer, label: String, fn: Callable) -> void:
 func _font(c: Control, fs: int) -> void:
 	c.add_theme_font_override("font", FONT)
 	c.add_theme_font_size_override("font_size", fs)
+	# 글자색 INK 강제 — SpinBox 등 타입별 색 미지정 컨트롤이 밝은 바탕에 흰 글씨로 안 보이는 것 방지.
+	c.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275))
