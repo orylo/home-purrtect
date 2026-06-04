@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.77"
+const BUILD := "0.0.78"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -179,7 +179,7 @@ const MATERIALS := {
 	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
 	# 연상 잡템(침입자 드랍 10%) — 매입가 출처: 기획_전리품보석도감.md §2 (플레이테스트 튜닝 대상)
 	"cheese_crumb":    {"name": "치즈 부스러기", "sell": 1},
-	"cheese":          {"name": "치즈 조각",   "sell": 3},
+	"cheese":          {"name": "치즈 조각",   "sell": 4},
 	"nail":            {"name": "녹슨 못",     "sell": 2},
 	"button":          {"name": "단추",        "sell": 2},
 	"thread_spool":    {"name": "실패",        "sell": 2},
@@ -442,7 +442,7 @@ const BLESSINGS := {
 }
 const BLESSING_ORDER := ["claw", "belly", "coin"]
 const GEM_FAVOR := {"gem_gravel": 1, "gem_pebble": 1, "gem_shell": 2, "gem_marble": 2, "gem_glass_bead": 3, "gem_agate": 4, "gem_quartz": 6, "gem_amber": 8, "gem_amethyst": 12, "gem_garnet": 17, "gem_rose": 24, "gem_teal": 33, "gem_sapphire": 45, "gem_emerald": 62, "gem_pearl": 85, "gem_teardrop": 115, "gem_ruby": 155, "gem_diamond": 200}
-const FAVOR_THRESHOLDS := [30, 80, 200, 500]   # Lv2/Lv3/Lv4/Lv5 누적 호감도
+const FAVOR_THRESHOLDS := [40, 120, 320, 800]   # Lv2/Lv3/Lv4/Lv5 누적 호감도(가속 곡선, 2026-06-04 재계산). Lv3=1막 현실 천장 / Lv4·5=2막+
 var pearl_favor: int = 0          # 누적 호감도
 var selected_blessing: String = ""   # 이번 판 축복("claw"/"belly"/"coin"/"")
 var run_coin_mult: float = 1.0    # 이번 판 동전 배율(곳간 축복)
