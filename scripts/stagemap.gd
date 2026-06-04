@@ -8,7 +8,8 @@ const COLS := 5
 const ROWS := 4
 const ACT_NAME := {1: "담벼락"}   # 막 부제(없으면 생략)
 
-var _toast: Label
+var _toast: Panel
+var _toast_lbl: Label
 var _toast_t := 0.0
 
 
@@ -30,19 +31,30 @@ func _build() -> void:
 	add_child(bg)
 
 	_build_topbar(vp, E)
-	var band_h := 150.0
-	var grid_top := E + 76.0
-	var grid_h := vp.y - grid_top - band_h - E - 12.0
+	var band_h := 144.0                        # 8px 그리드(§0-6)
+	var grid_top := E + 80.0
+	var grid_h := vp.y - grid_top - band_h - E - float(Design.GAP_XS)
 	_build_grid(vp, E, grid_top, grid_h)
 	_build_collection(vp, E, vp.y - E - band_h, band_h)
 
-	# 토스트(수령 알림)
-	_toast = Design.label("", "title", Design.CHEESE)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast.size = Vector2(vp.x, 50)
-	_toast.position = Vector2(0, vp.y * 0.42)
-	_toast.visible = false
+	# 토스트(수령 알림) — 상단중앙 PAPER 알약(§3.6)
+	var tw := 420.0
+	_toast = Panel.new()
 	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast.size = Vector2(tw, float(Design.BAR_H)); _toast.position = Vector2(vp.x * 0.5 - tw * 0.5, E + 64.0)
+	var tsb := StyleBoxFlat.new()
+	tsb.bg_color = Design.PAPER
+	tsb.set_corner_radius_all(int(Design.BAR_H / 2))
+	tsb.set_border_width_all(Design.OUTLINE_W); tsb.border_color = Design.INK
+	tsb.shadow_color = Color(Design.INK.r, Design.INK.g, Design.INK.b, 0.5); tsb.shadow_offset = Vector2(0, Design.SHADOW_OFF)
+	_toast.add_theme_stylebox_override("panel", tsb)
+	_toast_lbl = Design.label("", "title", Design.INK)
+	_toast_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_toast_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_toast_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_toast.add_child(_toast_lbl)
+	_toast.visible = false
 	add_child(_toast)
 
 
@@ -62,29 +74,33 @@ func _build_topbar(vp: Vector2, E: float) -> void:
 	home.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 	add_child(home)
 
-	# 막 이름(중앙)
+	# 막 이름(중앙) — 명판(물건화: 볼트 포함)
 	var sub: String = ACT_NAME.get(GameState.stage_major, "")
 	var title_txt := "%d막 %s" % [GameState.stage_major, sub] if sub != "" else "%d막 스테이지" % GameState.stage_major
 	var plate := Design.framed_plate(title_txt, "title")
-	plate.size = Vector2(320, 52)
+	plate.size = Vector2(320, float(Design.BAR_H))
 	plate.position = Vector2(vp.x * 0.5 - 160.0, E)
 	add_child(plate)
 
-	# 우측: 별 총합 + 코인
+	# 우측: 별 총합·코인 = 재화 캡슐(§3.5 #6, 그릇 안에·등간격)
 	var ap := GameState.allstar_progress()
-	var star_lbl := Design.label("★ %d/%d" % [ap.x, ap.y], "num", Design.CHEESE)
-	star_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	star_lbl.size = Vector2(180, 26); star_lbl.position = Vector2(vp.x - E - 180.0, E)
-	add_child(star_lbl)
-	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
-	coin.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	coin.size = Vector2(180, 26); coin.position = Vector2(vp.x - E - 180.0, E + 28.0)
-	add_child(coin)
+	var cap_w := 176.0
+	var coin_cap := _coin_capsule("코인 " + _commafy(GameState.coins))
+	coin_cap.position = Vector2(vp.x - E - cap_w, E); coin_cap.size = Vector2(cap_w, float(Design.BAR_H))
+	add_child(coin_cap)
+	var star_cap := _coin_capsule("★ %d/%d" % [ap.x, ap.y])
+	star_cap.position = Vector2(vp.x - E - cap_w * 2.0 - float(Design.GAP_XS), E); star_cap.size = Vector2(cap_w, float(Design.BAR_H))
+	add_child(star_cap)
+
+
+## 재화 캡슐 — 명판(PAPER_DEEP 바탕·잉크 외곽·볼트, 물건화). 글자=잉크(크림 위 골든 금지 §14).
+func _coin_capsule(text: String) -> Panel:
+	return Design.framed_plate(text, "num")
 
 
 # ── 스테이지 그리드 (1-1 ~ 1-20) ───────────────────────────────────────────
 func _build_grid(vp: Vector2, E: float, top: float, h: float) -> void:
-	var gap := 14.0
+	var gap := float(Design.GAP)   # 16 (8px 그리드)
 	var cw := (vp.x - 2.0 * E - (COLS - 1) * gap) / COLS
 	var ch := (h - (ROWS - 1) * gap) / ROWS
 	for i in 20:
@@ -100,10 +116,8 @@ func _make_cell(n: int, pos: Vector2, sz: Vector2) -> void:
 	var is_boss := n == 10 or n == 20
 	var best := GameState.best_star(n)
 
-	var kind := "paper"
-	if cleared and is_boss:
-		kind = "cheese"        # 보스 = 골든 강조
-	var cell := Design.button("", kind, Design.FS_BODY)
+	# 칸 = Secondary(크림) 공통. 보스는 빨강 채움이 아니라 '빨강 테두리'로 강조(빨강=전투/보스도전 §1, 골든 남용 방지).
+	var cell := Design.button("", "paper", Design.FS_BODY)
 	cell.position = pos
 	cell.custom_minimum_size = sz; cell.size = sz
 	cell.clip_contents = true
@@ -113,6 +127,20 @@ func _make_cell(n: int, pos: Vector2, sz: Vector2) -> void:
 		cell.pressed.connect(func(): _replay(n))
 	else:
 		cell.disabled = true   # 미클리어 = 잠금(흐림, 비활성)
+
+	# 보스 강조 = 빨강 잉크 테두리 오버레이(전투 의미색)
+	if is_boss:
+		var ring := Panel.new()
+		ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ring.set_anchors_preset(Control.PRESET_FULL_RECT)
+		ring.offset_left = 3.0; ring.offset_top = 3.0; ring.offset_right = -3.0; ring.offset_bottom = -3.0
+		var rb := StyleBoxFlat.new()
+		rb.bg_color = Color(0, 0, 0, 0); rb.draw_center = false
+		rb.set_corner_radius_all(999)
+		rb.set_border_width_all(4)
+		rb.border_color = Design.RED if cleared else Design.PAPER_DEEP
+		ring.add_theme_stylebox_override("panel", rb)
+		cell.add_child(ring)
 
 	# 스테이지 번호
 	var idl := Design.label("%d-%d" % [GameState.stage_major, n], "title", Design.INK if cleared else Design.INK.lerp(Design.PAPER_DEEP, 0.45))
@@ -174,33 +202,41 @@ func _make_segment(seg: Dictionary, pos: Vector2, sz: Vector2) -> void:
 	var claimed := GameState.allstar_claimed.has(seg_id)
 	var ready := GameState.can_claim_allstar(seg_id)
 
+	# 보상 칸 = 물건화(크림 바탕 + 잉크 외곽 + 모서리 볼트 4). 달성 전엔 PAPER_DEEP로 가라앉힘.
 	var panel := Panel.new()
 	panel.position = pos; panel.size = sz; panel.custom_minimum_size = sz
-	panel.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER if ready else Design.PAPER_DEEP, 4, 12))
+	panel.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER if ready else Design.PAPER_DEEP, 4, Design.RADIUS_CARD))
 	add_child(panel)
+	_corner_bolts(panel)
 
-	var rng := Design.label("%d-%d ~ %d-%d 올스타" % [GameState.stage_major, int(seg["from"]), GameState.stage_major, int(seg["to"])], "body", Design.INK)
+	var rng := Design.label("%d-%d ~ %d-%d 올스타" % [GameState.stage_major, int(seg["from"]), GameState.stage_major, int(seg["to"])], "caption", Design.INK)
 	rng.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rng.size = Vector2(sz.x - 16, 26); rng.position = Vector2(8, 10)
+	rng.size = Vector2(sz.x - 16, 24); rng.position = Vector2(8, 12)
 	panel.add_child(rng)
 
-	var reward := Design.label("%s ★%d/%d" % [gem_name, prog.x, prog.y], "num", Design.CHEESE)
-	reward.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	reward.size = Vector2(sz.x - 16, 30); reward.position = Vector2(8, 44)
-	panel.add_child(reward)
+	var gem_lbl := Design.label(gem_name, "title", Design.INK)
+	gem_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gem_lbl.size = Vector2(sz.x - 16, 34); gem_lbl.position = Vector2(8, 40)
+	panel.add_child(gem_lbl)
+
+	# ★ 진행도 = 골든 숫자 + 잉크 외곽선(크림 위 골든은 외곽선으로 분리, §14)
+	var prog_lbl := Design.label("★ %d/%d" % [prog.x, prog.y], "num", Design.CHEESE)
+	prog_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	prog_lbl.size = Vector2(sz.x - 16, 30); prog_lbl.position = Vector2(8, 76)
+	panel.add_child(prog_lbl)
 
 	var btn: Button
 	if claimed:
-		btn = Design.button("받음 ✓", "paper", Design.FS_BODY)
+		btn = Design.button("받음 ✓", "paper", Design.FS_BODY)   # 수령완료 = 비활성 크림
 		btn.disabled = true
 	elif ready:
-		btn = Design.button("받기", "cheese", Design.FS_TITLE)
+		btn = Design.button("받기", "cheese", Design.FS_TITLE)     # 보상받기 = 골드 CTA(§1)
 		btn.pressed.connect(func(): _claim(seg_id, gem_name))
 	else:
-		btn = Design.button("%d/%d" % [prog.x, prog.y], "paper", Design.FS_BODY)
+		btn = Design.button("%d/%d 달성" % [prog.x, prog.y], "paper", Design.FS_BODY)  # 미달성 = 비활성
 		btn.disabled = true
-	btn.size = Vector2(sz.x - 40, 48); btn.custom_minimum_size = btn.size
-	btn.position = Vector2(20, sz.y - 60.0)
+	btn.size = Vector2(sz.x - 2.0 * Design.GAP_LG, float(Design.BAR_H)); btn.custom_minimum_size = btn.size
+	btn.position = Vector2(float(Design.GAP_LG), sz.y - float(Design.BAR_H) - float(Design.GAP))
 	panel.add_child(btn)
 
 
@@ -209,13 +245,22 @@ func _claim(seg_id: String, gem_name: String) -> void:
 	if gem == "":
 		return
 	Sfx.play("buff")
-	_toast.text = "%s ×1 획득!" % gem_name
+	_build()    # 띠·별총합·코인 갱신 (토스트는 _build가 새로 만든 뒤 표시)
+	_toast_lbl.text = "%s ×1 획득!" % gem_name
 	_toast.visible = true
 	_toast_t = 2.0
-	_build()    # 띠·별총합·코인 갱신
 
 
 # ── helpers ──
+## 패널 모서리 볼트 4개(물건화, §0-7). Design.bolt 재사용.
+func _corner_bolts(panel: Control) -> void:
+	var corners := [Vector2(8, 8), Vector2(panel.size.x - 20, 8), Vector2(8, panel.size.y - 20), Vector2(panel.size.x - 20, panel.size.y - 20)]
+	for cpos in corners:
+		var bt := Design.bolt(11.0, Design.CHEESE_DEEP)
+		bt.position = cpos
+		panel.add_child(bt)
+
+
 func _commafy(n: int) -> String:
 	var s := str(n)
 	var out := ""

@@ -36,10 +36,10 @@ func _build() -> void:
 	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
 	stage.position = Vector2(E, E)
 	add_child(stage)
-	# 1막 별 진행도 → 스테이지 맵 진입 버튼(별점 허브)
+	# 1막 별 진행도 → 스테이지 맵 진입 버튼(별점 허브). 내비게이션이라 Secondary(크림), 강조는 출격(빨강) 하나만.
 	var ap := GameState.allstar_progress()
-	_btn("지도  ★ %d/%d" % [ap.x, ap.y], Vector2(E, E + 60.0), Vector2(220, 50),
-			"cheese", Design.FS_BODY,
+	_btn("지도  ★ %d/%d" % [ap.x, ap.y], Vector2(E, E + 60.0), Vector2(220, float(Design.BAR_H)),
+			"paper", Design.FS_BODY,
 			func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
 
 	# ── 우상단: 종/편지/친구/설정/메뉴 5버튼(우→좌) + 그 왼쪽에 보유 코인 ──
