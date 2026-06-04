@@ -5,8 +5,10 @@ extends CanvasLayer
 ## 전투결과 [확인]을 눌렀고, 그 스테이지가 "전투 씬 내 컷씬"이면 발신(game.gd가 받아 처리).
 signal inscene_event_requested
 
-# 전투 씬 안에서(씬전환 없이) 컷씬을 재생하는 스테이지(케이스 A: 1-3 보안관·1-5 펄·1-7 맥스)
-const INSCENE_EVENT_STAGES := [3, 5, 7]
+# 전투 씬 안에서(씬전환 없이) 컷씬 재생(케이스 A: 1-3 보안관·1-5 펄·1-7 맥스·1-13 비둘기·1-16 치와와)
+const INSCENE_EVENT_STAGES := [3, 5, 7, 13, 16]
+# 컷씬 없이 [확인]→홈+코치마크(케이스 D+: 1-9 스킬 판매)
+const HOME_EVENT_STAGES := [9]
 
 # 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
 const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
@@ -31,6 +33,7 @@ var _wave_total: int = 0
 var _event_pending: bool = false   # 클리어 이벤트 [확인] 대기 중
 var _event_text: String = ""
 var _inscene_event: bool = false   # 그 이벤트가 "전투 씬 내 컷씬"인지
+var _home_event: bool = false      # 컷씬 없이 홈+코치마크(D+)
 var coin_label: Label   # 상단 코인 표시(💰)
 
 
@@ -151,19 +154,27 @@ func show_clear(bonus: int = 0) -> void:
 	else:
 		msg += "\n전리품: 없음"
 	msg += "\n보유 코인 %s" % _commafy(GameState.coins)
+	var stg := GameState.stage_minor
+	var ev := GameState.clear_event_for(stg)
+	# 알림형(D/D+): 드랍 정산 결과창 하단에 해금 알림 한 줄(드랍과 사건 분리 — 가이드 §1-B).
+	#   인스씬 컷씬(A)·보스(C)는 사건을 컷씬/별도 씬이 알리므로 결과창엔 안 얹음.
+	var show_notice := ev != "" and not (stg in INSCENE_EVENT_STAGES) and not (stg in [10, 20])
+	if show_notice:
+		msg += "\n\n✨ " + ev
 	clear_title.text = msg
-	# #4: 해금 이벤트 스테이지면 [확인] 강제 후 진행 (로드맵 2-B)
-	var ev := GameState.clear_event_for(GameState.stage_minor)
-	if ev != "":
-		_event_pending = true
-		_event_text = ev
-		clear_next.text = "확인 ▶"
-		clear_restart.visible = false
-		_inscene_event = GameState.stage_minor in INSCENE_EVENT_STAGES
-	else:
-		_event_pending = false
-		clear_next.text = "다음 ▶"
-		clear_restart.visible = true
+	# 라우팅: 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스 등) / 일반(D·없음)
+	if stg in INSCENE_EVENT_STAGES:
+		_event_pending = true; _inscene_event = true; _home_event = false
+		clear_next.text = "확인 ▶"; clear_restart.visible = false
+	elif stg in HOME_EVENT_STAGES:
+		_event_pending = true; _inscene_event = false; _home_event = true
+		clear_next.text = "확인 ▶"; clear_restart.visible = false
+	elif ev != "" and (stg in [10, 20]):     # 보스(C) — 추후 컷씬, 현재 별도 알림 씬
+		_event_pending = true; _inscene_event = false; _home_event = false
+		_event_text = ev; clear_next.text = "확인 ▶"; clear_restart.visible = false
+	else:                                    # D(알림만) 또는 이벤트 없음 — 일반 진행
+		_event_pending = false; _inscene_event = false; _home_event = false
+		clear_next.text = "다음 ▶"; clear_restart.visible = true
 	clear_panel.visible = true
 
 
@@ -199,6 +210,15 @@ func _on_clear_next() -> void:
 		inscene_event_requested.emit()
 		return
 	get_tree().paused = false
+	# D+(1-9 등): 컷씬 없이 홈으로 → 홈에서 코치마크.
+	if _home_event:
+		_home_event = false
+		_event_pending = false
+		GameState.advance_stage()
+		if GameState.mode != "dev" and GameState.AUTOSAVE:
+			GameState.save_game()
+		get_tree().change_scene_to_file("res://scenes/home.tscn")
+		return
 	if _event_pending:
 		_event_pending = false
 		GameState.pending_event_stage = GameState.stage_minor   # 방금 깬 스테이지(이벤트 씬이 읽음)

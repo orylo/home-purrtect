@@ -84,18 +84,27 @@ func _build() -> void:
 				func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
 		coach.append({"id": "max", "rect": Rect2(max_pos, npc_sz),
 				"text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
+		# 1-9: 맥스가 스킬도 팔기 시작(D+ 코치마크 — 맥스 버튼 재강조)
+		if GameState.cleared_stages.has(9):
+			coach.append({"id": "skill", "rect": Rect2(max_pos, npc_sz),
+					"text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
 	if GameState.cleared_stages.has(3):
 		_btn("전투 준비", prep_pos, prep_sz, "secondary", Design.FS_TITLE,
 				func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
 		coach.append({"id": "prep", "rect": Rect2(prep_pos, prep_sz),
 				"text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
+		# 1-13: 동료 시스템(전투준비 > 동료 강조)
+		if GameState.cleared_stages.has(13):
+			coach.append({"id": "dove", "rect": Rect2(prep_pos, prep_sz),
+					"text": "맥스에게 호루라기를 사서 동료를 장착하면, 전투 중 불러낼 수 있어요!"})
 
 	# ── 우하단: 출격(CTA=빨강, "PLAY" 위치) ──
 	_btn("출격 ▶", Vector2(vp.x - E - 256.0, vp.y - E - 84.0), Vector2(256, 84), "cta", Design.FS_DISPLAY_S,
 			func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
 
-	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(전투준비 → 펄 → 맥스 순)
-	for c in [_coach_find(coach, "prep"), _coach_find(coach, "pearl"), _coach_find(coach, "max")]:
+	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(진행 순서대로 자연 안내)
+	for cid in ["prep", "pearl", "max", "skill", "dove"]:
+		var c = _coach_find(coach, cid)
 		if c != null and not GameState.coachmark_seen.has(c["id"]):
 			call_deferred("_show_coachmark", c)
 			break

@@ -41,7 +41,22 @@ func _on_stage_cleared() -> void:
 
 func _on_player_died() -> void:
 	get_tree().paused = true
-	hud.show_gameover()
+	hud.visible = false
+	_play_gameover_cutscene()
+
+
+# 게임오버 = 영감의 전보 컷씬(플레이스홀더) → 같은 스테이지 재도전(자산·코인 유지).
+func _play_gameover_cutscene() -> void:
+	var pages := [
+		"🎬 게임오버 (플레이스홀더)\n\n치즈가 문밖으로 뻥— 쫓겨나\n빗속에 나뒹군다…  💧",
+		"[ 전보 — 골드 ]\n\n\"침입 발생! 넌 해고— …아니다.\n마지막 기회를 주마. 정신 차려라! — G\"",
+		"치즈가 문 앞에서 싹싹 빈다  💦\n→ 벌떡 일어나 주먹 불끈!  💡\n\n[ 한 번 더 기회를 얻었다 — 재도전 ]",
+	]
+	for p in pages:
+		await _play_placeholder_cutscene(p)
+	# 같은 스테이지 재도전(보유 자산·코인·전리품 유지)
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
 # ── 전투 씬 내 컷씬(케이스 A 해금형: 1-3 보안관 / 1-5 펄 / 1-7 맥스) ──────────
@@ -54,10 +69,11 @@ var _event_char: Node2D = null   # 펄/맥스 플레이스홀더(전투 내내 �
 ## 펄/맥스 플레이스홀더(동그라미)를 전투 시작 시 배치(1-5·1-7 상주, 전투 무관).
 func _spawn_event_chars() -> void:
 	var vp := get_viewport_rect().size
-	if GameState.stage_minor == 5:
-		_event_char = _make_char("펄", Color(0.95, 0.55, 0.78), Vector2(vp.x * 0.07, Layout.ground_y() - 360.0), 34.0)
-	elif GameState.stage_minor == 7:
-		_event_char = _make_char("맥스", Color(0.72, 0.52, 0.32), Vector2(vp.x * 0.66, Layout.ground_y() - 60.0), 40.0)
+	match GameState.stage_minor:
+		5: _event_char = _make_char("펄", Color(0.95, 0.55, 0.78), Vector2(vp.x * 0.07, Layout.ground_y() - 360.0), 34.0)
+		7: _event_char = _make_char("맥스", Color(0.72, 0.52, 0.32), Vector2(vp.x * 0.66, Layout.ground_y() - 60.0), 40.0)
+		13: _event_char = _make_char("비둘기", Color(0.7, 0.72, 0.78), Vector2(vp.x * 0.30, Layout.ground_y() - 30.0), 30.0)
+		16: _event_char = _make_char("치와와", Color(0.85, 0.7, 0.4), Vector2(vp.x * 0.30, Layout.ground_y() - 34.0), 32.0)
 
 
 func _make_char(label: String, col: Color, pos: Vector2, radius: float) -> Node2D:
@@ -91,6 +107,8 @@ func _on_inscene_event() -> void:
 		3: await _event_crate()
 		5: await _event_pearl()
 		7: await _event_max()
+		13: await _event_rescue("비둘기", "🎬 컷씬 (플레이스홀더)\n\n다친 비둘기를 치료해줬다.\n“이 은혜 갚겠슴다!”\n\n[ 동료 시스템 해금! ]")
+		16: await _event_rescue("치와와", "🎬 컷씬 (플레이스홀더)\n\n갇힌 치와와를 풀어줬다.\n“너 때문 아니다! …갚아주지.”\n\n[ 동료 치와와 합류! ]")
 		_: pass
 	# 진행 저장 → 홈
 	GameState.advance_stage()
@@ -134,6 +152,16 @@ func _event_max() -> void:
 	await get_tree().create_timer(0.3).timeout
 	await _zoom_and_cutscene(Vector2((cat_x + target) * 0.5, Layout.ground_y() - 90.0),
 		"🎬 컷씬 (플레이스홀더)\n\n능글맞은 상인 맥스의 첫 거래.\n\n[ 맥스 상점 · 메이드·음악가 제작 해금! ]")
+
+
+## 1-13/1-16 구출형: 치즈가 동료(다친/갇힌)에게 다가가 → 줌인 → 컷씬.
+func _event_rescue(_who: String, text: String) -> void:
+	var cx: float = _event_char.position.x if is_instance_valid(_event_char) else get_viewport_rect().size.x * 0.30
+	var cat_x: float = (player as Node2D).global_position.x
+	var stand_x: float = cx + (90.0 if cat_x > cx else -90.0)
+	await _walk_cat_to(stand_x)
+	await get_tree().create_timer(0.35).timeout
+	await _zoom_and_cutscene(Vector2((cx + stand_x) * 0.5, Layout.ground_y() - 70.0), text)
 
 
 ## 치즈를 x로 자동 도보(왼쪽이면 flip).
