@@ -722,7 +722,7 @@ func _drive_status_fx() -> void:
 		_poison_fx.visible = false
 	if _slow_timer > 0.0:
 		if _slow_fx == null:
-			_slow_fx = _make_status_fx("dizzy_stars", Vector2(0, -150), 0.40, 47)
+			_slow_fx = _make_status_fx("slime_drip", Vector2(0, -48), 0.44, 47)   # 둔화=끈적(새똥류)
 		_slow_fx.visible = true
 	elif _slow_fx != null:
 		_slow_fx.visible = false

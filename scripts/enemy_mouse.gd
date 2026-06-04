@@ -555,7 +555,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 		_flash_crit = crit
 		_knockback = maxf(_knockback, knockback)
 		if stun > 0.0:
-			_stun_timer = stun
+			_begin_stun(stun)   # 음악가 크리 스턴도 별빙글 표시(스턴=별빙글 통일)
 		Fx.request_shake(7.0 if crit else 3.0)
 		if play_sfx:
 			Sfx.impact(crit)   # 근접·원거리 통일(punch), 크리=퍼벅
@@ -581,6 +581,12 @@ func apply_slow(dur: float, factor: float) -> void:
 ## 스킬 스턴(완전 정지 dur초) — 자장가. 데미지·넉백 없음
 func apply_stun(dur: float) -> void:
 	if dead:
+		return
+	_begin_stun(dur)
+
+## 스턴 적용 공통 — 타이머 갱신 + 별빙글 이펙트(스턴=별빙글 통일: 자장가·음악가 크리 둘 다).
+func _begin_stun(dur: float) -> void:
+	if dur <= 0.0 or dead:
 		return
 	_stun_timer = maxf(_stun_timer, dur)
 	Fx.burst("dizzy_stars", global_position + Vector2(0, -92.0 - _air_raise()), 0.46, 46, 14.0, true, dur)
