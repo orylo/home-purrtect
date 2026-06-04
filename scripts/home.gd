@@ -67,8 +67,9 @@ func _build() -> void:
 	add_child(coin)
 	_coin_lbl = coin
 
-	# DEV 도구(개발 빌드 전용) — 좌상단 스테이지 플레이트 아래.
-	if GameState.is_dev():
+	# DEV 도구 — "개발자 루트"로 들어온 홈에서만 노출. 일반 [게임 시작]→홈(mode=player)에선 숨김.
+	#   (시작화면 우하단 개발자 버튼 → 개발자 메뉴 → [홈 화면으로]로 들어와야 mode=dev → 노출)
+	if GameState.is_dev() and GameState.mode == "dev":
 		_btn("DEV 도구", Vector2(E, E + 118.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
 
 	# ── 좌측 중앙: 펄·맥스 세로 스택(해금 게이팅) ──
