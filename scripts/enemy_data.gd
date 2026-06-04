@@ -22,7 +22,7 @@ const ENEMY_DEFS := {
 	# --- 비-쥐 4종 ---
 	"bat":          {"name": "박쥐", "hp": 15, "dmg": 4, "armor": 0, "spd": 1.3, "atkint": 2.4, "kind": "shoot", "air": true,  "sprite": false, "high": true, "color": Color(0.42, 0.3, 0.5), "radius": 36, "range": 760, "status": "", "bcolor": Color(0.6,0.4,0.8)},
 	"sparrow":      {"name": "참새", "hp": 20, "dmg": 6, "armor": 0, "spd": 1.2, "atkint": 1.3, "kind": "dive",  "air": true,  "sprite": false, "color": Color(0.7, 0.55, 0.35), "radius": 40, "range": 0,   "status": "", "bcolor": Color(0.7,0.55,0.35)},
-	"bee":          {"name": "벌", "hp": 12, "dmg": 4, "armor": 0, "spd": 1.4, "atkint": 1.1, "kind": "shoot", "air": true,  "sprite": false, "color": Color(0.95, 0.78, 0.1), "radius": 28, "range": 820, "status": "poison", "bcolor": Color(0.95,0.8,0.1)},
+	"bee":          {"name": "벌", "hp": 12, "dmg": 3, "armor": 0, "spd": 1.4, "atkint": 1.1, "kind": "shoot", "air": true,  "sprite": false, "color": Color(0.95, 0.78, 0.1), "radius": 28, "range": 820, "status": "poison", "bcolor": Color(0.95,0.8,0.1)},
 	"spider":       {"name": "거미", "hp": 30, "dmg": 5, "armor": 0, "spd": 0.7, "atkint": 1.4, "kind": "shoot", "air": false, "sprite": false, "color": Color(0.25, 0.2, 0.28), "radius": 48, "range": 720, "status": "slow", "bcolor": Color(0.7,0.7,0.75)},
 	# --- 보스(단일 개체 · placeholder · 스킬 없이 큰 덩치+큰 피통+접촉 공격) (§3.3) ---
 	"boss_fungus":  {"name": "펑거스", "hp": 1000, "dmg": 14, "armor": 0, "spd": 0.45, "atkint": 1.5, "kind": "melee", "air": false, "sprite": false, "big": true, "color": Color(0.50, 0.20, 0.25), "radius": 120, "range": 0, "status": "", "bcolor": Color(0.7,0.4,0.4)},

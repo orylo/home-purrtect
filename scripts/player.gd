@@ -112,6 +112,13 @@ var _poison_tick: float = 0.0    # 다음 독 틱까지
 var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
 var _poison_fx: AnimatedSprite2D # 독 이펙트(플레이어 자식 = 따라다님, 단일 노드 = 중첩 없음)
 var _slow_fx: AnimatedSprite2D   # 둔화 이펙트(상동)
+# ── 상태이상 밸런스(벌·거미 재정의 2026-06-05, M=1.0 기준) — 중첩 금지·갱신만 ──
+const POISON_DUR := 3.0          # 독 지속(초)
+const POISON_TICK_INT := 1.0     # 독 틱 간격(초) — 1초마다
+const POISON_TICK_DMG := 1.5     # 틱당 데미지 (3틱 ≈ 4.5)
+const SLOW_DUR := 2.5            # 둔화 지속(초)
+const SLOW_MOVE_MULT := 0.65     # 둔화 시 이동 배율(-35%)
+const SLOW_ATK_MULT := 0.9       # 둔화 시 공속 배율(-10%). 1.0으로 두면 공속 둔화 없음.
 var _atk_buff_t: float = 0.0     # 말린 멸치: 공격력 버프 남은 시간
 const ATK_BUFF_MULT := 1.5       # 말린 멸치: +50%
 var _guard_t: float = 0.0        # 방패 자세: 피해감소 남은 시간
@@ -258,8 +265,8 @@ func _physics_process(delta: float) -> void:
 		_poison_timer -= delta
 		_poison_tick -= delta
 		if _poison_tick <= 0.0:
-			_poison_tick = 0.5
-			_poison_damage(2.0)
+			_poison_tick = POISON_TICK_INT
+			_poison_damage(POISON_TICK_DMG)
 	if _slow_timer > 0.0:
 		_slow_timer -= delta
 	_drive_status_fx()
@@ -308,7 +315,7 @@ func _physics_process(delta: float) -> void:
 	if on_ground and (_committed_anim == "shoot" or _committed_anim == "melee"):
 		direction = 0.0
 
-	var slow_factor := 0.5 if _slow_timer > 0.0 else 1.0   # 둔화 시 절반 속도
+	var slow_factor := SLOW_MOVE_MULT if _slow_timer > 0.0 else 1.0   # 둔화 시 이동 -35%(거미)
 	var encore_m := ENCORE_MSPD if _encore_t > 0.0 else 1.0   # 앵콜 이속 버프
 	velocity.x = direction * base_speed * move_multiplier * slow_factor * encore_m
 
@@ -445,7 +452,8 @@ func _handle_attack() -> void:
 	var want_ranged := Touch.ranged_held or Input.is_action_pressed("attack")   # L = 원거리
 	if not (want_melee or want_ranged):
 		return
-	_fire_timer = attack_interval / (ENCORE_ASPD if _encore_t > 0.0 else 1.0)   # 앵콜 공속 버프
+	# 앵콜 공속 버프(÷) / 둔화 공속 -10%(쿨 ÷0.9 = 길어짐, 거미)
+	_fire_timer = attack_interval / (ENCORE_ASPD if _encore_t > 0.0 else 1.0) / (SLOW_ATK_MULT if _slow_timer > 0.0 else 1.0)
 	_attack_fired = false              # 새 공격 시작 → 준비동작 빠른 속도부터
 	if want_melee:
 		_committed_anim = "melee"        # 근접 모션(끝까지 재생)
@@ -686,10 +694,10 @@ func apply_status(st: String) -> void:
 	# 재적용 = 타이머 갱신(중첩/스택 아님). 이펙트는 _drive_status_fx가 단일 노드로 표시.
 	match st:
 		"poison":
-			_poison_timer = 3.0
-			_poison_tick = 0.5
+			_poison_timer = POISON_DUR
+			_poison_tick = POISON_TICK_INT
 		"slow":
-			_slow_timer = 2.5
+			_slow_timer = SLOW_DUR
 
 
 ## 독 지속 데미지 — 피격 모션 없이 체력만 깎음(틱마다 호출)
