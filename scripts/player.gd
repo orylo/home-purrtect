@@ -438,7 +438,7 @@ func _handle_attack() -> void:
 		return   # 앉은 중엔 공격 안 함
 	if _fire_timer > 0.0:
 		return
-	var want_melee := Touch.melee_held or Input.is_key_pressed(KEY_K)
+	var want_melee := Touch.melee_held or Input.is_physical_key_pressed(KEY_K)   # 물리 K(한글 IME·자판배열 무관)
 	var want_ranged := Touch.ranged_held or Input.is_action_pressed("attack")   # L = 원거리
 	if not (want_melee or want_ranged):
 		return

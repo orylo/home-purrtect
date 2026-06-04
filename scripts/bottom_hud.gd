@@ -97,7 +97,7 @@ func _draw() -> void:
 			_label(font, 20, SKILL_SHORT.get(sid, "?"), skills[k])
 
 	# 근접공격(K) / 원거리공격(L) = 빨간 원형 버튼 + 글러브 손(나노바나나)
-	var am: bool = Touch.melee_held or Input.is_key_pressed(KEY_K)
+	var am: bool = Touch.melee_held or Input.is_physical_key_pressed(KEY_K)   # 물리 K(IME 무관)
 	_tex(TEX_RND_ACT, L["melee"], d, d, _mod(am))
 	_tex(TEX_MELEE, L["melee"], d * 0.64, d * 0.64)
 	var ar: bool = Touch.ranged_held or Input.is_action_pressed("attack")
