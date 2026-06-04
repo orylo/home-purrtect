@@ -1,6 +1,7 @@
 extends CharacterBody2D
 ## 적 (범용) — def(Enemies.ENEMY_DEFS)로 종류별 스탯·생김새·행동을 받는다.
-##   회색쥐·검은쥐(맨몸)만 쥐 스프라이트(검은쥐=어둡게 리컬러), 나머지는 placeholder(색·크기·이름표).
+##   침입자 10종 모두 실제 스프라이트(ENEMY_FRAMES: 회색3·박쥐·벌·참새·거미 + 검은3=회색 셰이더 리스킨).
+##   placeholder(_draw 도형)는 보스 2종(boss_fungus·boss_snake, def "sprite":false)만.
 ##   kind: melee 근접 / lob 포물선투척 / shoot 직선발사 / dive 공중→근접
 ##   원거리(lob/shoot)는 사거리 안에서 멈춰 enemy_bullet 발사. 공중(air)은 띄우고 밀기 대상 아님.
 ## 스포너가 add_child 전에 enemy.def = Enemies.def_of(id) 로 채워준다.
