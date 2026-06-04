@@ -133,7 +133,7 @@ G=/Applications/Godot.app/Contents/MacOS/Godot
 
 ## 웹 배포
 - `git push` → **GitHub Actions**(`.github/workflows/deploy.yml`) → **GitHub Pages**(~1~2분).
-- 캐시버스트: CI가 `index.js`/`wasm`/`pck`/`audio.worklet.js` 파일명에 커밋 짧은 SHA를 붙임 → 새로고침만 해도 최신.
+- 캐시: **안정 파일명**(index.js/wasm/pck 그대로 — SHA 리네임 폐기, v0.0.88). SHA 리네임은 연속 배포 시 "캐시된 옛 index.html이 사라진 옛 .pck를 찾는" 404를 유발해서 제거. 최신 반영은 GitHub Pages ETag 재검증(보통 새로고침, 안 되면 강력 새로고침). 배포 직후 버전은 시작화면 `BUILD` 표시로 확인.
 - og-image·manifest.webmanifest도 CI가 복사.
 
 ## 기술 메모 (함정 주의)

@@ -44,21 +44,11 @@ jobs:
           ./godot --headless --path . --export-release "Web" build/web/index.html
           ls -la build/web
 
-      - name: Cache-bust filenames (버전별 파일명으로 브라우저 캐시 무력화)
-        run: |
-          cd build/web
-          V="${GITHUB_SHA::8}"
-          for ext in js wasm pck audio.worklet.js; do
-            if [ -f "index.$ext" ]; then mv "index.$ext" "index.$V.$ext"; fi
-          done
-          sed -i \
-            -e "s/index\.audio\.worklet\.js/index.$V.audio.worklet.js/g" \
-            -e "s/index\.pck/index.$V.pck/g" \
-            -e "s/index\.wasm/index.$V.wasm/g" \
-            -e "s/src=\"index\.js\"/src=\"index.$V.js\"/g" \
-            -e "s/\"executable\":\"index\"/\"executable\":\"index.$V\"/g" \
-            index.html
-          echo "버전 V=$V 적용됨"; ls -la
+      # ※ 캐시 정책: 파일명을 커밋 SHA로 바꾸지 않는다(안정 파일명 유지).
+      #   이유: SHA 리네임은 짧은 시간에 2번 배포하면 "캐시된 옛 index.html이 삭제된 옛 .pck를 찾는"
+      #   404를 일으킨다(GitHub Pages는 전체 교체 배포라 옛 SHA 파일이 사라짐).
+      #   안정 파일명 = 404 절대 없음. 최신 반영은 GitHub Pages의 ETag 재검증(보통 새로고침이면 최신,
+      #   안 되면 강력 새로고침). 빌드 버전은 game_state.gd const BUILD로 시작화면에 표시돼 확인 가능.
 
       - name: Copy OG image + PWA manifest into site
         run: |

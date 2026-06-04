@@ -289,14 +289,18 @@ func _center_label(text: String, kind: String, color: Color) -> Label:
 	return l
 
 
-## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(75%) + 하단 개수(§3.5)
+## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(슬롯에 맞춰 축소) + 하단 개수(§3.5)
 func _reward_tile(tex: Texture2D, count_text: String) -> Control:
 	var tile := Panel.new()
 	tile.custom_minimum_size = Vector2(88, 88)
+	tile.clip_contents = true   # 혹시라도 넘치면 칸 밖으로 안 나가게
 	tile.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
 	if tex != null:
 		var ic := TextureRect.new()
 		ic.texture = tex
+		# ★ expand_mode 기본값(KEEP_SIZE)은 최소크기=원본픽셀 → 큰 아이콘이 슬롯을 뚫음.
+		#   IGNORE_SIZE로 컨트롤 크기에 맞춰 축소 + 비율유지 중앙정렬.
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		ic.set_anchors_preset(Control.PRESET_FULL_RECT)
 		ic.offset_left = 6; ic.offset_top = 2; ic.offset_right = -6; ic.offset_bottom = -22
