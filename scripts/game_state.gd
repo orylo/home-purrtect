@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.82"
+const BUILD := "0.0.83"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -215,13 +215,20 @@ const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparr
 const GEM_ORDER := ["gem_gravel", "gem_pebble", "gem_shell", "gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz", "gem_amber", "gem_amethyst", "gem_garnet", "gem_rose", "gem_teal", "gem_sapphire", "gem_emerald", "gem_pearl", "gem_teardrop", "gem_ruby", "gem_diamond"]
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
+var run_coins: int = 0   # 이번 전투에서 번 코인(처치+첫클리어 보너스, 클리어 화면 표시용)
 
 ## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 + 축복 1회 소비
 ## (player._ready가 game._ready보다 먼저 실행되어 발톱·배는 이미 적용된 뒤 여기서 소비됨)
 func start_battle_loot() -> void:
 	run_loot = {}
+	run_coins = 0
 	run_coin_mult = (1.0 + blessing_pct("coin")) if selected_blessing == "coin" else 1.0
 	selected_blessing = ""   # 축복은 1회용 — 매 출격마다 펄에게 다시 받아야 함(§5.5)
+
+## 코인 획득(보유 + 이번 판 집계 동시). 처치 코인·첫클리어 보너스가 호출.
+func add_coins(n: int) -> void:
+	coins += n
+	run_coins += n
 
 func add_material(id: String, n: int = 1) -> void:
 	materials[id] = int(materials.get(id, 0)) + n
@@ -532,7 +539,7 @@ func award_stage_clear(stars: int = 1) -> int:
 	elif stars == 2:
 		mult = FIRST_CLEAR_STAR2_MULT
 	var bonus := int(round(base * mult))
-	coins += bonus
+	add_coins(bonus)   # 보유 + 이번 판 집계
 	return bonus
 
 

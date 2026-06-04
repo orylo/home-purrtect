@@ -169,40 +169,24 @@ func set_wave(current: int, total: int) -> void:
 
 func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	Sfx.play("clear")
-	var msg := "스테이지 클리어!"
-	# ★ 별점 — 딴 별(채움/빈칸) + 클리어 시간 + 다음 도전 목표시간(맨 위 강조)
-	if not star_info.is_empty():
-		var s := int(star_info.get("stars", 1))
-		msg += "\n%s   (★%d/3)" % ["★".repeat(s) + "·".repeat(3 - s), s]
-		msg += "\n클리어 시간 %s" % _fmt_mmss(float(star_info.get("time", 0.0)))
-		var t2 := int(round(float(star_info.get("t2", 0.0))))
-		var t3 := int(round(float(star_info.get("t3", 0.0))))
-		if t2 > 0 and t3 > 0:
-			msg += "   (★★ %ds · ★★★ %ds)" % [t2, t3]
-		# 재도전 신기록(첫 클리어가 아닌데 별 기록을 갱신했을 때)
-		if not bool(star_info.get("is_first", true)) and bool(star_info.get("new_best", false)):
-			msg += "\n★ 신기록!  최고 ★%d 갱신" % s
-	if bonus > 0:
-		msg += "\n첫 클리어 보너스 +%d 코인" % bonus
-	# 별 차등 보석(첫 클리어 ★2/★3). 구간 올스타 보석은 스테이지 맵 [받기]로 수령(여기 표시 안 함).
-	if not star_info.is_empty():
-		var fg := String(star_info.get("first_gem", ""))
-		if fg != "" and GameState.MATERIALS.has(fg):
-			msg += "\n[별 보상] %s ×1 획득!" % String(GameState.MATERIALS[fg]["name"])
-	var loot := GameState.run_loot_summary()
-	if loot != "":
-		msg += "\n전리품: " + loot           # #2: 이번 판 얻은 전리품 표시
-	else:
-		msg += "\n전리품: 없음"
-	msg += "\n보유 코인 %s" % _commafy(GameState.coins)
+	# 깨끗한 결과 화면(쿠키런 톤) — 전투 HUD(체력·조이스틱·하단버튼 등) 숨기고 클리어 패널만.
+	for c in get_children():
+		if c != clear_panel and c is CanvasItem:
+			c.visible = false
 	var stg := GameState.stage_minor
 	var ev := GameState.clear_event_for(stg)
 	# 알림형(D/D+): 드랍 정산 결과창 하단에 해금 알림 한 줄(드랍과 사건 분리 — 가이드 §1-B).
 	#   인스씬 컷씬(A)·보스(C)는 사건을 컷씬/별도 씬이 알리므로 결과창엔 안 얹음.
 	var show_notice := ev != "" and not GameState.replaying and not (stg in INSCENE_EVENT_STAGES) and not (stg in [10, 20])
-	if show_notice:
-		msg += "\n\n✨ " + ev
-	clear_title.text = msg
+
+	# 타이틀 = 큰 "CLEAR!" (골든 + 잉크 외곽, §2.2 display)
+	clear_title.text = "CLEAR!"
+	clear_title.add_theme_font_size_override("font_size", 64)
+	clear_title.add_theme_color_override("font_color", Design.CHEESE)
+	clear_title.add_theme_color_override("font_outline_color", Design.INK)
+	clear_title.add_theme_constant_override("outline_size", 6)
+
+	_build_clear_content(star_info, bonus, show_notice, ev)
 	# 라우팅: (파밍 재도전) 맵 복귀 / 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스) / 일반(D·없음)
 	if GameState.replaying:                   # 스테이지 맵 [재도전] 파밍 — 진행 안 올리고 맵 복귀(이벤트 생략)
 		_event_pending = false; _inscene_event = false; _home_event = false
@@ -221,6 +205,144 @@ func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 		_event_pending = false; _inscene_event = false; _home_event = false
 		clear_next.text = "다음 ▶"; clear_restart.visible = true
 	clear_panel.visible = true
+
+
+# ── 클리어 결과 콘텐츠(별·시간·보상 박스) 동적 구성 ─────────────────────────
+const LOOT_DIR := "res://assets/items/loot/"
+## 전리품 id ↔ 아이콘 파일명 예외(나머지는 id.png 그대로). 출처: 기획_아이템도감.md
+const ICON_ALIAS := {"sparrow_feather": "feather", "spider_silk": "cobweb", "wheel": "steel_wheel", "sack": "loot_sack"}
+var _clear_dyn: Array = []   # show_clear가 만든 동적 노드(재호출 시 정리)
+
+
+func _build_clear_content(star_info: Dictionary, bonus: int, show_notice: bool, ev: String) -> void:
+	var box := clear_title.get_parent()
+	for n in _clear_dyn:
+		if is_instance_valid(n):
+			n.queue_free()
+	_clear_dyn.clear()
+	var vp := get_viewport().get_visible_rect().size
+
+	# ① 별 3개(채움/빈칸) — 큰 별 줄
+	if not star_info.is_empty():
+		var sr := StarRow.new()
+		sr.got = int(star_info.get("stars", 1))
+		sr.custom_minimum_size = Vector2(260, 84)
+		_add_dyn(box, sr)
+
+		# ② 클리어 시간 + 다음 목표시간
+		var t2 := int(round(float(star_info.get("t2", 0.0))))
+		var t3 := int(round(float(star_info.get("t3", 0.0))))
+		var tt := "클리어 %s" % _fmt_mmss(float(star_info.get("time", 0.0)))
+		if t2 > 0 and t3 > 0:
+			tt += "      ★★ %ds · ★★★ %ds" % [t2, t3]
+		_add_dyn(box, _center_label(tt, "body", Design.INK_CREAM))
+
+		# ③ 신기록(재도전 별 갱신)
+		if not bool(star_info.get("is_first", true)) and bool(star_info.get("new_best", false)):
+			_add_dyn(box, _center_label("★ 신기록!  최고 ★%d 갱신" % int(star_info.get("stars", 1)), "title", Design.CHEESE))
+
+	# ④ 보상 박스(코인 + 전리품) — 물건화 패널 안 타일 그리드
+	var tiles: Array = []
+	if GameState.run_coins > 0:
+		tiles.append(_reward_tile(_coin_tex(), _commafy(GameState.run_coins)))
+	for id in GameState.MAT_ORDER:
+		var cnt := int(GameState.run_loot.get(id, 0))
+		if cnt > 0:
+			tiles.append(_reward_tile(_mat_tex(id), "×%d" % cnt))
+	if tiles.size() > 0:
+		_add_dyn(box, _center_label("획득", "caption", Design.INK_CREAM))
+		var panel := PanelContainer.new()
+		panel.add_theme_stylebox_override("panel", Design.panel_box())
+		panel.custom_minimum_size = Vector2(minf(vp.x * 0.78, 880.0), 0)
+		var mg := MarginContainer.new()
+		for s in ["left", "right", "top", "bottom"]:
+			mg.add_theme_constant_override("margin_" + s, 14)
+		panel.add_child(mg)
+		var flow := HFlowContainer.new()
+		flow.add_theme_constant_override("h_separation", 10)
+		flow.add_theme_constant_override("v_separation", 10)
+		flow.alignment = FlowContainer.ALIGNMENT_CENTER
+		mg.add_child(flow)
+		for t in tiles:
+			flow.add_child(t)
+		_add_dyn(box, panel)
+
+	# ⑤ 해금 알림(D/D+)
+	if show_notice:
+		_add_dyn(box, _center_label("✨ " + ev, "body", Design.CHEESE))
+
+	# 버튼을 항상 맨 아래로
+	box.move_child(clear_next, box.get_child_count() - 1)
+	box.move_child(clear_restart, box.get_child_count() - 1)
+
+
+## box에 자식 추가 + 동적노드 추적(다음 호출 때 정리)
+func _add_dyn(box: Control, node: Control) -> void:
+	box.add_child(node)
+	_clear_dyn.append(node)
+
+
+func _center_label(text: String, kind: String, color: Color) -> Label:
+	var l := Design.label(text, kind, color)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size_flags_horizontal = Control.SIZE_FILL
+	return l
+
+
+## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(75%) + 하단 개수(§3.5)
+func _reward_tile(tex: Texture2D, count_text: String) -> Control:
+	var tile := Panel.new()
+	tile.custom_minimum_size = Vector2(88, 88)
+	tile.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
+	if tex != null:
+		var ic := TextureRect.new()
+		ic.texture = tex
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.set_anchors_preset(Control.PRESET_FULL_RECT)
+		ic.offset_left = 6; ic.offset_top = 2; ic.offset_right = -6; ic.offset_bottom = -22
+		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.add_child(ic)
+	var cnt := Design.label(count_text, "caption", Design.INK)
+	cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cnt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	cnt.offset_top = -24.0; cnt.offset_bottom = -2.0
+	cnt.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tile.add_child(cnt)
+	return tile
+
+
+func _mat_tex(id: String) -> Texture2D:
+	var fn := String(ICON_ALIAS.get(id, id))
+	var p := LOOT_DIR + fn + ".png"
+	return load(p) if ResourceLoader.exists(p) else null
+
+
+func _coin_tex() -> Texture2D:
+	return load(LOOT_DIR + "coin.png")
+
+
+## 별 3개(획득 채움=골든 / 미획득=빈 크림) — 가운데 별 살짝 크게(쿠키런 톤)
+class StarRow extends Control:
+	var got := 0
+	func _draw() -> void:
+		var cx := size.x * 0.5
+		var cy := size.y * 0.5
+		var spacing := 66.0
+		for i in 3:
+			var big: bool = (i == 1)
+			var r := 30.0 if big else 24.0
+			var c := Vector2(cx + (i - 1) * spacing, cy - (10.0 if big else 0.0))
+			_star(c, r, i < got)
+	func _star(c: Vector2, r: float, filled: bool) -> void:
+		var pts := PackedVector2Array()
+		for k in 10:
+			var ang := -PI / 2.0 + k * PI / 5.0
+			var rr := r if k % 2 == 0 else r * 0.45
+			pts.append(c + Vector2(cos(ang), sin(ang)) * rr)
+		draw_colored_polygon(pts, Design.CHEESE if filled else Design.PAPER_DEEP)
+		var loop := pts
+		loop.append(pts[0])
+		draw_polyline(loop, Design.INK, 3.0, true)
 
 
 func show_gameover() -> void:

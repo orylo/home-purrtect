@@ -610,7 +610,7 @@ func _on_anim_finished() -> void:
 func _die() -> void:
 	dead = true
 	GameState.enemy_killed.emit()                                    # 스테이지 이벤트 트리거(첫 처치 등)
-	GameState.coins += int(round(_coin * GameState.run_coin_mult))   # 처치 코인(§3.1, 곳간 축복 배율)
+	GameState.add_coins(int(round(_coin * GameState.run_coin_mult)))   # 처치 코인(§3.1, 곳간 축복 배율)
 	for mid in Enemies.roll_drops(_id):   # 전리품 드랍(§5.2)
 		GameState.add_material(mid)
 	velocity = Vector2.ZERO
