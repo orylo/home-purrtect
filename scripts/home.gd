@@ -475,7 +475,12 @@ func _show_coachmark(c: Dictionary) -> void:
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ov.add_child(hint)
 
+	# 직전 화면(클리어 패널 등)에서 넘어온 탭이 즉시 코치마크를 닫는 것 방지 — 0.35s 후 닫기 무장.
+	var armed := [false]
+	get_tree().create_timer(0.35).timeout.connect(func() -> void: armed[0] = true)
 	ov.gui_input.connect(func(ev: InputEvent) -> void:
+		if not armed[0]:
+			return
 		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventScreenTouch and ev.pressed):
 			if not GameState.coachmark_seen.has(c["id"]):
 				GameState.coachmark_seen.append(c["id"])
@@ -488,8 +493,7 @@ class CoachRing extends Control:
 	var c := Vector2.ZERO
 	var r := 90.0
 	func _draw() -> void:
-		draw_arc(c, r, 0.0, TAU, 72, Color("F2B33D"), 5.0, true)
-		draw_arc(c, r + 6.0, 0.0, TAU, 72, Color(0.14, 0.12, 0.10, 0.55), 3.0, true)
+		draw_arc(c, r, 0.0, TAU, 72, Color("F2B33D"), 5.0, true)   # 골든 강조 링(다크 스트로크 제거)
 
 
 # --- helpers ---
