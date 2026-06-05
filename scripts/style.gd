@@ -92,6 +92,56 @@ const TEX_PILL := {
 	"gray": preload("res://assets/ui/buttons/pill2_gray.png"),
 }
 
+# 빈티지 명판 버튼(좌우 리벳 캡 고정·가운데 신축, 9-slice). 좌우 캡 ≈54px.
+const SIGN_TEX := {
+	"red": preload("res://assets/ui/buttons/sign_red.png"),
+	"cream": preload("res://assets/ui/buttons/sign_cream.png"),
+	"green": preload("res://assets/ui/buttons/sign_green.png"),
+}
+const SIGN_CAP := 54.0   # 좌우 장식(코너+리벳) 폭 — 9-slice texture_margin
+
+
+## 명판 버튼 — 좌우 리벳 캡 고정, 가운데만 글자수에 맞춰 신축(9-slice).
+##   color: "red"/"green"=크림 글자+잉크 스트로크 / "cream"=잉크 글자(스트로크 없음).
+func signboard_button(b: Button, color: String = "green", fs: int = FS_TITLE) -> void:
+	var tex: Texture2D = SIGN_TEX.get(color, SIGN_TEX["green"])
+	b.clip_contents = false
+	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
+		var sb := StyleBoxTexture.new()
+		sb.texture = tex
+		sb.texture_margin_left = SIGN_CAP
+		sb.texture_margin_right = SIGN_CAP
+		sb.texture_margin_top = 30.0
+		sb.texture_margin_bottom = 30.0
+		sb.content_margin_left = SIGN_CAP + 12.0     # 글자가 리벳 위로 안 가게
+		sb.content_margin_right = SIGN_CAP + 12.0
+		sb.content_margin_top = 16.0
+		sb.content_margin_bottom = 16.0
+		if st == "pressed":
+			sb.modulate_color = Color(0.9, 0.9, 0.9)
+		elif st == "disabled":
+			sb.modulate_color = Color(0.75, 0.75, 0.75)
+		b.add_theme_stylebox_override(st, sb)
+	b.add_theme_font_override("font", FONT_TITLE)
+	b.add_theme_font_size_override("font_size", fs)
+	var fg := INK if color == "cream" else INK_CREAM
+	for cn in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		b.add_theme_color_override(cn, fg)
+	if color != "cream":
+		b.add_theme_color_override("font_outline_color", INK)
+		b.add_theme_constant_override("outline_size", 6)
+	if not b.has_meta("_sfx"):
+		b.set_meta("_sfx", true)
+		b.pressed.connect(func(): Sfx.play("click"))
+
+
+## 명판 버튼 생성 헬퍼.
+func sign_button(text: String, color: String = "green", fs: int = FS_TITLE) -> Button:
+	var b := Button.new()
+	b.text = text
+	signboard_button(b, color, fs)
+	return b
+
 ## (폴백) 코드 알약 박스 - 텍스처 못 쓰는 icon kind 등에서 사용
 func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
