@@ -18,7 +18,7 @@ const POOL := 6               # 동시 블립 풀(빠른 연타 대비)
 ##   blip_every(N글자마다 1회) / char_ms(타이핑 속도, 작을수록 빠름) / sample_path(있으면 .ogg 변조)
 ## sample_path 채워짐 = 녹음 음절(.wav) pitch_scale 변조 재생(합성 대신). 펑거스=시스템 알림 음색도 겸함.
 const VOICE_PROFILES := {
-	"fungus": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 22.0, "sample_path": "res://assets/audio/voice/blip_fungus.wav"},  # 거들먹·빠름·종알종알
+	"fungus": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 34.0, "sample_path": "res://assets/audio/voice/blip_fungus.wav"},  # 거들먹·종알종알(녹음 음절이 겹쳐 뭉치지 않게 22→34ms = 펄45·기존22 중간)
 	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": "res://assets/audio/voice/blip_pearl.wav"},  # 또박또박·우아·느림
 	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": "res://assets/audio/voice/blip_max.wav"},  # 능글·낮음·느긋
 }
