@@ -322,28 +322,32 @@ func _dev_wbtn(parent: Control, t: String, pos: Vector2, fn: Callable) -> void:
 	parent.add_child(b)
 
 
-# --- 실내 배경 플레이스홀더(벽/바닥 2톤 + 중앙 받침) ---
-func _room_placeholder(vp: Vector2) -> void:
-	var wall := ColorRect.new()
-	wall.color = Color("3b2f4a")                  # 어둑한 실내 벽(보라톤)
-	wall.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(wall)
-	var floor := ColorRect.new()
-	floor.color = Color("5a4636")                 # 나무 바닥(갈색)
-	floor.position = Vector2(0, vp.y * 0.66)
-	floor.size = Vector2(vp.x, vp.y * 0.34)
-	add_child(floor)
-	# 중앙 받침(러그/접시 느낌 ─ 치즈 발밑)
-	var rug := ColorRect.new()
-	rug.color = Color("8a3b5e")                   # 러그
-	rug.size = Vector2(vp.x * 0.40, vp.y * 0.16)
-	rug.position = Vector2(vp.x * 0.5 - rug.size.x * 0.5, vp.y * 0.66 - rug.size.y * 0.5)
-	add_child(rug)
-	var tag := Design.label("(실내 배경 ─ 플레이스홀더)", "caption", Design.PAPER_DEEP)
-	tag.position = Vector2(vp.x * 0.5 - 120, vp.y - 28)
-	tag.size = Vector2(240, 24)
-	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(tag)
+# --- 실내 배경 = Home_BG (세로 고정 · 가로 자동 블리딩 · 가운데) ---
+const HOME_BG := preload("res://assets/backgrounds/home_bg.png")
+func _room_placeholder(_vp: Vector2) -> void:
+	var bg := _HomeBG.new()
+	bg.tex = HOME_BG
+	add_child(bg)   # 첫 자식 = 맨 뒤(치즈·버튼 등은 뒤에 add → 위에 그려짐)
+
+
+## 홈 배경: 세로=화면높이로 스케일(고정), 가로는 자동(넘치면 양옆 블리딩)·가운데. 리사이즈 추종.
+class _HomeBG extends Control:
+	var tex: Texture2D
+	func _ready() -> void:
+		set_anchors_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_viewport().size_changed.connect(queue_redraw)
+	func _draw() -> void:
+		if tex == null:
+			return
+		var vp := size
+		var ts := tex.get_size()
+		if ts.y <= 0.0:
+			return
+		var sc := vp.y / ts.y               # 세로 고정
+		var w := ts.x * sc
+		var x := (vp.x - w) * 0.5           # 가로 가운데 → 넘치면 양옆 블리딩
+		draw_texture_rect(tex, Rect2(x, 0.0, w, vp.y), false)
 
 
 # --- 코치마크(전체 딤 + 버튼 위치만 원형 마스킹) ---
