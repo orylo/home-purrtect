@@ -392,9 +392,17 @@ func _resolve_attack() -> void:
 	if _is_touching_player() or _kind == "dive":
 		var player := get_tree().get_first_node_in_group("player")
 		if player and player.has_method("take_damage"):
-			player.take_damage(damage)
+			var cd := _crit_dmg()                  # 크리(길냥이 동일)
+			player.take_damage(cd[0], cd[1])
 			if _status != "" and player.has_method("apply_status"):
 				player.apply_status(_status)
+
+
+## 침입자 평타 크리 — 길냥이(base)와 동일하게 통일(5%·strike ×1.5, base 스탯 참조). [최종dmg, 크리여부].
+func _crit_dmg() -> Array:
+	var bs: Dictionary = GameState.JOB_STATS["base"]
+	var c: bool = randf() < float(bs.get("crit", 0.05))
+	return [damage * (float(bs.get("crit_mult", 1.5)) if c else 1.0), c]
 
 
 func _fire_projectile() -> void:
@@ -404,6 +412,9 @@ func _fire_projectile() -> void:
 	_lunge = 0.16
 	var b := ENEMY_BULLET.instantiate()
 	var bcol := _bcolor            # 발사체 색(아래에서 종류별 지정)
+	var cd := _crit_dmg()          # 발사체도 크리(길냥이 동일: 5%·×1.5)
+	var bdmg: float = cd[0]
+	b.is_crit = cd[1]
 	if _kind == "lob":
 		b.shape = "stone"          # 투척쥐 = 돌멩이. 회색=치즈 돌과 동일 / 검은투척쥐=어둡게.
 		bcol = Color(0.26, 0.23, 0.22) if _id == "black_thrower" else Color(0.55, 0.55, 0.58)
@@ -423,7 +434,7 @@ func _fire_projectile() -> void:
 		b.hit_y_offset = emit.y - global_position.y    # 음파가 지나는 높이(바닥 기준)
 		b.dodge_by_crouch = true
 		get_parent().add_child(b)
-		b.setup(Vector2(-460.0, 0.0), damage, _status, bcol, 0.0)   # 수평 직선
+		b.setup(Vector2(-460.0, 0.0), bdmg, _status, bcol, 0.0)   # 수평 직선
 		return
 
 	var origin := _emit_pos()
@@ -437,10 +448,10 @@ func _fire_projectile() -> void:
 		var t := clampf(absf(to.x) / 420.0, 0.55, 1.4)   # 거리 멀수록 길게(과하지 않게 clamp)
 		var vx := to.x / t
 		var vy := (to.y - 0.5 * g * t * t) / t
-		b.setup(Vector2(vx, vy), damage, _status, bcol, g)
+		b.setup(Vector2(vx, vy), bdmg, _status, bcol, g)
 	else:
 		var dir := (target - origin).normalized()
-		b.setup(dir * 520.0, damage, _status, bcol, 0.0)                   # 직선
+		b.setup(dir * 520.0, bdmg, _status, bcol, 0.0)                   # 직선
 
 
 ## 탄환 생성 위치(월드). 스프라이트 부위(EMIT_OFFSET) 기준, 없으면 폴백.

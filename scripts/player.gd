@@ -424,11 +424,13 @@ func _draw_hurt_popups() -> void:
 		var f: float = clampf(p["t"] / HURT_POP_DUR, 0.0, 1.0)
 		var y := -236.0 - 48.0 * f
 		var a := 1.0 - f
-		var col := Color(1.0, 0.35, 0.3, a)   # 빨강(피해)
-		var txt := "-" + str(p["amount"])
+		var is_c: bool = p.get("crit", false)
+		var col := Color(1.0, 0.6, 0.15, a) if is_c else Color(1.0, 0.35, 0.3, a)   # 크리=주황 / 일반=빨강
+		var fs := 36 if is_c else 28
+		var txt := "-" + str(p["amount"]) + ("!" if is_c else "")
 		var pos := Vector2(-40.0, y)
-		draw_string_outline(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 28, 5, Color(0, 0, 0, a * 0.85))
-		draw_string(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, 28, col)
+		draw_string_outline(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, fs, 5, Color(0, 0, 0, a * 0.85))
+		draw_string(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, fs, col)
 
 
 ## 몸으로 밀기 — move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
@@ -627,7 +629,7 @@ func _nearest_enemy(exclude_air: bool = false) -> Node2D:
 
 
 ## 적의 공격에서 호출 — 데미지를 받는다(넉백 없음).
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, crit: bool = false) -> void:
 	if _dead:
 		return
 	if GameState.cheats.get("godmode", false):   # 개발자 치트: 무적
@@ -635,11 +637,11 @@ func take_damage(amount: float) -> void:
 	if _guard_t > 0.0:
 		amount *= (1.0 - _guard_pct)   # 방패 자세: 피해 감소
 	if amount >= 1.0:
-		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})   # 받은 데미지 숫자
-		# 적이 치즈 평타에 맞을 때와 동일한 타격 연출(소리+임팩트 번쩍+흔들림)
-		Sfx.impact(false)
-		Fx.request_shake(3.0)
-		Fx.burst("impact_flash", global_position + Vector2(0, -110), 0.42, 45)
+		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0, "crit": crit})   # 받은 데미지 숫자
+		# 적이 치즈 평타에 맞을 때와 동일한 타격 연출(소리+임팩트 번쩍+흔들림) — 크리면 강하게
+		Sfx.impact(crit)
+		Fx.request_shake(7.0 if crit else 3.0)
+		Fx.burst("critical_hit" if crit else "impact_flash", global_position + Vector2(0, -110), 0.6 if crit else 0.42, 45)
 	health -= amount
 	_hurt_flash_timer = 0.15
 	_committed_anim = "hit"   # 피격 모션(끝까지·빠르게), 진행 중 공격 취소

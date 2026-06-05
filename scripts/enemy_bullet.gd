@@ -5,6 +5,7 @@ extends Node2D
 var _vel := Vector2.ZERO
 var _grav := 0.0
 var damage := 5.0
+var is_crit := false           # 크리 여부(길냥이 동일) — 피격 연출용
 var status := ""           # ""/"poison"/"slow"
 var color := Color(0.8, 0.3, 0.2)
 var shape := "dot"              # dot(원) / stone(회색 돌-투척쥐) / cone(원뿔 독침-벌)
@@ -50,7 +51,7 @@ func _physics_process(delta: float) -> void:
 				pass   # 앉아서 음파 회피 → 그냥 통과(맞지 않음)
 			else:
 				if p.has_method("take_damage"):
-					p.take_damage(damage)
+					p.take_damage(damage, is_crit)
 				if status != "" and p.has_method("apply_status"):
 					p.apply_status(status)
 				queue_free()
