@@ -54,14 +54,12 @@ const FULL_GROUND_FMT := "res://assets/backgrounds/wall/ground_full/ground%02d.p
 const FULL_FAR_COUNT := 8
 const FULL_GROUND_COUNT := 10
 ## per-stage 풀프레임 override — 키="막-스테이지" → res 경로. 그 스테이지만 고정(비면 풀 랜덤).
-const FIXED_FAR := {
-	"1-1":  "res://assets/backgrounds/wall/far_full/far08.png",
-	"1-3":  "res://assets/backgrounds/wall/far_full/far02.png",
-	"1-20": "res://assets/backgrounds/wall/far_full/far01.png",
-}
+##   원경(far)은 전부 랜덤 → FIXED_FAR 비움. 지면(ground)만 고정 + 고정분은 랜덤 풀에서 제외.
+const FIXED_FAR := {}
 const FIXED_GROUND := {
 	"1-1":  "res://assets/backgrounds/wall/ground_full/ground04.png",
 	"1-3":  "res://assets/backgrounds/wall/ground_full/ground06.png",
+	"1-10": "res://assets/backgrounds/wall/ground_full/ground09.png",
 	"1-20": "res://assets/backgrounds/wall/ground_full/ground03.png",
 }
 var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음). 현재 전 스테이지 true.
@@ -107,12 +105,14 @@ func _pick_backgrounds() -> void:
 				_last_far = far_texture.resource_path
 		if far_texture == null:
 			far_texture = _load_tex(DEFAULT_FAR)   # 풀 비면 폴백
-	# 지면 = 고정 있으면 그것, 없으면 풀에서 랜덤
+	# 지면 = 고정 있으면 그것, 없으면 풀에서 랜덤(단, 고정 배정된 지면은 제외 → 다른 스테이지에 안 나옴)
 	if ground_texture == null:
 		if FIXED_GROUND.has(key):
 			ground_texture = _load_tex(FIXED_GROUND[key])
 		else:
-			ground_texture = _pick_seq(FULL_GROUND_FMT, FULL_GROUND_COUNT, [_last_ground])
+			var gexclude: Array = FIXED_GROUND.values()   # 고정 지면 전부 제외
+			gexclude.append(_last_ground)
+			ground_texture = _pick_seq(FULL_GROUND_FMT, FULL_GROUND_COUNT, gexclude)
 			if ground_texture != null:
 				_last_ground = ground_texture.resource_path
 		if ground_texture == null:
