@@ -463,6 +463,13 @@ func _show_coachmark(c: Dictionary) -> void:
 	var tx: float = (rect.position.x + rect.size.x + 18.0) if on_left else (rect.position.x - ts.x - 18.0)
 	var ty: float = center.y - ts.y * 0.5
 	tip.position = Vector2(clampf(tx, 12.0, vp.x - ts.x - 12.0), clampf(ty, 12.0, vp.y - ts.y - 12.0))
+	# 말풍선 꼬리 — 아이콘 쪽 변에, 아이콘 높이에 맞춰
+	var tail := _Tail.new()
+	tail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tail.side = "left" if on_left else "right"
+	var tail_y: float = clampf(center.y, tip.position.y + 18.0, tip.position.y + ts.y - 18.0)
+	tail.position = Vector2(tip.position.x if on_left else tip.position.x + ts.x, tail_y)
+	ov.add_child(tail)
 	var hint := Design.label("▶ 탭하여 계속", "caption", Design.CHEESE_DEEP)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.size = Vector2(vp.x, 30.0)
@@ -484,7 +491,23 @@ func _show_coachmark(c: Dictionary) -> void:
 			ov.queue_free())
 
 
-# (CoachRing 제거 — 노란 강조 링 폐기, 다크 딤+원형 마스크만 사용)
+# 툴팁 말풍선 꼬리 — 크림 채움 + 잉크 빗변 외곽선. side="left"(꼬리 왼쪽)/"right".
+class _Tail extends Control:
+	var side := "left"
+	const COL := Color("F3E3BE")   # PAPER
+	const BRD := Color("241F1B")   # INK
+	func _draw() -> void:
+		var L := 18.0      # 꼬리 길이
+		var Hh := 15.0     # 꼬리 반높이
+		var o := 4.0       # 박스 안으로 겹쳐 테두리 가림
+		var pts: PackedVector2Array
+		if side == "left":
+			pts = PackedVector2Array([Vector2(o, -Hh), Vector2(o, Hh), Vector2(-L, 0)])
+		else:
+			pts = PackedVector2Array([Vector2(-o, -Hh), Vector2(-o, Hh), Vector2(L, 0)])
+		draw_colored_polygon(pts, COL)
+		draw_line(pts[0], pts[2], BRD, 2.0)
+		draw_line(pts[1], pts[2], BRD, 2.0)
 
 
 # --- helpers ---
