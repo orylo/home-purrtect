@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/cheese/base/cheese_base.tres" id="2_frames"]
@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="4_mouse"]
 [ext_resource type="PackedScene" path="res://scenes/bullet.tscn" id="5_bullet"]
 [ext_resource type="Script" path="res://scripts/stage_background.gd" id="6_bg"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/test1.jpg" id="7_bgtex"]
 [ext_resource type="Script" path="res://scripts/foreground.gd" id="7_fg"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
 [ext_resource type="Script" path="res://scripts/bottom_hud.gd" id="9_bottomhud"]
@@ -72,7 +71,6 @@ layer = -10
 
 [node name="StageBackground" type="Node2D" parent="BG"]
 script = ExtResource("6_bg")
-stage_texture = ExtResource("7_bgtex")
 show_ground_line = false
 offset_y = 250.0
 fog_enabled = false
