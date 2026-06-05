@@ -146,9 +146,11 @@ func _process(delta: float) -> void:
 # ── 인트로(웨이브 전, NPC 도보 등장) ─────────────────────
 func _run_intro() -> void:
 	_busy = true
-	await get_tree().process_frame                    # 플레이어/뷰포트 준비
+	# ★ hold은 await보다 먼저 — 한 프레임이라도 spawner._process가 돌아 "전투 시작!" 큐가
+	#   인트로 대화 전에 새어나가는 것을 방지(battle_starting은 hold 중엔 안 뜸).
 	if _spawner != null and _spawner.has_method("hold_intro"):
 		_spawner.hold_intro()
+	await get_tree().process_frame                    # 플레이어/뷰포트 준비
 	if _hud != null:
 		_hud.visible = false
 	await _await_cat_landed()                          # 점프 중이면 착지까지 기다린 뒤 정지

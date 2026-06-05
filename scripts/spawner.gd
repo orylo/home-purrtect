@@ -7,6 +7,7 @@ extends Node2D
 
 signal wave_started(current: int, total: int)
 signal stage_cleared
+signal battle_starting   # 첫 웨이브 직전(대기 시작) 1회 — "전투 시작!" 큐가 적 등장을 선행
 
 @export var enemy_scene: PackedScene
 @export var spawn_offscreen: float = 140.0   # 화면 밖 오른쪽 이만큼에서 등장
@@ -24,6 +25,7 @@ var _wave_index: int = -1
 var _to_spawn: int = 0
 var _spawn_timer: float = 0.0
 var _delay_timer: float = 0.0
+var _announced: bool = false    # battle_starting 1회 발신 가드
 
 
 func _ready() -> void:
@@ -48,6 +50,11 @@ func _process(delta: float) -> void:
 		return
 	match _state:
 		"delay":
+			# 첫 웨이브 직전(대기 시작) 1회 = "전투 시작!" 큐 → 적 등장보다 먼저 뜬다.
+			#   (인트로 있으면 대화 종료 후 release되어 여기 진입, 없으면 씬 진입 직후)
+			if not _announced and _wave_index == -1:
+				_announced = true
+				battle_starting.emit()
 			_delay_timer -= delta
 			if _delay_timer <= 0.0:
 				_start_next_wave()

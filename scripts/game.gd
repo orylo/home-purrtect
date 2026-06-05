@@ -13,6 +13,8 @@ func _ready() -> void:
 	spawner.wave_started.connect(hud.set_wave)
 	spawner.wave_started.connect(_on_wave_for_timing)
 	spawner.stage_cleared.connect(_on_stage_cleared)
+	if spawner.has_signal("battle_starting"):
+		spawner.battle_starting.connect(_on_battle_starting)   # "전투 시작!" 큐(적 등장 선행)
 	player.died.connect(_on_player_died)
 	if hud.has_signal("inscene_event_requested"):
 		hud.inscene_event_requested.connect(_on_inscene_event)
@@ -27,8 +29,12 @@ func _on_wave_for_timing(current: int, _total: int) -> void:
 	if current == 1:                # 첫 웨이브 스폰 = 측정 시작(인트로 등은 이미 끝난 뒤)
 		_battle_time = 0.0
 		_timing = true
-		if hud.has_method("show_battle_start"):   # "전투 시작!" 큐(이벤트→전투 전환 명확화)
-			hud.show_battle_start()
+
+
+## 전투 시작 큐 — 첫 웨이브 대기 시작 시(적 등장보다 ~1.5s 먼저) 배너+팡파르
+func _on_battle_starting() -> void:
+	if hud.has_method("show_battle_start"):
+		hud.show_battle_start()
 
 
 func _process(delta: float) -> void:
