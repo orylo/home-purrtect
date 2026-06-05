@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.100"
+const BUILD := "0.0.101"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -36,7 +36,8 @@ var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
-var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(첫 실행 자동재생 게이트)
+var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(다시보기/기록용 — 자동재생 게이트는 아님)
+var prologue_return: String = "start"  # 프롤로그 끝난 뒤 갈 곳(임시·비저장): 새 게임=「home」 / 다시보기=「start」
 var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
 var stage_stars: Dictionary = {}   # 별 최고기록 {"1-1": best_star(1~3)} — 재도전으로 max 갱신
 var allstar_claimed: Array = []    # 구간 올스타 보상 1회 지급 플래그(act1_1_10/act1_11_20/act1_full)

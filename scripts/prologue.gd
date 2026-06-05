@@ -191,7 +191,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _finish() -> void:
 	GameState.prologue_seen = true
 	GameState.save_game()
-	get_tree().change_scene_to_file("res://scenes/start.tscn")
+	# 새 게임 진입(prologue_return="home")이면 홈으로, 다시보기면 시작화면으로.
+	var dest := "res://scenes/home.tscn" if GameState.prologue_return == "home" else "res://scenes/start.tscn"
+	GameState.prologue_return = "start"   # 소비 후 기본값 복귀(다음 다시보기 대비)
+	get_tree().change_scene_to_file(dest)
 
 
 # ───────── 임시 비주얼(도형) ─────────

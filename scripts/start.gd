@@ -42,12 +42,14 @@ func _ready() -> void:
 			$DevButton.add_theme_stylebox_override(st, circle)   # 모든 상태 동일 → 호버 변화 없음
 
 
-	# [이야기] = 프롤로그 컷씬 다시보기(좌하단)
+	# [이야기] = 프롤로그 컷씬 다시보기(좌하단). 다시보기는 끝나면 시작화면으로 복귀.
 	var vp := get_viewport_rect().size
 	var story := Design.button("이야기", "secondary", Design.FS_BODY)
 	story.custom_minimum_size = Vector2(150, 52)
 	story.position = Vector2(40, vp.y - 80)
-	story.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
+	story.pressed.connect(func():
+		GameState.prologue_return = "start"
+		get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
 	add_child(story)
 	# [처음부터] = 진행 초기화(세이브 있을 때만 노출, 확인 팝업 거침). 이야기 버튼 오른쪽.
 	if GameState.has_save():
@@ -56,9 +58,7 @@ func _ready() -> void:
 		fresh.position = Vector2(200, vp.y - 80)
 		fresh.pressed.connect(_confirm_new_game)
 		add_child(fresh)
-	# 첫 실행이면 프롤로그 자동 재생(본 뒤엔 prologue_seen=true → 안 뜸)
-	if not GameState.prologue_seen:
-		get_tree().change_scene_to_file.call_deferred("res://scenes/prologue.tscn")
+	# ※ 프롤로그 자동재생 폐기 — 이제 [게임 시작](세이브 없을 때=새 게임)·[처음부터]를 눌렀을 때만 재생.
 
 
 func _layout_title() -> void:
@@ -78,24 +78,36 @@ func _layout_title() -> void:
 
 func _on_start() -> void:
 	GameState.mode = "player"
-	# 세이브가 진실원천: 있으면 로드(개발자 세션 잔여 해금/코인 제거) = 이어하기 / 없으면 새 게임 1-1.
+	_apply_player_run_flags()
 	if GameState.AUTOSAVE and GameState.has_save():
+		# 이어하기 = 세이브 로드 후 프롤로그 없이 바로 홈(개발자 세션 잔여 해금/코인 제거)
 		GameState.load_game()
+		get_tree().change_scene_to_file("res://scenes/home.tscn")
 	else:
+		# 세이브 없음 = 새 게임 → 프롤로그 1회 → 홈
 		GameState.reset_progress()
-	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
-	GameState.difficulty = 1.0
-	GameState.sandbox = false   # 플레이어 모드는 항상 일반 스테이지
-	get_tree().change_scene_to_file("res://scenes/home.tscn")   # 홈 허브로
+		_play_prologue_then_home()
 
 
 func _on_new_game() -> void:
+	# [처음부터] = 진행 초기화 후 프롤로그 → 홈
 	GameState.mode = "player"
 	GameState.new_game()         # 진행·별점·올스타 초기화 + 세이브 덮어쓰기
+	_apply_player_run_flags()
+	_play_prologue_then_home()
+
+
+## 플레이어 런 공통 플래그(치트 끔·난이도 1·일반 스테이지)
+func _apply_player_run_flags() -> void:
 	GameState.cheats = {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 	GameState.difficulty = 1.0
-	GameState.sandbox = false
-	get_tree().change_scene_to_file("res://scenes/home.tscn")
+	GameState.sandbox = false   # 플레이어 모드는 항상 일반 스테이지
+
+
+## 새 게임 진입 = 프롤로그 컷씬 1회 재생 후 홈으로(프롤로그가 prologue_return 보고 이동)
+func _play_prologue_then_home() -> void:
+	GameState.prologue_return = "home"
+	get_tree().change_scene_to_file("res://scenes/prologue.tscn")
 
 
 ## "처음부터" 확인 팝업(진행 삭제는 되돌릴 수 없어 한 번 묻는다)
