@@ -9,7 +9,7 @@ const INK := Color("241F1B")
 const PAPER := Color("F3E3BE")
 const PAPER_DEEP := Color("E4CB95")
 const CHEESE_DEEP := Color("D4912A")
-const BOX_H := 236.0
+const BOX_H := 272.0   # 36px 본문 3줄 + 세로 가운데 여유(쿠키런식 큰 글씨 대응)
 ## 커스텀 대화창 프레임 이미지(빈티지 테두리). 박스 크기로 늘려 깔고, 본문은 그 위에.
 const FRAME := preload("res://assets/ui/ui_dialogue.png")
 
@@ -86,18 +86,21 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 
 	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
 	box.add_child(name_lbl)
-	var text_lbl := _mk_label(36, INK, Vector2(tx, 52))   # 본문 36(화면높이 ~5%, 쿠키런급 큰 글씨)
+	# 본문 칸 = 이름 아래(56) ~ 힌트 위(BOX_H-46) 사이 body. 그 안에서 세로 가운데.
+	var text_top := 56.0
+	var text_h := BOX_H - text_top - 46.0
+	var text_lbl := _mk_label(36, INK, Vector2(tx, text_top))   # 본문 36(쿠키런급 큰 글씨)
 	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER   # 칸이 세로로 넓어 1~2줄 가운데 정렬
-	# 본문 칸 폭 제한(최대 880px) → 한 줄 글자수↓(가독). 박스가 더 좁으면 그에 맞춤.
-	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 880.0), BOX_H - 52.0 - 18.0)
+	text_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER     # body 정중앙(1~3줄)
+	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 880.0), text_h)   # 폭 최대 880(한 줄 글자수↓)
 	box.add_child(text_lbl)
 	var choices := HBoxContainer.new()
 	choices.add_theme_constant_override("separation", 16)
 	choices.position = Vector2(tx, 156)
 	choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(choices)
-	var hint := _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 176.0, BOX_H - 40.0))
+	# 힌트 = 코너 장식(우하단 ~150px) 피해 왼쪽으로. 본문 칸 하단.
+	var hint := _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 340.0, BOX_H - 42.0))
 	hint.text = "▶ 탭하여 계속"
 	box.add_child(hint)
 	return {"box": box, "face": face, "name_lbl": name_lbl, "text_lbl": text_lbl, "hint_lbl": hint, "choices": choices}
