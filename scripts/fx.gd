@@ -48,6 +48,8 @@ func burst(anim: String, pos: Vector2, scale: float = 1.0, z: int = 40,
 	if scn == null:
 		return
 	var s := AnimatedSprite2D.new()
+	# 클리어(트리 일시정지) 중에도 타격/처치 이펙트가 끝까지 재생되게.
+	s.process_mode = Node.PROCESS_MODE_ALWAYS
 	s.sprite_frames = _frames(anim, loop)
 	s.global_position = pos
 	s.scale = Vector2(scale, scale)

@@ -153,6 +153,7 @@ func _run_intro() -> void:
 		_hud.visible = false
 	get_tree().paused = true                           # 조작 실제 차단
 	_set_cat_idle(true)
+	_set_bg_alive(true)                                # 배경(비·드리프트)은 계속
 	var vp := get_viewport().get_visible_rect().size
 	var cat_x := 200.0
 	var pl := get_parent().get_node_or_null("Player")
@@ -172,6 +173,7 @@ func _run_intro() -> void:
 	if _spawner != null and _spawner.has_method("release_intro"):
 		_spawner.release_intro()                        # 웨이브 시작
 	_set_cat_idle(false)
+	_set_bg_alive(false)
 	get_tree().paused = false
 	_busy = false
 
@@ -190,12 +192,14 @@ func _run_popup(beats: Array) -> void:
 		_hud.visible = false
 	get_tree().paused = true
 	_set_cat_idle(true)
+	_set_bg_alive(true)
 	_build_ui(0.55)                                    # 화면 Dim
 	await _play_beats(beats)
 	_close_ui()
 	if _hud != null:
 		_hud.visible = true
 	_set_cat_idle(false)
+	_set_bg_alive(false)
 	get_tree().paused = false
 	_busy = false
 
@@ -222,9 +226,26 @@ func play_outro() -> void:
 		_hud.visible = false
 	get_tree().paused = true
 	_set_cat_idle(true)
+	_set_bg_alive(true)
 	var vp := get_viewport().get_visible_rect().size
-	_spawn_npc(vp.x + 160.0)                            # 우측에서 다시 등장
-	await _walk_to(vp.x * 0.6)
+	# ── #4·#5: 인트로처럼 화면 우측 가까이 등장하되, 치즈를 통과/추월하지 않는다.
+	#   치즈는 펑거스 왼쪽에 서고(겹침 금지), 치즈가 너무 우측이면 왼쪽으로 밀어 자리 확보.
+	var gap := 240.0                                   # 펑거스↔치즈 대화 간격
+	var npc_max := vp.x - 140.0                         # 펑거스가 화면 안에 보이는 우측 한계
+	var near_right := vp.x - 200.0                      # 인트로 standing(우측 가까이) 재현
+	var pl := get_parent().get_node_or_null("Player")
+	var cat_x := 200.0
+	if pl != null and pl is Node2D:
+		cat_x = (pl as Node2D).global_position.x
+	var npc_target: float = clampf(maxf(near_right, cat_x + gap), 0.0, npc_max)
+	var cat_target: float = npc_target - gap
+	_spawn_npc(vp.x + 160.0)                            # 우측 밖에서 등장
+	# 치즈가 펑거스 자리를 침범(너무 우측)하면 왼쪽으로 밀어 비켜줌(펑거스 도보와 동시 진행)
+	if pl != null and cat_x > cat_target + 6.0 and pl.has_method("event_walk_to"):
+		pl.event_walk_to(cat_target)
+	await _walk_to(npc_target)                          # 펑거스 우측 가까이 정지
+	while pl != null and pl.has_method("is_event_walking") and pl.is_event_walking():
+		await get_tree().process_frame                 # 치즈 밀기 완료까지 대기
 	_build_ui(0.0)
 	await _play_beats(_data["outro"])
 	_close_ui()
@@ -235,6 +256,7 @@ func play_outro() -> void:
 	if _hud != null:
 		_hud.visible = true
 	_set_cat_idle(false)
+	_set_bg_alive(false)
 	get_tree().paused = false
 	_busy = false
 
@@ -244,6 +266,17 @@ func _set_cat_idle(on: bool) -> void:
 	var pl := get_parent().get_node_or_null("Player")
 	if pl != null and pl.has_method("set_event_idle"):
 		pl.set_event_idle(on)
+
+
+## 이벤트(트리 일시정지) 동안에도 배경 움직임(비·원경 드리프트·바람)은 계속 흐르게.
+##   BG(CanvasLayer)·Weather·Foreground를 ALWAYS로, 끝나면 INHERIT 복귀.
+func _set_bg_alive(on: bool) -> void:
+	var mode := Node.PROCESS_MODE_ALWAYS if on else Node.PROCESS_MODE_INHERIT
+	var par := get_parent()
+	for nm in ["BG", "Weather", "Foreground"]:
+		var n := par.get_node_or_null(nm)
+		if n != null:
+			n.process_mode = mode
 
 
 # ── NPC ────────────────────────────────────────────────

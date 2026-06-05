@@ -215,8 +215,9 @@ func _physics_process(delta: float) -> void:
 		_eslow_timer -= delta
 	if _lunge > 0.0:
 		_lunge -= delta
-	# placeholder 적: hit 애니가 없어 타이머로 피격 경직 해제(안 그러면 영영 멈춤)
-	if _hit and not _use_sprite:
+	# 피격 경직 해제 = 타이머(모든 적 안전망). 루프슈터(투척쥐 등)는 hit 애니가
+	#   _play_move_anim에 가로채여 animation_finished("hit")가 안 와 _hit이 영영 안 풀리던 버그 방지.
+	if _hit:
 		_hit_timer -= delta
 		if _hit_timer <= 0.0:
 			_hit = false
@@ -332,7 +333,8 @@ func _update_loop_shooter(delta: float, dist: float, stunned: bool) -> void:
 		if _loop_active:
 			_loop_active = false
 			anim.speed_scale = 1.0
-			_play_move_anim()
+			if not _hit:           # _hit이면 hit 애니 재생 중 → 가로채지 않음
+				_play_move_anim()
 		return
 	if not _loop_active or anim.animation != "attack":
 		_loop_active = true
@@ -626,8 +628,11 @@ func _die() -> void:
 	velocity = Vector2.ZERO
 	$CollisionShape2D.set_deferred("disabled", true)
 	$Hitbox.set_deferred("monitorable", false)
+	# 클리어(마지막 처치) 시 트리가 일시정지돼도 죽음 연출(귀신·펑)이 끝까지 재생되게.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	queue_redraw()
 	var pop := POP.instantiate()
+	pop.process_mode = Node.PROCESS_MODE_ALWAYS
 	get_parent().add_child(pop)
 	pop.global_position = global_position + Vector2(0, -45 - _air_raise())
 	Fx.request_shake(7.0)
