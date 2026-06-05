@@ -101,28 +101,21 @@ const SIGN_TEX := {
 const SIGN_CAP := 54.0   # 좌우 장식(코너+리벳) 폭 — 9-slice texture_margin
 
 
-## 명판 버튼 — 좌우 리벳 캡 고정, 가운데만 글자수에 맞춰 신축(9-slice).
+## 명판 버튼 — ★코인 명판과 같은 드로우 규칙: 세로=이미지 전체 균일 스케일,
+##   가로=9-slice(좌우 리벳 캡 고정, 가운데만 가로 신축). 버튼 배경은 투명(StyleBoxEmpty)이고
+##   뒤에 깔린 _SignPlate(show_behind_parent)가 텍스처를 직접 그린다. → 버튼 높이가 텍스처와 달라도 리벳 안 늘어남.
 ##   color: "red"/"green"=크림 글자+잉크 스트로크 / "cream"=잉크 글자(스트로크 없음).
 func signboard_button(b: Button, color: String = "green", fs: int = FS_TITLE) -> void:
 	var tex: Texture2D = SIGN_TEX.get(color, SIGN_TEX["green"])
 	b.clip_contents = false
+	# 세로중앙 보정: SB어그로 잉크가 라인박스 안에서 fs의 ~11.5%만큼 위로 앉음 → top↑/bot↓로 끌어내림.
+	var vshift: float = fs * 0.115
 	for st in ["normal", "hover", "pressed", "focus", "disabled"]:
-		var sb := StyleBoxTexture.new()
-		sb.texture = tex
-		sb.texture_margin_left = SIGN_CAP
-		sb.texture_margin_right = SIGN_CAP
-		sb.texture_margin_top = 30.0
-		sb.texture_margin_bottom = 30.0
+		var sb := StyleBoxEmpty.new()   # 배경은 _SignPlate가 그림 → 버튼 자체는 투명(글자만)
 		sb.content_margin_left = SIGN_CAP + 12.0     # 글자가 리벳 위로 안 가게
 		sb.content_margin_right = SIGN_CAP + 12.0
-		# 세로중앙 보정: SB어그로 잉크가 라인박스 안에서 fs의 ~11.5%만큼 위로 앉음 → top↑/bot↓로 끌어내림.
-		var vshift: float = fs * 0.115
 		sb.content_margin_top = 16.0 + vshift
 		sb.content_margin_bottom = maxf(4.0, 16.0 - vshift)
-		if st == "pressed":
-			sb.modulate_color = Color(0.9, 0.9, 0.9)
-		elif st == "disabled":
-			sb.modulate_color = Color(0.75, 0.75, 0.75)
 		b.add_theme_stylebox_override(st, sb)
 	b.add_theme_font_override("font", FONT_TITLE)
 	b.add_theme_font_size_override("font_size", fs)
@@ -132,9 +125,55 @@ func signboard_button(b: Button, color: String = "green", fs: int = FS_TITLE) ->
 	if color != "cream":
 		b.add_theme_color_override("font_outline_color", INK)
 		b.add_theme_constant_override("outline_size", maxi(8, int(fs * 0.18)))   # fs 비례 두꺼운 외곽선
+	# 명판 배경(텍스트 뒤). 재호출 시 텍스처만 갱신.
+	var plate: Node = b.get_node_or_null("_SignPlate")
+	if plate == null:
+		var p := _SignPlate.new()
+		p.name = "_SignPlate"
+		b.add_child(p)
+		plate = p
+	plate.tex = tex
+	plate.cap_px = SIGN_CAP
+	plate.queue_redraw()
 	if not b.has_meta("_sfx"):
 		b.set_meta("_sfx", true)
 		b.pressed.connect(func(): Sfx.play("click"))
+
+
+## 명판 버튼 배경 — 버튼 뒤(show_behind_parent)에서 텍스처를 세로 균일 스케일 + 가로 9-slice로 그림.
+class _SignPlate extends Control:
+	var tex: Texture2D
+	var cap_px := 54.0
+	func _ready() -> void:
+		show_behind_parent = true   # 부모(버튼) 글자 뒤에 그림
+		set_anchors_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		resized.connect(queue_redraw)   # 버튼 크기 바뀌면 다시 그림
+	func _process(_d: float) -> void:
+		var b := get_parent() as Button
+		if b == null:
+			return
+		var m := b.get_draw_mode()
+		var c := Color.WHITE
+		if m == BaseButton.DRAW_PRESSED or m == BaseButton.DRAW_HOVER_PRESSED:
+			c = Color(0.9, 0.9, 0.9)
+		elif m == BaseButton.DRAW_DISABLED:
+			c = Color(0.75, 0.75, 0.75)
+		if c != modulate:
+			modulate = c
+	func _draw() -> void:
+		if tex == null:
+			return
+		var th: float = tex.get_height()
+		var tw: float = tex.get_width()
+		var s: float = size.y / th        # 세로 = 전체 균일 스케일
+		var capw: float = cap_px * s
+		var W := size.x
+		var H := size.y
+		draw_texture_rect_region(tex, Rect2(0, 0, capw, H), Rect2(0, 0, cap_px, th))
+		draw_texture_rect_region(tex, Rect2(W - capw, 0, capw, H), Rect2(tw - cap_px, 0, cap_px, th))
+		var midw: float = maxf(0.0, W - 2.0 * capw)
+		draw_texture_rect_region(tex, Rect2(capw, 0, midw, H), Rect2(cap_px, 0, tw - 2.0 * cap_px, th))
 
 
 ## 명판 버튼 생성 헬퍼.
