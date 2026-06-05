@@ -91,25 +91,29 @@ func _build() -> void:
 
 	# 우하단: 출격 → 전투
 	_icon_btn(ICON_SORTIE, bg_x0, bg_sc, MOCK["sortie"], func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
-	# 좌상단: 코인 아이콘 + 숫자 칸 (지도 버튼 제거 — 나중에 우하단 출격과 통합 예정). 크기·스트로크 우상단과 맞춤.
+	# 좌상단: 알약 숫자칸 + 그 왼쪽 끝에 코인이 겹쳐 올라감(지도 제거 — 나중에 출격과 통합). 우상단 크기·스트로크 통일.
 	var tr_cy: float = MOCK["tr2"].y * bg_sc                       # 우상단 아이콘 세로 중심
-	var coin_h: float = ICON_TR2.get_height() * bg_sc             # 우상단 아이콘과 비슷한 크기
+	var coin_h: float = ICON_TR2.get_height() * bg_sc             # 코인(우상단 아이콘 크기)
+	var coin_w: float = ICON_COIN.get_width() * (coin_h / float(ICON_COIN.get_height()))
+	var box_h: float = coin_h * 0.70                               # 알약(코인보다 낮아 코인이 위아래로 삐져나옴)
+	var pill_w: float = 230.0 * bg_sc
+	# 알약(숫자칸) 먼저 = 뒤. 코인이 위에 올라가게.
+	var cb := _CoinBox.new()
+	cb.text_pad_left = coin_w * 0.6 + 8.0                          # 숫자가 코인 아래로 안 깔리게
+	cb.position = Vector2(E + coin_w * 0.45, tr_cy - box_h * 0.5)
+	cb.size = Vector2(pill_w, box_h)
+	add_child(cb)
+	cb.set_count(GameState.coins)
+	_coin_box = cb
+	# 코인 아이콘 = 위, 알약 왼쪽 끝에 겹침
 	var ci := TextureRect.new()
 	ci.texture = ICON_COIN
 	ci.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ci.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	ci.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var cw: float = ICON_COIN.get_width() * (coin_h / float(ICON_COIN.get_height()))
 	ci.position = Vector2(E, tr_cy - coin_h * 0.5)
-	ci.size = Vector2(cw, coin_h)
+	ci.size = Vector2(coin_w, coin_h)
 	add_child(ci)
-	var cb := _CoinBox.new()
-	var box_h: float = coin_h * 0.66
-	cb.position = Vector2(E + cw - 8.0, tr_cy - box_h * 0.5)
-	cb.size = Vector2(210.0 * bg_sc, box_h)
-	add_child(cb)
-	cb.set_count(GameState.coins)
-	_coin_box = cb
 	# 우상단 3(좌→우): 알림 / 메일 / 설정 — 셋 다 항상 노출
 	_icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): _toast_msg("알림 - 준비중"))
 	_icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): _toast_msg("메일 - 준비중"))
@@ -533,6 +537,7 @@ func _show_coachmark(c: Dictionary) -> void:
 class _CoinBox extends Control:
 	const FONT_NUM := preload("res://assets/fonts/SBAggro-Bold.ttf")
 	var _lbl: Label
+	var text_pad_left := 14.0    # 코인이 겹치는 만큼 숫자를 오른쪽으로 밀기
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_lbl = Label.new()
@@ -541,14 +546,14 @@ class _CoinBox extends Control:
 		_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		_lbl.offset_left = 14.0
-		_lbl.offset_right = -10.0
+		_lbl.offset_left = text_pad_left
+		_lbl.offset_right = -16.0
 		_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_lbl)
 	func set_count(n: int) -> void:
 		if _lbl == null:
 			return
-		_lbl.add_theme_font_size_override("font_size", int(size.y * 0.5))
+		_lbl.add_theme_font_size_override("font_size", int(size.y * 0.52))
 		_lbl.text = _commafy(n)
 	func _commafy(n: int) -> String:
 		var s := str(n)
@@ -562,7 +567,7 @@ class _CoinBox extends Control:
 		return out
 	func _draw() -> void:
 		var sw := 3.0                       # 흰 외곽 두께
-		var rad := int(size.y * 0.34)
+		var rad := int(size.y * 0.5)        # 풀 알약(레퍼런스)
 		var wsb := StyleBoxFlat.new()
 		wsb.bg_color = Color(1, 1, 1, 1)
 		wsb.set_corner_radius_all(rad + int(sw))
