@@ -52,11 +52,13 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 	box.size = Vector2(vp.x - 48, BOX_H)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(box)
-	# 커스텀 프레임 이미지(배경) — 박스 크기로 늘림. 본문/초상화는 이 위에.
-	var frame := TextureRect.new()
+	# 커스텀 프레임 이미지(배경) — 나인패치: 코너 장식은 고정, 가운데 양피지만 늘어남(화면비 무관 왜곡 0).
+	var frame := NinePatchRect.new()
 	frame.texture = FRAME
-	frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	frame.stretch_mode = TextureRect.STRETCH_SCALE
+	frame.patch_margin_left = 150     # 코너 플로리시 크기(텍스처 px). 측정값.
+	frame.patch_margin_right = 150
+	frame.patch_margin_top = 100
+	frame.patch_margin_bottom = 100
 	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(frame)
