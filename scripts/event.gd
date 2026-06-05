@@ -67,6 +67,8 @@ func _ready() -> void:
 	cont.pressed.connect(_continue)
 	add_child(cont)
 
+	VoiceBlip.notify()   # 시스템 알림(즉시표시) = 펑거스 음색 단발
+
 
 func _continue() -> void:
 	if GameState.mode == "dev":

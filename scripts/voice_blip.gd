@@ -16,10 +16,11 @@ const POOL := 6               # 동시 블립 풀(빠른 연타 대비)
 ## 캐릭터별 피치 프로필 — 새 NPC는 여기 한 줄 추가로 확장. 전부 시작값·튜닝 대상.
 ##   base_freq Hz(낮을수록 굵음: 맥스<펑거스<펄) / jitter(클수록 지껄임) / waveform(음색)
 ##   blip_every(N글자마다 1회) / char_ms(타이핑 속도, 작을수록 빠름) / sample_path(있으면 .ogg 변조)
+## sample_path 채워짐 = 녹음 음절(.wav) pitch_scale 변조 재생(합성 대신). 펑거스=시스템 알림 음색도 겸함.
 const VOICE_PROFILES := {
-	"fungus": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 22.0, "sample_path": ""},  # 거들먹·빠름·종알종알
-	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": ""},  # 또박또박·우아·느림
-	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": ""},  # 능글·낮음·느긋
+	"fungus": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 22.0, "sample_path": "res://assets/audio/voice/blip_fungus.wav"},  # 거들먹·빠름·종알종알
+	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": "res://assets/audio/voice/blip_pearl.wav"},  # 또박또박·우아·느림
+	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": "res://assets/audio/voice/blip_max.wav"},  # 능글·낮음·느긋
 }
 
 ## 무음 처리할 글자(공백·개행·일부 문장부호 — 글자에만 블립).
@@ -89,6 +90,12 @@ func blip(profile_id: String, ch: String, char_index: int, total: int) -> void:
 		p.stream = _tone(String(prof.get("waveform", "sine")))
 		p.pitch_scale = clampf(freq / REF_FREQ, 0.4, 3.0)
 	p.play()
+
+
+## 시스템 알림(즉시표시·非타이핑)용 — 펑거스 음색 단발 블립 1회(과하지 않게).
+##   타이핑되는 시스템 알림은 blip("fungus", …)을 글자마다 쓸 것(별도 system 프로필 없음 = 펑거스 그대로).
+func notify() -> void:
+	blip("fungus", "A", 0, 1)
 
 
 ## 화자가 바뀌거나 대사 시작 시 호출(blip_every 카운터 리셋). 선택.

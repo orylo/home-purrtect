@@ -34,7 +34,7 @@ var _music: AudioStreamPlayer
 var _cur_music := ""
 
 var _cap: Label
-var _dlg: Panel
+var _dlg: Control          # 공용 DialoguePanel 박스(인게임 이벤트 대화창과 동일)
 var _dlg_name: Label
 var _dlg_line: Label
 var _hint: Label
@@ -75,25 +75,14 @@ func _build_ui() -> void:
 	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_cap.add_theme_constant_override("outline_size", 8)
 	add_child(_cap)
-	# 영감 대화창(하단 가운데, 고정폭 1120·바닥에서 64px 위)
-	_dlg = Panel.new()
-	_dlg.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 5, 16))
-	_dlg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dlg.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_dlg.offset_left = -560; _dlg.offset_right = 560
-	_dlg.offset_top = -220; _dlg.offset_bottom = -64
-	add_child(_dlg)
-	_dlg_name = _mklabel(26, Design.RED)
-	_dlg_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dlg_name.position = Vector2(32, 14)
-	_dlg.add_child(_dlg_name)
-	_dlg_line = _mklabel(30, Design.INK)
-	_dlg_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dlg_line.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_dlg_line.offset_left = 32; _dlg_line.offset_right = -32
-	_dlg_line.offset_top = 56; _dlg_line.offset_bottom = -10
-	_dlg_line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dlg.add_child(_dlg_line)
+	# 영감 대화창 — 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 프레임·스타일로 통일).
+	#   골드 영감은 초상화 에셋이 없어 portrait 생략(본문 왼쪽부터). 진행 힌트는 기존 _hint 하나로 통일.
+	var vp := get_viewport().get_visible_rect().size
+	var dlg := DialoguePanel.build(self, vp)
+	_dlg = dlg["box"]
+	_dlg_name = dlg["name_lbl"]
+	_dlg_line = dlg["text_lbl"]
+	(dlg["hint_lbl"] as Label).visible = false
 	_dlg.visible = false
 	# 건너뛰기(우상단) — 누르면 전체 건너뜀(_finish). 버튼은 클릭을 받아야 하므로 mouse_filter 기본(STOP).
 	var skip := Design.button("건너뛰기", "secondary", Design.FS_BODY)
