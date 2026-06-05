@@ -146,6 +146,9 @@ func _apply_def() -> void:
 	damage = float(def.get("dmg", 5))
 	attack_interval = float(def.get("atkint", 1.0))
 	move_speed = 120.0 * float(def.get("spd", 1.0))
+	# 적별 걷·멈 리듬(없으면 @export 기본 1.5/1.0 유지). 이후 _ready의 randf가 곱해짐.
+	walk_time = float(def.get("wt", walk_time))
+	stop_time = float(def.get("st", stop_time))
 	_kind = def.get("kind", "melee")
 	_air = def.get("air", false)
 	_high = def.get("high", false)
