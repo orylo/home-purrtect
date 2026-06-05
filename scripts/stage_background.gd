@@ -37,18 +37,17 @@ const FOG_BLOBS := [
 var _t := 0.0
 var _fog_tex: ImageTexture
 
-# ── 스테이지 배경 풀(테마별) ─────────────────────────────────
-## 같은 막=같은 테마. 한 판마다 far/ground/near를 풀에서 랜덤으로 뽑는다.
-## 새 배경: 해당 폴더에 규칙대로 넣고 아래 장수만 늘리면 자동 포함.
-##   far: wall/far/far01..NN.jpg / ground: wall/ground/g01..NN.png / near: wall/near/<tl|tr|bl|br>/<코너>01..NN.png
+# ── 근경(near) 풀 개수(테마별) ─────────────────────────────────
+##   far/ground 풀은 위 FULL_*_FMT/COUNT(풀프레임 21:9). near만 여기서 코너별 개수 관리.
+##   새 근경: wall/near/<tl|tr|bl|br>/<코너>01..NN.png 넣고 아래 수만 ↑.
 const POOL_COUNT := {
-	"wall": {"far": 12, "ground": 21, "near": 7},
+	"wall": {"near": 7},
 }
 ## ── 신규 21:9 풀프레임 배경(현재 전 스테이지 공통, 사용자가 스테이지별로 수동 교체 예정) ──
 ##   far·ground를 같은 커버 스케일로 꽉(높이맞춤·바닥고정), 패럴랙스 올림·지면 휴리스틱 OFF.
 ##   디자인이 far+ground 같은 2520x1080 캔버스로 정렬돼 바닥선(310px 설계)이 자동으로 ground_y에 맞음.
-const DEFAULT_FAR := "res://assets/backgrounds/wall/test/BG_Far1.png"        # 풀 비었을 때 폴백 원경
-const DEFAULT_GROUND := "res://assets/backgrounds/wall/test/BG_Ground1.png"  # 풀 비었을 때 폴백 지면
+const DEFAULT_FAR := "res://assets/backgrounds/wall/far_full/far01.png"        # 풀 비었을 때 폴백 원경
+const DEFAULT_GROUND := "res://assets/backgrounds/wall/ground_full/ground01.png"  # 풀 비었을 때 폴백 지면
 ## ── 1막 풀프레임 배경 풀(21:9). 매 판 far·ground를 각각 랜덤(직전 판과 다르게). 새 그림은 폴더에 넣고 카운트만 ↑ ──
 const FULL_FAR_FMT := "res://assets/backgrounds/wall/far_full/far%02d.png"
 const FULL_GROUND_FMT := "res://assets/backgrounds/wall/ground_full/ground%02d.png"
