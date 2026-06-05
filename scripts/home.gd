@@ -61,7 +61,7 @@ func _build() -> void:
 		add_child(spr)
 
 	# ── 상/하단 그라데이션 딤(배경 위 버튼 가독) — 1080 기준 150px. 치즈 위·버튼 아래 레이어 ──
-	var dim_h := 150.0 * (vp.y / 1080.0)
+	var dim_h := 190.0 * (vp.y / 1080.0)
 	_edge_scrim(true, dim_h)
 	_edge_scrim(false, dim_h)
 
@@ -375,7 +375,7 @@ func _edge_scrim(top: bool, h: float) -> void:
 ## 세로 그라데이션 텍스처(잉크색). top=true: 위 진함→아래 투명 / false: 위 투명→아래 진함.
 func _vgrad(top: bool) -> GradientTexture2D:
 	var c := Design.INK
-	var a := 0.5
+	var a := 0.65
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 1.0])
 	if top:
