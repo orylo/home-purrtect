@@ -107,6 +107,7 @@ var _hint_lbl: Label = null
 var _choices: HBoxContainer = null
 
 var _advance := false
+var _typing := false   # 대사 타이핑 중(탭=스킵→전체표시), 끝나면 탭=다음
 var _choice := -1
 var _busy := false           # 대화 진행 중(중복 트리거 방지)
 var _first_kill_done := false
@@ -378,7 +379,7 @@ func _build_ui(dim_alpha: float) -> void:
 	_tap.flat = true
 	_tap.focus_mode = Control.FOCUS_NONE
 	_tap.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_tap.pressed.connect(func() -> void: _advance = true)
+	_tap.pressed.connect(_on_tap)
 	_ui.add_child(_tap)
 
 	var box_h := 236.0
@@ -438,15 +439,46 @@ func _mk_label(fsize: int, col: Color, pos: Vector2) -> Label:
 func _play_beats(beats: Array) -> void:
 	for i in beats.size():
 		_show_beat(beats[i])
+		await _type_text(String(beats[i].get("text", "")), _voice_id())   # 한 글자씩 + 재잘 보이스
 		if beats[i].has("choices"):
 			await _wait_choice()
 		else:
 			await _wait_advance()
 
 
+## stage_intro NPC는 전부 펑거스 → "fungus" 보이스(beat에 "voice" 있으면 우선).
+func _voice_id() -> String:
+	return String(_data.get("voice", "fungus"))
+
+
+## 대사를 한 글자씩 표시 + 글자마다 재잘 블립. 탭하면 즉시 전체 표시(스킵).
+func _type_text(text: String, profile_id: String) -> void:
+	_typing = true
+	VoiceBlip.reset(profile_id)
+	_text_lbl.text = text
+	_text_lbl.visible_characters = 0
+	var n := text.length()
+	var dt := VoiceBlip.char_sec(profile_id)
+	var i := 0
+	while i < n and _typing:
+		_text_lbl.visible_characters = i + 1
+		VoiceBlip.blip(profile_id, text[i], i, n)
+		i += 1
+		await get_tree().create_timer(dt, true).timeout   # process_always=true → 일시정지(이벤트) 중에도 진행
+	_text_lbl.visible_characters = -1   # 전체 표시(스킵/완료)
+	_typing = false
+
+
+## 탭: 타이핑 중이면 스킵(전체표시), 아니면 다음으로.
+func _on_tap() -> void:
+	if _typing:
+		_typing = false
+	else:
+		_advance = true
+
+
 func _show_beat(beat: Dictionary) -> void:
 	_name_lbl.text = String(beat.get("name", _data.get("name", "?")))
-	_text_lbl.text = String(beat.get("text", ""))
 	# 펑거스 표정(anim): NPC 스프라이트 + 초상화 얼굴 둘 다 반영
 	var face_anim := String(beat.get("anim", ""))
 	if face_anim != "" and FUNGUS.has_animation(face_anim):

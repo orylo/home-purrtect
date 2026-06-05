@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.118"
+const BUILD := "0.0.119"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -36,6 +36,7 @@ var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
+var voice_enabled: bool = true     # NPC 재잘거림 보이스 켜짐(VoiceBlip이 읽음, 사운드 옵션)
 var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(다시보기/기록용 — 자동재생 게이트는 아님)
 var prologue_return: String = "start"  # 프롤로그 끝난 뒤 갈 곳(임시·비저장): 새 게임=「home」 / 다시보기=「start」
 var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
@@ -873,6 +874,7 @@ func save_game() -> void:
 		"pearl_favor": pearl_favor,              # 펄 호감도(로드맵 6단계)
 		"selected_blessing": selected_blessing,
 		"bgm_enabled": bgm_enabled,              # 배경음악 켜짐 여부
+		"voice_enabled": voice_enabled,          # NPC 재잘거림 보이스 켜짐 여부
 		"prologue_seen": prologue_seen,          # 프롤로그 봤는지
 		"coachmark_seen": coachmark_seen,        # 홈 코치마크 본 항목
 		"stage_stars": stage_stars,              # 스테이지 별 최고기록
@@ -896,6 +898,7 @@ func load_game() -> void:
 		stage_minor = int(data.get("stage_minor", 1))
 		coins = int(data.get("coins", 0))
 		bgm_enabled = bool(data.get("bgm_enabled", true))
+		voice_enabled = bool(data.get("voice_enabled", true))
 		prologue_seen = bool(data.get("prologue_seen", false))
 		coachmark_seen = []
 		var cms = data.get("coachmark_seen", [])

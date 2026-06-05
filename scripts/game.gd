@@ -223,7 +223,7 @@ func _event_pearl() -> void:
 	await _walk_cat_to(vp.x * 0.16)
 	await get_tree().create_timer(0.3).timeout
 	var focus: Vector2 = _event_char.position if is_instance_valid(_event_char) else Vector2(vp.x * 0.1, Layout.ground_y() - 320.0)
-	await _zoom_and_cutscene(focus, CUT_PEARL)
+	await _zoom_and_cutscene(focus, CUT_PEARL, "pearl")
 
 
 ## 1-7 맥스: 담벼락에 기대 있던 맥스가 치즈에게 다가옴 → 줌인 → 컷씬.
@@ -236,7 +236,7 @@ func _event_max() -> void:
 			_event_char.position.x = move_toward(_event_char.position.x, target, 230.0 / 60.0)
 			_event_char.position.y = Layout.ground_y() - 60.0
 	await get_tree().create_timer(0.3).timeout
-	await _zoom_and_cutscene(Vector2((cat_x + target) * 0.5, Layout.ground_y() - 90.0), CUT_MAX)
+	await _zoom_and_cutscene(Vector2((cat_x + target) * 0.5, Layout.ground_y() - 90.0), CUT_MAX, "max")
 
 
 ## 1-13/1-16 구출형: 치즈가 동료(다친/갇힌)에게 다가가 → 줌인 → 컷씬(다중 페이지).
@@ -259,7 +259,7 @@ func _walk_cat_to(x: float) -> void:
 
 ## ★화면 전체(배경+치즈) 줌인. 배경은 CanvasLayer라 Camera2D가 안 먹음 →
 ##   현재 렌더 프레임을 통째로 캡처해 focus(화면좌표) 기준으로 확대.
-func _zoom_and_cutscene(focus: Vector2, pages: Array) -> void:
+func _zoom_and_cutscene(focus: Vector2, pages: Array, voice: String = "") -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var img := get_viewport().get_texture().get_image()
@@ -281,18 +281,19 @@ func _zoom_and_cutscene(focus: Vector2, pages: Array) -> void:
 			zt = minf(zt + 1.0 / 50.0, 1.0)
 			var e := zt * zt * (3.0 - 2.0 * zt)
 			tr.scale = Vector2.ONE * lerpf(1.0, 1.7, e)
-	await _play_cutscene(pages)
+	await _play_cutscene(pages, voice)
 
 
 ## 다중 페이지 컷씬(플레이스홀더) — 각 페이지 = {"img": 그림 설명, "line": 대사}. 탭으로 넘김.
-func _play_cutscene(pages: Array) -> void:
+##   voice = NPC 재잘 보이스 프로필("pearl"/"max"/""=무음). 화자가 한 명일 때 전 페이지 동일.
+func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
-		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size())
+		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), voice)
 
 
 ## 컷씬 한 페이지: 어두운 바탕 + 회색 "이미지 플레이스홀더([그림] 설명)" + 대사 + 페이지수 + 탭.
-func _cut_page(img: String, line: String, idx: int, total: int) -> void:
+func _cut_page(img: String, line: String, idx: int, total: int, voice: String = "") -> void:
 	var vp := get_viewport_rect().size
 	var layer := CanvasLayer.new()
 	layer.layer = 80
@@ -321,9 +322,10 @@ func _cut_page(img: String, line: String, idx: int, total: int) -> void:
 	imglbl.position = box.position + Vector2(28.0, 0.0)
 	imglbl.size = Vector2(iw - 56.0, ih)
 	layer.add_child(imglbl)
-	# 대사(이미지 아래, 골드)
+	# 대사(이미지 아래, 골드) — voice 있으면 한 글자씩 + 재잘 보이스
+	var dlg: Label = null
 	if line != "":
-		var dlg := Label.new()
+		dlg = Label.new()
 		dlg.add_theme_font_override("font", FONT)
 		dlg.add_theme_font_size_override("font_size", 30)
 		dlg.add_theme_color_override("font_color", Color("F2B33D"))
@@ -332,6 +334,8 @@ func _cut_page(img: String, line: String, idx: int, total: int) -> void:
 		dlg.text = line
 		dlg.position = Vector2(60.0, vp.y * 0.58)
 		dlg.size = Vector2(vp.x - 120.0, vp.y * 0.30)
+		if voice != "" and VoiceBlip.VOICE_PROFILES.has(voice):
+			dlg.visible_characters = 0   # 타이핑은 아래에서
 		layer.add_child(dlg)
 	# 페이지 카운터(우상단)
 	var pc := Label.new()
@@ -359,8 +363,27 @@ func _cut_page(img: String, line: String, idx: int, total: int) -> void:
 	tap.focus_mode = Control.FOCUS_NONE
 	tap.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(tap)
+	var typing := [false]
 	var done := [false]
-	tap.pressed.connect(func() -> void: done[0] = true)
+	tap.pressed.connect(func() -> void:
+		if typing[0]:
+			typing[0] = false          # 타이핑 중 탭 = 스킵(전체표시)
+		else:
+			done[0] = true)            # 그 외 탭 = 다음 페이지
+	# 보이스 있으면 한 글자씩 표시 + 재잘 블립
+	if dlg != null and voice != "" and VoiceBlip.VOICE_PROFILES.has(voice):
+		typing[0] = true
+		VoiceBlip.reset(voice)
+		var n := line.length()
+		var d := VoiceBlip.char_sec(voice)
+		var k := 0
+		while k < n and typing[0]:
+			dlg.visible_characters = k + 1
+			VoiceBlip.blip(voice, line[k], k, n)
+			k += 1
+			await get_tree().create_timer(d, true).timeout
+		dlg.visible_characters = -1
+		typing[0] = false
 	while not done[0]:
 		await get_tree().process_frame
 	layer.queue_free()
