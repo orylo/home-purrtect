@@ -80,6 +80,34 @@ func _ready() -> void:
 	_style_ghost(clear_restart)
 	_style_primary(gameover_restart)
 	_build_coin_label()
+	# iOS 안전영역(노치)만큼 상단 HUD를 코너에서 안으로 — 배경은 풀블리드, HUD는 안 가리게.
+	_apply_safe_hud()
+	get_viewport().size_changed.connect(_apply_safe_hud)
+	get_tree().create_timer(0.7).timeout.connect(_apply_safe_hud)   # env 인셋 늦게 확정 대비
+
+
+# ── iOS 안전영역 상단 HUD 인셋 (적용 델타 추적 = 누적/리사이즈 안전) ──
+var _hud_applied := {}   # 노드 → 현재 적용된 인셋(Vector2)
+
+func _safe_shift(n: Control, delta: Vector2) -> void:
+	if n == null or not is_instance_valid(n):
+		return
+	var prev: Vector2 = _hud_applied.get(n, Vector2.ZERO)
+	if delta.is_equal_approx(prev):
+		return
+	n.position += delta - prev
+	_hud_applied[n] = delta
+
+func _apply_safe_hud() -> void:
+	var l := Layout.safe_left()
+	var t := Layout.safe_top()
+	var r := Layout.safe_right()
+	for n in [get_node_or_null("Heart"), hp_bar, coin_label]:   # 좌상단 → 오른쪽·아래로
+		_safe_shift(n, Vector2(l, t))
+	for n in [enemy_label, pause_button]:                       # 우상단 → 왼쪽·아래로
+		_safe_shift(n, Vector2(-r, t))
+	for n in [stage_label, get_node_or_null("AutoInfo")]:       # 상단중앙/기타 → 아래로
+		_safe_shift(n, Vector2(0, t))
 
 
 ## 상단 코인 표시 — 동전 이모지 대신 금색 "코인 N"으로(숫자는 항상 렌더)

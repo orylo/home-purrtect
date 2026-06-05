@@ -93,7 +93,7 @@ func _draw() -> void:
 	else:
 		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙
 		var band_cy := (Layout.band_top() + size.y) * 0.5
-		var rest := Vector2(50.0 + base_radius, band_cy)
+		var rest := Vector2(Layout.safe_left() + 50.0 + base_radius, band_cy)   # 좌측 노치 안전영역만큼 안으로
 		_draw_pad(rest, 0.85)
 		_draw_knob(rest)
 		_draw_wasd(rest, 0.85)

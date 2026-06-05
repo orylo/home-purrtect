@@ -12,6 +12,45 @@ extends Node
 const REF_W: float = 1920.0
 const REF_H: float = 1080.0
 
+# === iOS 안전영역(노치·홈인디케이터) 인셋 — 배경은 풀블리드, UI/조작/바닥만 안으로 ===
+#   웹(iOS standalone)에서만 CSS env(safe-area-inset-*)를 읽어 채운다. 그 외엔 0(무변화).
+#   값은 뷰포트 px 기준(CSS px × 뷰포트/innerW). left/top/right/bottom.
+var _safe := Vector4.ZERO
+const _SAFE_JS := "(function(){var s=getComputedStyle(document.documentElement);function v(n){return parseFloat(s.getPropertyValue(n))||0}return [v('--sail'),v('--sair'),v('--sait'),v('--saib'),window.innerWidth,window.innerHeight].join(',')})()"
+
+
+func _ready() -> void:
+	_refresh_safe()
+	get_viewport().size_changed.connect(_refresh_safe)
+	# env() 인셋·뷰포트가 로드 직후 한 박자 늦게 확정되는 경우 대비 재읽기
+	get_tree().create_timer(0.6).timeout.connect(_refresh_safe)
+
+
+func _refresh_safe() -> void:
+	if not OS.has_feature("web"):
+		_safe = Vector4.ZERO
+		return
+	var raw = JavaScriptBridge.eval(_SAFE_JS)
+	if typeof(raw) != TYPE_STRING:
+		return
+	var p := String(raw).split(",")
+	if p.size() < 6:
+		return
+	var vis := get_viewport().get_visible_rect().size
+	var iw: float = maxf(float(p[4]), 1.0)
+	var ih: float = maxf(float(p[5]), 1.0)
+	_safe = Vector4(
+		float(p[0]) * vis.x / iw,   # left
+		float(p[2]) * vis.y / ih,   # top
+		float(p[1]) * vis.x / iw,   # right
+		float(p[3]) * vis.y / ih)   # bottom
+
+
+func safe_left() -> float:   return _safe.x
+func safe_top() -> float:    return _safe.y
+func safe_right() -> float:  return _safe.z
+func safe_bottom() -> float: return _safe.w
+
 # 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠)
 const CONTROL_BAND_HEIGHT: float = 264.0   # 띠 높이(화면 px 고정)
 const CONTROL_BAND_GAP: float = 22.0       # 바닥선과 띠 윗변 사이 간격
@@ -37,8 +76,8 @@ const ITEM_GAP: float = 14.0
 ## 하단 행 전체 좌표를 한 번에 계산(오른쪽 끝에서 왼쪽으로). 그림·입력 공유.
 ##   반환: ranged/melee/companion(Vector2) · skills/consum/items([Vector2]) · row_y(float)
 func bottom_row(s: Vector2) -> Dictionary:
-	var row_y := s.y - CONTROL_EDGE_MARGIN - ACT_R   # 큰 버튼 중심 y(행 기준선)
-	var cx := s.x - CONTROL_EDGE_MARGIN              # 커서: 다음 요소의 오른쪽 가장자리
+	var row_y := s.y - CONTROL_EDGE_MARGIN - ACT_R - safe_bottom()   # 큰 버튼 중심 y(홈인디케이터 인셋만큼 위로)
+	var cx := s.x - CONTROL_EDGE_MARGIN - safe_right()               # 커서: 우측 노치 인셋만큼 안으로
 
 	var ranged := Vector2(cx - ACT_R, row_y)
 	cx -= 2.0 * ACT_R + GROUP_GAP
@@ -77,9 +116,9 @@ func cover_scale() -> float:
 	return maxf(v.x / REF_W, v.y / REF_H)
 
 
-## 조작 띠(하단 딤 + 버튼)의 윗변 y좌표
+## 조작 띠(하단 딤 + 버튼)의 윗변 y좌표 — 홈인디케이터 인셋만큼 위로(바닥선도 따라 올라감)
 func band_top() -> float:
-	return _vis().y - CONTROL_BAND_HEIGHT
+	return _vis().y - CONTROL_BAND_HEIGHT - safe_bottom()
 
 
 ## 캐릭터가 서는 바닥 라인의 y좌표 — 조작 띠보다 위 + GROUND_DROP만큼 아래로
