@@ -23,16 +23,42 @@ const STAGE_HALFTONE := {
 }
 
 var _t := 0.0
+var _weather := ""
 
 
 func _ready() -> void:
 	if material is ShaderMaterial:
 		_setup(material as ShaderMaterial)
+	if _weather == "calm":
+		_add_sun()   # 쾌청(맑음)일 때만 태양 — 중심이 화면 맨 위(y=0), 하단 반원만 보임
+
+
+## 태양: 중심을 화면 최상단(y=0)에 맞춰 아래쪽 반원만 보이게. 가로 중앙. Halftone 자식(하늘에 떠 지면 뒤).
+func _add_sun() -> void:
+	var vp := get_viewport_rect().size
+	var sun := Sun.new()
+	sun.radius = vp.y * 0.22
+	sun.position = Vector2(vp.x * 0.5, 0.0)
+	add_child(sun)
+
+
+class Sun extends Node2D:
+	var radius := 180.0
+	func _draw() -> void:
+		var gold := Color("F2B33D")       # 골든(빈티지 카툰 톤)
+		var core := Color("FBD774")       # 밝은 속
+		var ink := Color("3A2A12")        # 잉크 외곽
+		for i in range(3):                # 부드러운 후광
+			draw_circle(Vector2.ZERO, radius * (1.0 + 0.14 * float(i + 1)), Color(gold.r, gold.g, gold.b, 0.06))
+		draw_circle(Vector2.ZERO, radius, gold)
+		draw_circle(Vector2.ZERO, radius * 0.70, core)
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 72, ink, 5.0, true)   # 외곽선(상단은 화면 밖이라 자연 클립)
 
 
 func _setup(m: ShaderMaterial) -> void:
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
 	var name: String = STAGE_HALFTONE.get(key, NORMAL_POOL[randi() % NORMAL_POOL.size()])
+	_weather = name
 	var p: Dictionary = PRESETS[name]
 	# drift 방향은 매 판 랜덤(왼/오) — 한쪽으로만 흐르지 않게
 	var dir := 1.0 if randf() < 0.5 else -1.0
