@@ -262,7 +262,7 @@ func _show_dev_panel() -> void:
 	ov.add_child(dim)
 
 	var pw := 560.0
-	var ph := 470.0
+	var ph := 540.0
 	var panel := Panel.new()
 	panel.add_theme_stylebox_override("panel", Design.panel_box())
 	panel.position = Vector2((vp.x - pw) * 0.5, (vp.y - ph) * 0.5)
@@ -293,6 +293,13 @@ func _show_dev_panel() -> void:
 	_dev_wbtn(panel, "소모품 전부 +10", Vector2(24, y), func(): _dev_add_consumables())
 	y += 60.0
 	_dev_wbtn(panel, "직업·스킬·펄 전부 해금", Vector2(24, y), func(): _dev_unlock_all())
+	y += 60.0
+	# 코치마크 다시 보기 — coachmark_seen 비우고 홈 재진입(첫 미본 코치마크 표시)
+	_dev_wbtn(panel, "코치마크 리셋(다시 보기)", Vector2(24, y), func():
+		GameState.coachmark_seen = []
+		if GameState.AUTOSAVE:
+			GameState.save_game()
+		get_tree().reload_current_scene())
 	y += 60.0
 
 	var close := Design.button("닫기", "secondary", Design.FS_BODY)
