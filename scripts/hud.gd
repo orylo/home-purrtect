@@ -184,10 +184,10 @@ func show_battle_start() -> void:
 	banner.modulate.a = 0.0
 	var t := create_tween()
 	t.set_parallel(true)
-	t.tween_property(banner, "scale", Vector2(1.0, 1.0), 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(banner, "modulate:a", 1.0, 0.18)
-	t.chain().tween_interval(0.7)
-	t.chain().tween_property(banner, "modulate:a", 0.0, 0.35)
+	t.tween_property(banner, "scale", Vector2(1.0, 1.0), 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(banner, "modulate:a", 1.0, 0.2)
+	t.chain().tween_interval(1.5)                  # 읽을 시간 충분히(0.7→1.5s)
+	t.chain().tween_property(banner, "modulate:a", 0.0, 0.45)
 	t.chain().tween_callback(banner.queue_free)
 
 

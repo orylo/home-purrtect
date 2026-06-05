@@ -64,6 +64,7 @@ var _idle_phase: String = ""       # ""(미진입) / hold(첫프레임 유지) /
 var _event_idle: bool = false      # 인게임 이벤트 중: 전투 정지, idle 사이클만(트리 일시정지에도 동작)
 var _event_walking: bool = false   # 이벤트 중 지정 위치로 자동 도보
 var _event_walk_target: float = 0.0
+var _event_backstep: bool = false  # true면 좌측 이동 시 back(뒷걸음질, 우향) — 펑거스 밀기용
 var _idle_hold_t: float = 0.0
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
@@ -225,12 +226,18 @@ func _physics_process(delta: float) -> void:
 		anim.modulate = Color(1, 1, 1)
 		if _event_walking:
 			var dir := signf(_event_walk_target - global_position.x)
-			anim.flip_h = dir < 0.0          # 인게임 이벤트 한정: 왼쪽 걸음 허용(flip)
+			var anim_name := "walk"
+			if _event_backstep and dir < 0.0:
+				# 펑거스에게 밀려 뒷걸음질(전투처럼) — 오른쪽 보고 뒤로 물러남.
+				anim.flip_h = false
+				anim_name = "back"
+			else:
+				anim.flip_h = dir < 0.0          # 인게임 이벤트 한정: 왼쪽 걸음 허용(flip)
 			velocity.x = dir * base_speed * 0.7
 			velocity.y = 0.0
 			move_and_slide()
-			if anim.animation != "walk":
-				anim.play("walk")
+			if anim.animation != anim_name:
+				anim.play(anim_name)
 				anim.speed_scale = 1.0
 			_idle_phase = ""
 			if absf(global_position.x - _event_walk_target) <= 6.0:
@@ -813,9 +820,10 @@ func set_event_idle(on: bool) -> void:
 
 
 ## 이벤트 중 지정 x로 자동 도보(조작 없이). 궤짝보다 오른쪽이면 왼쪽으로 flip해 걸어감.
-func event_walk_to(target_x: float) -> void:
+func event_walk_to(target_x: float, backstep: bool = false) -> void:
 	_event_walk_target = target_x
 	_event_walking = true
+	_event_backstep = backstep
 
 
 func is_event_walking() -> bool:

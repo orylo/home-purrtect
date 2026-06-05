@@ -246,8 +246,9 @@ func play_outro() -> void:
 	var cat_target: float = npc_target - gap
 	_spawn_npc(vp.x + 160.0)                            # 우측 밖에서 등장
 	# 치즈가 펑거스 자리를 침범(너무 우측)하면 왼쪽으로 밀어 비켜줌(펑거스 도보와 동시 진행)
+	#   전투처럼 뒷걸음질(back, 우향)로 밀리게 backstep=true.
 	if pl != null and cat_x > cat_target + 6.0 and pl.has_method("event_walk_to"):
-		pl.event_walk_to(cat_target)
+		pl.event_walk_to(cat_target, true)
 	await _walk_to(npc_target)                          # 펑거스 우측 가까이 정지
 	while pl != null and pl.has_method("is_event_walking") and pl.is_event_walking():
 		await get_tree().process_frame                 # 치즈 밀기 완료까지 대기

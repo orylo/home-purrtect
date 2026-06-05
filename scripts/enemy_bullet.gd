@@ -23,6 +23,8 @@ func setup(vel: Vector2, dmg: float, st: String, col: Color, grav: float) -> voi
 
 
 func _ready() -> void:
+	# 클리어(트리 일시정지) 중에도 계속 날아 바닥에 떨어지게(허공 정지 방지).
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ground_y = Layout.ground_y()
 	queue_redraw()
 
@@ -38,7 +40,8 @@ func _physics_process(delta: float) -> void:
 		rotation = _vel.angle()            # 원뿔 독침: 진행 방향 향함
 	queue_redraw()
 
-	var p := get_tree().get_first_node_in_group("player")
+	# 트리 일시정지(클리어·일시정지 메뉴) 중엔 날아가되 데미지는 주지 않음(시각적으로만 낙하).
+	var p := get_tree().get_first_node_in_group("player") if not get_tree().paused else null
 	if p and is_instance_valid(p):
 		if global_position.distance_to((p as Node2D).global_position + Vector2(0, hit_y_offset)) < 70.0:
 			if dodge_by_crouch and bool(p.get("crouching")):

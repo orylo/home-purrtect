@@ -18,6 +18,7 @@ const ENEMY_BULLET := preload("res://scenes/enemy_bullet.tscn")
 const ENEMY_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const DMG_POP_DUR := 0.8
 const AIR_HEIGHT := 230.0   # 공중 적이 떠 있는 높이(px)
+const STAGE_ENTER_MARGIN := 100.0   # 원거리 적은 화면 우측에서 이만큼 안으로 들어와야 멈춰 발사(스폰 밖 정지 방지)
 ## 침입자별 SpriteFrames(검은 계열은 회색 프레임 재사용 + 어둡게 모듈레이트)
 const ENEMY_FRAMES := {
 	"gray":          "res://assets/sprites/enemies/gray/gray_frames.tres",
@@ -241,7 +242,7 @@ func _physics_process(delta: float) -> void:
 		elif _walking and not _hit and not dead:
 			# 지상 원거리(투척쥐·거미)만 사거리에서 멈춰 발사(다가오지 않음).
 			# 공중 원거리(박쥐·벌)는 멈추지 않고 계속 비행하며 발사(§3.1 "비행(멈춤 없음)").
-			if ranged and not _air and _atk_range > 0.0 and dist <= _atk_range:
+			if ranged and not _air and _atk_range > 0.0 and dist <= _atk_range and _on_stage():
 				base_vx = 0.0
 			else:
 				base_vx = -move_speed * (_eslow_factor if _eslow_timer > 0.0 else 1.0)
@@ -264,7 +265,7 @@ func _physics_process(delta: float) -> void:
 		_attack_timer -= delta
 		if not stunned and not dead and not _pending_release and _attack_timer <= 0.0:
 			if ranged:
-				if _atk_range > 0.0 and dist <= _atk_range:
+				if _atk_range > 0.0 and dist <= _atk_range and _on_stage():
 					_attack_timer = attack_interval
 					_start_attack(true)
 			elif _is_touching_player():
@@ -328,7 +329,7 @@ func _resolve_pending_release(delta: float) -> void:
 ## 루프 슈터(투척쥐·거미·벌): 교전 중 attack 사이클을 계속 루프,
 ## ATK_RELEASE 프레임 통과 순간 발사. 루프 속도를 공격 간격에 맞춤. idle 안 씀.
 func _update_loop_shooter(delta: float, dist: float, stunned: bool) -> void:
-	var in_range := _atk_range > 0.0 and dist <= _atk_range
+	var in_range := _atk_range > 0.0 and dist <= _atk_range and _on_stage()
 	if stunned or dead or _hit or not in_range:
 		if _loop_active:
 			_loop_active = false
@@ -454,6 +455,12 @@ func _dist_to_player() -> float:
 	if p == null:
 		return 99999.0
 	return absf(global_position.x - (p as Node2D).global_position.x)
+
+
+## 원거리 적이 "멈춰서 발사"해도 되는 위치인지 = 화면(스테이지) 안에 충분히 들어왔는지.
+##   치즈가 우측 스폰 근처에서 버텨도 적이 화면 밖에서 멈추지 않고 최소한 안으로 들어오게.
+func _on_stage() -> bool:
+	return global_position.x <= get_viewport_rect().size.x - STAGE_ENTER_MARGIN
 
 
 func _draw() -> void:
@@ -603,7 +610,7 @@ func _play_move_anim() -> void:
 	if _use_sprite:
 		anim.speed_scale = 1.0
 	# 원거리 적이 사거리 안에서 교전 중이면(멈춰 발사) 발사 사이에 idle 유지.
-	var engaged := (_kind == "lob" or _kind == "shoot") and _atk_range > 0.0 and _dist_to_player() <= _atk_range
+	var engaged := (_kind == "lob" or _kind == "shoot") and _atk_range > 0.0 and _dist_to_player() <= _atk_range and _on_stage()
 	if _has_idle and (not _walking or engaged):
 		if anim.animation != "idle":
 			anim.play("idle")
