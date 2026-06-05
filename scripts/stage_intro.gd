@@ -151,6 +151,7 @@ func _run_intro() -> void:
 		_spawner.hold_intro()
 	if _hud != null:
 		_hud.visible = false
+	await _await_cat_landed()                          # 점프 중이면 착지까지 기다린 뒤 정지
 	get_tree().paused = true                           # 조작 실제 차단
 	_set_cat_idle(true)
 	_set_bg_alive(true)                                # 배경(비·드리프트)은 계속
@@ -190,6 +191,7 @@ func _run_popup(beats: Array) -> void:
 	_busy = true
 	if _hud != null:
 		_hud.visible = false
+	await _await_cat_landed()                          # 점프 중이면 착지 대기(공중 대화 방지)
 	get_tree().paused = true
 	_set_cat_idle(true)
 	_set_bg_alive(true)
@@ -224,6 +226,7 @@ func play_outro() -> void:
 	_busy = true
 	if _hud != null:
 		_hud.visible = false
+	await _await_cat_landed()                          # 점프 중 클리어 → 착지까지 기다린 뒤 퇴장 이벤트
 	get_tree().paused = true
 	_set_cat_idle(true)
 	_set_bg_alive(true)
@@ -259,6 +262,18 @@ func play_outro() -> void:
 	_set_bg_alive(false)
 	get_tree().paused = false
 	_busy = false
+
+
+## 이벤트 일시정지 전, 치즈가 점프 중이면 착지까지 대기(공중에서 대화/정지 방지).
+##   아직 트리가 안 멈춘 상태라 물리가 돌아 자연히 떨어져 착지한다. 안전상한 둠.
+func _await_cat_landed() -> void:
+	var pl := get_parent().get_node_or_null("Player")
+	if pl == null or not pl.has_method("is_airborne"):
+		return
+	var guard := 0
+	while pl.is_airborne() and guard < 180:        # ~3초(60fps) 안전상한
+		await get_tree().process_frame
+		guard += 1
 
 
 ## 이벤트 동안 치즈를 제자리 idle 사이클로(트리 일시정지에도 동작). 끝나면 복귀.

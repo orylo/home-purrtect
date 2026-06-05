@@ -72,6 +72,12 @@ func _on_stage_cleared() -> void:
 	var si := get_node_or_null("StageIntro")          # 클리어 퇴장 이벤트(있으면)가 먼저
 	if si != null and si.has_method("has_outro") and si.has_outro():
 		await si.play_outro()
+	# 점프 중 마지막 적을 처치한 경우, 공중에서 결과창이 뜨지 않게 착지까지 대기(아웃트로 없을 때 포함)
+	var pl := get_node_or_null("Player")
+	var guard := 0
+	while pl != null and pl.has_method("is_airborne") and pl.is_airborne() and guard < 180:
+		await get_tree().process_frame
+		guard += 1
 	get_tree().paused = true
 	hud.show_clear(bonus, star_info)
 

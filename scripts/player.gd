@@ -822,6 +822,12 @@ func is_event_walking() -> bool:
 	return _event_walking
 
 
+## 점프 등으로 공중에 떠 있는지(이벤트 일시정지 전 착지 대기용).
+##   발 원점 y가 바닥선보다 위(작음)거나 상승/하강 중이면 공중으로 본다.
+func is_airborne() -> bool:
+	return _jump_state == "air" or position.y < Layout.ground_y() - 1.0
+
+
 ## idle 사이클 — 첫 프레임에서 IDLE_HOLD초 유지 → idle 1회 재생 → (재생 끝나면 _on_anim_finished가 다시 유지)
 func _tick_idle(delta: float) -> void:
 	if _idle_phase == "":
