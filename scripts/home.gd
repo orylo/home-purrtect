@@ -21,44 +21,56 @@ func _build() -> void:
 	# ── 배경(실내 플레이스홀더) ─ 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
 	_room_placeholder(vp)
 
-	# ── 중앙: 치즈(대기) ─ 1080 기준 키 500px, 바닥에서 발 100px 위(알파 bbox로 정확 정렬) ──
+	# ── 중앙: 치즈(대기) ─ 1080 기준 키 500px, 발 바닥 100px 위. 인게임처럼 idle 사이클 + 탭=hit ──
 	var frames := load(GameState.job_frames_path())
 	if frames:
-		var spr := AnimatedSprite2D.new()
-		spr.sprite_frames = frames
 		var sf := frames as SpriteFrames
 		var anim := "idle" if sf.has_animation("idle") else sf.get_animation_names()[0]
-		spr.play(anim)
+		var cat := _HomeCat.new()
+		cat.sprite_frames = frames
+		cat.animation = anim
 		var tex := sf.get_frame_texture(anim, 0)
-		var fh := tex.get_size().y
 		var fw := tex.get_size().x
-		# 프레임 내 고양이 실제 영역(알파 top/bot) 측정 → 정확한 키·발 정렬(없으면 프레임 전체)
+		var fh := tex.get_size().y
+		# 프레임 내 고양이 실제 영역(알파 bbox) 측정 → 정확한 키·발 정렬 + 탭 영역
 		var top := 0.0
 		var bot := fh
+		var left := 0.0
+		var right := fw
 		var im := tex.get_image()
 		if im != null:
 			var t := -1
 			var b := -1
+			var l := int(fw)
+			var r := -1
 			for y in int(fh):
 				var op := false
 				for x in range(0, int(fw), 4):
 					if im.get_pixel(x, y).a > 0.1:
 						op = true
-						break
+						if x < l: l = x
+						if x > r: r = x
 				if op:
 					if t < 0:
 						t = y
 					b = y
 			if t >= 0:
-				top = float(t)
-				bot = float(b)
+				top = float(t); bot = float(b); left = float(l); right = float(r)
 		var cat_native: float = maxf(bot - top + 1.0, 1.0)
 		var k: float = vp.y / 1080.0                       # 1080 기준 → 실제 높이 환산
 		var sc: float = (500.0 * k) / cat_native           # 보이는 키 = 500px(1080기준)
-		spr.scale = Vector2(sc, sc)
+		cat.scale = Vector2(sc, sc)
 		var foot_y: float = vp.y - 100.0 * k               # 바닥에서 발 100px 위
-		spr.position = Vector2(vp.x * 0.5, foot_y - (bot - fh * 0.5) * sc)  # centered 스프라이트: 발이 foot_y에 오게
-		add_child(spr)
+		cat.position = Vector2(vp.x * 0.5, foot_y - (bot - fh * 0.5) * sc)
+		add_child(cat)
+		# 탭 영역(고양이 보이는 부분) → hit 모션
+		var tb := Button.new()
+		tb.flat = true
+		tb.focus_mode = Control.FOCUS_NONE
+		tb.position = Vector2(cat.position.x + (left - fw * 0.5) * sc, cat.position.y + (top - fh * 0.5) * sc)
+		tb.size = Vector2((right - left) * sc, (bot - top) * sc)
+		tb.pressed.connect(cat.tap_hit)
+		add_child(tb)
 
 	# ── 상/하단 그라데이션 딤(배경 위 버튼 가독) — 1080 기준 150px. 치즈 위·버튼 아래 레이어 ──
 	var dim_h := 260.0 * (vp.y / 1080.0)
@@ -496,6 +508,40 @@ func _show_coachmark(c: Dictionary) -> void:
 				if GameState.AUTOSAVE:
 					GameState.save_game()
 			ov.queue_free())
+
+
+# 홈 치즈 — 인게임처럼 idle 사이클(첫 프레임 1초 유지 → idle 1회 재생 → 반복) + 탭=hit 1회.
+class _HomeCat extends AnimatedSprite2D:
+	const HOLD := 1.0
+	var _phase := "hold"   # hold(첫프레임 유지) / play(idle 1회) / hit
+	var _t := 0.0
+	func _ready() -> void:
+		if sprite_frames:
+			if sprite_frames.has_animation("idle"):
+				sprite_frames.set_animation_loop("idle", false)   # 1회 재생(사이클은 코드로)
+			if sprite_frames.has_animation("hit"):
+				sprite_frames.set_animation_loop("hit", false)
+		animation_finished.connect(_on_finished)
+		_to_hold()
+	func _to_hold() -> void:
+		_phase = "hold"
+		_t = HOLD
+		animation = "idle"
+		frame = 0
+		stop()
+	func _process(delta: float) -> void:
+		if _phase == "hold":
+			_t -= delta
+			if _t <= 0.0:
+				_phase = "play"
+				play("idle")
+	func _on_finished() -> void:
+		_to_hold()             # idle 1회 끝 / hit 끝 → 다시 1초 유지
+	func tap_hit() -> void:
+		if sprite_frames and sprite_frames.has_animation("hit"):
+			_phase = "hit"
+			frame = 0
+			play("hit")
 
 
 # 툴팁 말풍선 꼬리 — 크림 채움 + 잉크 빗변 외곽선. side="left"(꼬리 왼쪽)/"right".
