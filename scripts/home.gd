@@ -65,82 +65,46 @@ func _build() -> void:
 	_edge_scrim(true, dim_h)
 	_edge_scrim(false, dim_h)
 
-	# ── 좌상단: "N막 N스테이지"(옛 게이지 위치) ──
-	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
-	stage.position = Vector2(E, E)
-	add_child(stage)
-	# 1막 별 진행도 → 스테이지 맵 진입 버튼(별점 허브). 내비게이션이라 Secondary(크림), 강조는 출격(빨강) 하나만.
-	var ap := GameState.allstar_progress()
-	_btn("지도  ★ %d/%d" % [ap.x, ap.y], Vector2(E, E + 60.0), Vector2(220, float(Design.BAR_H)),
-			"paper", Design.FS_BODY,
-			func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
+	# ── 아이콘 배치 = 목업 assets.png 좌표 그대로(배경과 같은 2520×1080·세로고정·가로중앙) ──
+	var bg_sc := vp.y / 1080.0
+	var bg_x0 := (vp.x - 2520.0 * bg_sc) * 0.5
+	var coach := []
 
-	# ── 우상단: 종/편지/친구/설정/메뉴 5버튼(우→좌) + 그 왼쪽에 보유 코인 ──
-	var ic_w := 84.0     # 버튼 텍스트(2글자)가 넘치지 않게 고정폭 → 균일·비겹침
-	var ic_h := 56.0
-	var istep := ic_w + 10.0
-	var top_specs := [   # 오른쪽부터: 메뉴, 설정, 친구, 편지, 종
-		["메뉴", func(): _show_bag()],
-		["설정", func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐"))],
-		["친구", func(): _toast_msg("친구 ─ 준비중")],
-		["편지", func(): _toast_msg("메시지 ─ 준비중")],
-		["종",   func(): _toast_msg("알림 ─ 준비중")],
-	]
-	var leftmost := vp.x
-	for i in top_specs.size():
-		var x := vp.x - E - ic_w - i * istep
-		leftmost = x
-		_btn(String(top_specs[i][0]), Vector2(x, E), Vector2(ic_w, ic_h), "paper", Design.FS_CAPTION, top_specs[i][1])
-	# 보유 코인 ─ 5버튼 왼쪽에(우측정렬)
+	# 좌상단: 지도 → 스테이지맵
+	_icon_btn(ICON_MAP, bg_x0, bg_sc, MOCK["map"], func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
+	# 우하단: 출격 → 전투
+	_icon_btn(ICON_SORTIE, bg_x0, bg_sc, MOCK["sortie"], func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
+	# 우상단3(우): 메뉴(가방) — 항상
+	_icon_btn(ICON_TR3, bg_x0, bg_sc, MOCK["tr3"], _show_bag)
+	# 우상단2(중): 펄(해금 1-5)
+	if GameState.cleared_stages.has(5):
+		var pr := _icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): get_tree().change_scene_to_file("res://scenes/pearl.tscn"))
+		coach.append({"id": "pearl", "rect": pr, "text": "펄에게 가면, 출격 전 축복을 하나 받을 수 있어요."})
+	# 우상단1(좌): 맥스(해금 1-7)
+	if GameState.cleared_stages.has(7):
+		var mr := _icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
+		coach.append({"id": "max", "rect": mr, "text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
+		if GameState.cleared_stages.has(9):
+			coach.append({"id": "skill", "rect": mr, "text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
+	# 좌하단: 전투 준비(해금 1-3)
+	if GameState.cleared_stages.has(3):
+		var ppr := _icon_btn(ICON_PREP, bg_x0, bg_sc, MOCK["prep"], func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
+		coach.append({"id": "prep", "rect": ppr, "text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
+		if GameState.cleared_stages.has(13):
+			coach.append({"id": "dove", "rect": ppr, "text": "맥스에게 호루라기를 사서 동료를 장착하면, 전투 중 불러낼 수 있어요!"})
+
+	# 보유 코인 — 우상단 아이콘 묶음 왼쪽
 	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
 	coin.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	coin.size = Vector2(240, ic_h)
-	coin.position = Vector2(leftmost - 240 - 16, E)
+	coin.size = Vector2(240, 56)
+	coin.position = Vector2(bg_x0 + 1782.0 * bg_sc - 240.0 - 20.0, E)
 	coin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(coin)
 	_coin_lbl = coin
 
-	# DEV 도구 ─ "개발자 루트"로 들어온 홈에서만 노출. 일반 [게임 시작]→홈(mode=player)에선 숨김.
-	#   (시작화면 우하단 개발자 버튼 → 개발자 메뉴 → [홈 화면으로]로 들어와야 mode=dev → 노출)
+	# DEV 도구 — 개발자 루트 홈에서만
 	if GameState.is_dev() and GameState.mode == "dev":
-		_btn("DEV 도구", Vector2(E, E + 118.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
-
-	# ── 좌측 중앙: 펄·맥스 세로 스택(해금 게이팅) ──
-	var npc_sz := Vector2(160, 64)
-	var pearl_pos := Vector2(E, vp.y * 0.40)
-	var max_pos := Vector2(E, vp.y * 0.40 + npc_sz.y + 14.0)
-	# ── 좌하단: 전투 준비("내 쿠키들" 위치, 해금 게이팅) ──
-	var prep_pos := Vector2(E, vp.y - E - 84.0)
-	var prep_sz := Vector2(240, 84)
-
-	var coach := []
-	if GameState.cleared_stages.has(5):
-		_btn("펄", pearl_pos, npc_sz, "paper", Design.FS_TITLE,
-				func(): get_tree().change_scene_to_file("res://scenes/pearl.tscn"))
-		coach.append({"id": "pearl", "rect": Rect2(pearl_pos, npc_sz),
-				"text": "펄에게 가면, 출격 전 축복을 하나 받을 수 있어요."})
-	if GameState.cleared_stages.has(7):
-		_btn("맥스", max_pos, npc_sz, "paper", Design.FS_TITLE,
-				func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
-		coach.append({"id": "max", "rect": Rect2(max_pos, npc_sz),
-				"text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
-		# 1-9: 맥스가 스킬도 팔기 시작(D+ 코치마크 ─ 맥스 버튼 재강조)
-		if GameState.cleared_stages.has(9):
-			coach.append({"id": "skill", "rect": Rect2(max_pos, npc_sz),
-					"text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
-	if GameState.cleared_stages.has(3):
-		_btn("전투 준비", prep_pos, prep_sz, "secondary", Design.FS_TITLE,
-				func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
-		coach.append({"id": "prep", "rect": Rect2(prep_pos, prep_sz),
-				"text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
-		# 1-13: 동료 시스템(전투준비 > 동료 강조)
-		if GameState.cleared_stages.has(13):
-			coach.append({"id": "dove", "rect": Rect2(prep_pos, prep_sz),
-					"text": "맥스에게 호루라기를 사서 동료를 장착하면, 전투 중 불러낼 수 있어요!"})
-
-	# ── 우하단: 출격(CTA=빨강, "PLAY" 위치) ──
-	_btn("출격 ▶", Vector2(vp.x - E - 256.0, vp.y - E - 84.0), Vector2(256, 84), "cta", Design.FS_DISPLAY_S,
-			func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
+		_btn("DEV 도구", Vector2(E, E + 200.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
 
 	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(진행 순서대로 자연 안내)
 	for cid in ["prep", "pearl", "max", "skill", "dove"]:
@@ -389,6 +353,37 @@ func _vgrad(top: bool) -> GradientTexture2D:
 	gt.width = 4
 	gt.height = 128
 	return gt
+
+
+# --- 홈 아이콘(외곽 스트로크 입힌 가공본) + 목업 assets.png 좌표(2520×1080 기준) ---
+const ICON_MAP := preload("res://assets/ui/home/map.png")        # 좌상단: 지도
+const ICON_TR1 := preload("res://assets/ui/home/tr1.png")        # 우상단1(좌): 맥스
+const ICON_TR2 := preload("res://assets/ui/home/tr2.png")        # 우상단2(중): 펄
+const ICON_TR3 := preload("res://assets/ui/home/tr3.png")        # 우상단3(우): 메뉴
+const ICON_PREP := preload("res://assets/ui/home/prep.png")      # 좌하단: 전투준비
+const ICON_SORTIE := preload("res://assets/ui/home/sortie.png")  # 우하단: 출격
+const MOCK := {  # 목업 내 각 아이콘 중심(2520×1080) — 템플릿 매칭값
+	"map": Vector2(314, 179), "tr1": Vector2(1881, 140), "tr2": Vector2(2092, 147),
+	"tr3": Vector2(2325, 150), "prep": Vector2(338, 872), "sortie": Vector2(2126, 872),
+}
+
+
+## 목업 좌표(2520×1080)에 아이콘 버튼 배치 — 배경(Home_BG)과 같은 매핑(세로고정·가로중앙). Rect2 반환(코치마크용).
+func _icon_btn(tex: Texture2D, bg_x0: float, bg_sc: float, mc: Vector2, fn: Callable) -> Rect2:
+	var w := tex.get_width() * bg_sc
+	var h := tex.get_height() * bg_sc
+	var pos := Vector2(bg_x0 + mc.x * bg_sc - w * 0.5, mc.y * bg_sc - h * 0.5)
+	var b := TextureButton.new()
+	b.texture_normal = tex
+	b.ignore_texture_size = true
+	b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	b.position = pos
+	b.size = Vector2(w, h)
+	b.pressed.connect(func() -> void:
+		Sfx.play("click")
+		fn.call())
+	add_child(b)
+	return Rect2(pos, Vector2(w, h))
 
 
 # --- 실내 배경 = Home_BG (세로 고정 · 가로 자동 블리딩 · 가운데) ---
