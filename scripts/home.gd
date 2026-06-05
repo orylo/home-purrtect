@@ -4,7 +4,7 @@ extends Control
 
 var _toast: Label
 var _toast_t := 0.0
-var _coin_lbl: Label   # 개발 도구에서 코인 즉시 갱신용
+var _coin_box   # 좌상단 코인 숫자 칸(_CoinBox) — 개발 도구에서 즉시 갱신용
 
 
 func _ready() -> void:
@@ -89,9 +89,27 @@ func _build() -> void:
 	var bg_x0 := (vp.x - 2520.0 * bg_sc) * 0.5
 	var coach := []
 
-	# 좌상단: 지도 → 스테이지맵 / 우하단: 출격 → 전투
-	_icon_btn(ICON_MAP, bg_x0, bg_sc, MOCK["map"], func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
+	# 우하단: 출격 → 전투
 	_icon_btn(ICON_SORTIE, bg_x0, bg_sc, MOCK["sortie"], func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
+	# 좌상단: 코인 아이콘 + 숫자 칸 (지도 버튼 제거 — 나중에 우하단 출격과 통합 예정). 크기·스트로크 우상단과 맞춤.
+	var tr_cy: float = MOCK["tr2"].y * bg_sc                       # 우상단 아이콘 세로 중심
+	var coin_h: float = ICON_TR2.get_height() * bg_sc             # 우상단 아이콘과 비슷한 크기
+	var ci := TextureRect.new()
+	ci.texture = ICON_COIN
+	ci.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ci.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ci.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cw: float = ICON_COIN.get_width() * (coin_h / float(ICON_COIN.get_height()))
+	ci.position = Vector2(E, tr_cy - coin_h * 0.5)
+	ci.size = Vector2(cw, coin_h)
+	add_child(ci)
+	var cb := _CoinBox.new()
+	var box_h: float = coin_h * 0.66
+	cb.position = Vector2(E + cw - 8.0, tr_cy - box_h * 0.5)
+	cb.size = Vector2(210.0 * bg_sc, box_h)
+	add_child(cb)
+	cb.set_count(GameState.coins)
+	_coin_box = cb
 	# 우상단 3(좌→우): 알림 / 메일 / 설정 — 셋 다 항상 노출
 	_icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): _toast_msg("알림 - 준비중"))
 	_icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): _toast_msg("메일 - 준비중"))
@@ -116,14 +134,7 @@ func _build() -> void:
 		if GameState.cleared_stages.has(9):
 			coach.append({"id": "skill", "rect": Rect2(max_pos, npc_sz), "text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
 
-	# 보유 코인 — 우상단 아이콘 묶음 왼쪽
-	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
-	coin.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	coin.size = Vector2(240, 56)
-	coin.position = Vector2(bg_x0 + 1782.0 * bg_sc - 240.0 - 20.0, E)
-	coin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	add_child(coin)
-	_coin_lbl = coin
+	# (보유 코인 표시는 좌상단 코인 칸으로 이동)
 
 	# DEV 도구 — 개발자 루트 홈에서만
 	if GameState.is_dev() and GameState.mode == "dev":
@@ -227,14 +238,14 @@ func _rebuild() -> void:
 		remove_child(c)
 		c.queue_free()
 	_toast = null
-	_coin_lbl = null
+	_coin_box = null
 	_build()
 
 
 func _dev_add_coins(n: int) -> void:
 	GameState.coins += n
-	if is_instance_valid(_coin_lbl):
-		_coin_lbl.text = "코인 " + _commafy(GameState.coins)
+	if is_instance_valid(_coin_box):
+		_coin_box.set_count(GameState.coins)
 	_toast_msg("코인 +%s" % _commafy(n))
 
 
@@ -386,7 +397,8 @@ func _vgrad(top: bool) -> GradientTexture2D:
 
 
 # --- 홈 아이콘(외곽 스트로크 입힌 가공본) + 목업 assets.png 좌표(2520×1080 기준) ---
-const ICON_MAP := preload("res://assets/ui/home/map.png")        # 좌상단: 지도
+const ICON_COIN := preload("res://assets/ui/home/coin.png")      # 좌상단: 코인(검정+흰 스트로크)
+const ICON_MAP := preload("res://assets/ui/home/map.png")        # (미사용) 지도 — 나중에 출격과 통합
 const ICON_TR1 := preload("res://assets/ui/home/tr1.png")        # 우상단1(좌): 알림
 const ICON_TR2 := preload("res://assets/ui/home/tr2.png")        # 우상단2(중): 메일
 const ICON_TR3 := preload("res://assets/ui/home/tr3.png")        # 우상단3(우): 설정
@@ -515,6 +527,52 @@ func _show_coachmark(c: Dictionary) -> void:
 				if GameState.AUTOSAVE:
 					GameState.save_game()
 			ov.queue_free())
+
+
+# 좌상단 코인 숫자 칸 — 흰(밖)+잉크(테두리)+크림(채움), 골든 숫자. 아이콘 스트로크 스타일과 통일.
+class _CoinBox extends Control:
+	const FONT_NUM := preload("res://assets/fonts/SBAggro-Bold.ttf")
+	var _lbl: Label
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_lbl = Label.new()
+		_lbl.add_theme_font_override("font", FONT_NUM)
+		_lbl.add_theme_color_override("font_color", Color("F2B33D"))   # 골든
+		_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_lbl.offset_left = 14.0
+		_lbl.offset_right = -10.0
+		_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_lbl)
+	func set_count(n: int) -> void:
+		if _lbl == null:
+			return
+		_lbl.add_theme_font_size_override("font_size", int(size.y * 0.5))
+		_lbl.text = _commafy(n)
+	func _commafy(n: int) -> String:
+		var s := str(n)
+		var out := ""
+		var c := 0
+		for i in range(s.length() - 1, -1, -1):
+			out = s[i] + out
+			c += 1
+			if c % 3 == 0 and i > 0:
+				out = "," + out
+		return out
+	func _draw() -> void:
+		var sw := 3.0                       # 흰 외곽 두께
+		var rad := int(size.y * 0.34)
+		var wsb := StyleBoxFlat.new()
+		wsb.bg_color = Color(1, 1, 1, 1)
+		wsb.set_corner_radius_all(rad + int(sw))
+		draw_style_box(wsb, Rect2(Vector2.ZERO, size))
+		var isb := StyleBoxFlat.new()
+		isb.bg_color = Color("F3E3BE")      # 크림
+		isb.set_border_width_all(3)
+		isb.border_color = Color("241F1B")  # 잉크
+		isb.set_corner_radius_all(rad)
+		draw_style_box(isb, Rect2(sw, sw, size.x - 2.0 * sw, size.y - 2.0 * sw))
 
 
 # 발밑 그림자 — 인게임과 동일(검정 30% 납작 타원, y스케일 0.28).
