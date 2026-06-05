@@ -4,8 +4,8 @@ extends RefCounted
 ##   게임 내 모든 대화(펑거스 이벤트 / 펄·맥스 컷씬 등)가 동일하게 쓰도록 한 곳에서 빌드 → 통일.
 ##   build()가 parent에 하단 박스를 붙이고 노드 참조 dict 반환. 타이핑/탭/보이스는 호출부가 담당.
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
-const FONT_DIALOGUE := preload("res://assets/fonts/ClimateCrisisKR-2019.ttf")   # 대사 본문 전용(Climate Crisis 4번째 얇은 두께)
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+const FONT_DIALOGUE := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")   # 대사 본문 = 서울알림체 Bold(700) (= FONT와 동일, 본문 통일)
 const INK := Color("241F1B")
 const PAPER := Color("F3E3BE")
 const PAPER_DEEP := Color("E4CB95")
@@ -91,7 +91,7 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 	var text_top := 56.0
 	var text_h := BOX_H - text_top - 46.0
 	var text_lbl := _mk_label(36, INK, Vector2(tx, text_top))   # 본문 36(쿠키런급 큰 글씨)
-	text_lbl.add_theme_font_override("font", FONT_DIALOGUE)     # 대사 본문 = Climate Crisis 2019(4번째 얇음)
+	text_lbl.add_theme_font_override("font", FONT_DIALOGUE)     # 대사 본문 = 서울알림체 Bold(700)
 	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER     # body 정중앙(1~3줄)
 	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 880.0), text_h)   # 폭 최대 880(한 줄 글자수↓)

@@ -4,7 +4,7 @@ extends Control
 ##   음악: 슬픔(prologue_sad) → 온기(prologue_warm). 자체 재생(Music 오토로드는 이 씬에서 무음).
 ##   끝나면 GameState.prologue_seen=true 저장 후 시작화면으로.
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 const SAD := preload("res://assets/music/prologue_sad.wav")
 const WARM := preload("res://assets/music/prologue_warm.wav")
 

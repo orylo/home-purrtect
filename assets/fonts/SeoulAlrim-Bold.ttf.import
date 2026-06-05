@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bxo1abp3dt4ax"
-path="res://.godot/imported/ClimateCrisisKR-2019.ttf-113ef4978fce6adc8072a0fef70180a8.fontdata"
+uid="uid://c4x5euanacrln"
+path="res://.godot/imported/SeoulAlrim-Bold.ttf-2389f7226eec7d63e549f2e6b1b6d386.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/ClimateCrisisKR-2019.ttf"
-dest_files=["res://.godot/imported/ClimateCrisisKR-2019.ttf-113ef4978fce6adc8072a0fef70180a8.fontdata"]
+source_file="res://assets/fonts/SeoulAlrim-Bold.ttf"
+dest_files=["res://.godot/imported/SeoulAlrim-Bold.ttf-2389f7226eec7d63e549f2e6b1b6d386.fontdata"]
 
 [params]
 

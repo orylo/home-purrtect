@@ -109,7 +109,7 @@ func _play_gameover_cutscene() -> void:
 # ── 전투 씬 내 컷씬(케이스 A 해금형: 1-3 보안관 / 1-5 펄 / 1-7 맥스) ──────────
 #   결과창 [확인] 후 씬전환 없이 이어서: 대상에 다가감/상호작용 → 화면 줌인 → 컷씬(플레이스홀더) → 홈.
 const CRATE_X_FRAC := 0.25   # 1-3 나무 궤짝 화면 x(뷰포트 비율, 좌측). 필요 시 조정.
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 var _event_char: Node2D = null   # 펄/맥스 플레이스홀더(전투 내내 상주)
 
 # ── 컷씬 페이지 데이터(대본 `기획_이벤트대본_1막.md` 충실) — 장 수 맞춰 플레이스홀더 ─────
@@ -189,7 +189,7 @@ class EventChar extends Node2D:
 		draw_circle(Vector2(0, radius * 0.18), radius * 1.05, Color(0, 0, 0, 0.22))   # 옅은 그림자
 		draw_circle(Vector2.ZERO, radius, col)
 		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 40, Color(0.14, 0.12, 0.10), 3.0, true)
-		var f := preload("res://assets/fonts/Pretendard-Regular.ttf")
+		var f := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 		draw_string(f, Vector2(-radius, -radius - 10.0), label, HORIZONTAL_ALIGNMENT_CENTER, radius * 2.0, 22, Color(1, 1, 1))
 
 

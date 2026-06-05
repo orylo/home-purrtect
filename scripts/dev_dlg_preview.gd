@@ -31,7 +31,7 @@ func _ready() -> void:
 	_show(0)
 	# 안내
 	var help := Label.new()
-	help.add_theme_font_override("font", preload("res://assets/fonts/Pretendard-Regular.ttf"))
+	help.add_theme_font_override("font", preload("res://assets/fonts/SeoulAlrim-Bold.ttf"))
 	help.add_theme_font_size_override("font_size", 22)
 	help.text = "화면 탭 = 짧은/중간/긴 대사 순환 · 빨간 점선 칸 안에서 세로 가운데면 정상"
 	help.position = Vector2(40, 30)

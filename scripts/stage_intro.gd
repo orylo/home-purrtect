@@ -7,7 +7,7 @@ extends Node2D
 
 const MFRAMES := preload("res://assets/sprites/enemies/mouse/mouse_frames.tres")
 const FUNGUS := preload("res://assets/sprites/fungus/fungus_frames.tres")
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 
 # design.md 색 토큰
 const INK := Color("241F1B")

@@ -8,12 +8,12 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.154"
+const BUILD := "0.0.155"
 
 
-## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
+## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 서울알림체를 쓰도록 전역 기본 폰트 지정
 func _ready() -> void:
-	var f := load("res://assets/fonts/Pretendard-Regular.ttf")
+	var f := load("res://assets/fonts/SeoulAlrim-Bold.ttf")
 	if f:
 		ThemeDB.fallback_font = f
 	# ★언어: 지금은 한국어 고정(영어기기에서도 안 튀게). 추후 언어분기 시 set_language()로 전환.

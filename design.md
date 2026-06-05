@@ -57,8 +57,8 @@
 > 보석 5종: 조약돌=rank-1 / 자수정=rank-4 / 사파이어=rank-3 / 루비=red / 다이아=흰+blue.
 ---
 ## 2. 타이포그래피 `[확정]`
-- **본문·UI·숫자 = Pretendard** `[적용됨]` — 가독성·글로벌. 본문은 절대 디스플레이 폰트 금지.
-- **한글 타이틀 = Climate Crisis KR 1990** `[적용됨 v0.0.145]` — 제목·보스명·"클리어"·버튼. (연도 빠를수록 두꺼운 폰트: 1979 최두께→2050 최얇음. **2번째 두꺼운 = 1990**. 이전: 여기어때 잘난체 → 교체.) `style.gd FONT_TITLE`.
+- **본문·UI·숫자·대사 = 서울알림체 Bold(700)** `[적용됨 v0.0.155]` — `SeoulAlrim-Bold.ttf`. `style.gd FONT`·`dialogue_panel FONT/FONT_DIALOGUE`·project.godot custom_font·ThemeDB.fallback.
+- **타이틀·버튼 = 서울알림체 Heavy(900)** `[적용됨 v0.0.155]` — `SeoulAlrim-Heavy.ttf`. 제목·보스명·"클리어"·버튼. `style.gd FONT_TITLE`. (이전: Pretendard[본문]+잘난체→Climate Crisis[타이틀] → 전량 서울알림체로 통일. projectnoonnu woff2 → TTF 변환.)
 - **영문 타이틀 = Luckiest Guy** `[확정]` — "HOME PURRTECT"·"CLEAR!".
 - ⚠️ **로고/메인 타이틀은 "폰트"가 아니라 "그래픽"**(글자 효과 §2.2).
 ### 2.1 타입 스케일 (1560×720 UI 좌표 px)

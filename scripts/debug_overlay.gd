@@ -2,7 +2,7 @@ extends CanvasLayer
 ## DEV 전용 인게임 디버그 오버레이 — 좌상단 🐞 버튼으로 패널 토글.
 ## 게임 진행 중에 스테이지 점프 / 직업 변경 / 특정 적 스폰 / 치트.
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 const ENEMY_SCENE := preload("res://scenes/enemy.tscn")
 # 가독성 토큰 — 어두운 패널 + 밝은 크림 버튼 + 진한 잉크 글씨(밝은 게임화면 위에서도 또렷).
 const BG_PANEL := Color("17140F")    # 어두운 패널

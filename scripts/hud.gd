@@ -11,7 +11,7 @@ const INSCENE_EVENT_STAGES := [3, 5, 7, 13, 16]
 const HOME_EVENT_STAGES := [9]
 
 # 웹 export에서 테마 기본폰트가 한글을 못 그려서, 폰트를 직접 preload해 명시 지정
-const UI_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const UI_FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 
 @onready var hp_bar: ProgressBar = $HPBar
 @onready var hp_value: Label = $HPBar/HPValue

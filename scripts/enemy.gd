@@ -15,7 +15,7 @@ extends CharacterBody2D
 
 const POP := preload("res://scenes/pop_effect.tscn")
 const ENEMY_BULLET := preload("res://scenes/enemy_bullet.tscn")
-const ENEMY_FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const ENEMY_FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 const DMG_POP_DUR := 0.8
 const AIR_HEIGHT := 230.0   # 공중 적이 떠 있는 높이(px)
 const STAGE_ENTER_MARGIN := 100.0   # 원거리 적은 화면 우측에서 이만큼 안으로 들어와야 멈춰 발사(스폰 밖 정지 방지)

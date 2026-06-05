@@ -417,7 +417,7 @@ func _draw() -> void:
 func _draw_hurt_popups() -> void:
 	if _hurt_popups.is_empty():
 		return
-	var font: Font = preload("res://assets/fonts/Pretendard-Regular.ttf")
+	var font: Font = preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 	if font == null:
 		return
 	for p in _hurt_popups:

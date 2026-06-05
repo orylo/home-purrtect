@@ -4,8 +4,8 @@ extends Node
 ## 톤: 고전 카툰 — 두꺼운 잉크 외곽선 + 단색 면 + 단색(블러0) 오프셋 그림자 + 베벨 입체 + 물건화 패널 + 8px 그리드.
 ## 버튼=Design.style_button(b, kind) / 패널=Design.make_panel(panel, ...).
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")        # 본문·숫자·캡션
-const FONT_TITLE := preload("res://assets/fonts/ClimateCrisisKR-1990.ttf")  # 타이틀·버튼(Climate Crisis KR 1990 = 2번째 두꺼운 웨이트. 연도 빠를수록 두꺼움: 1979 최두께→2050 최얇음. 한글+기호 ★▶♥◆ 커버)
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")        # 본문·숫자·캡션 = 서울알림체 Bold(700)
+const FONT_TITLE := preload("res://assets/fonts/SeoulAlrim-Heavy.ttf")  # 타이틀·버튼 = 서울알림체 Heavy(900)
 const TITLE_KINDS := ["display", "display_s", "title"]
 
 # --- 컬러 토큰 (design.md §1) ---
@@ -143,7 +143,7 @@ func _pill_key(kind: String) -> String:
 ## kind: brand/cheese(골드=성장·획득) / primary/cta(빨강=전투·돌입)
 ##       secondary/paper/ghost(크림=뒤로·중립) / danger(크림+빨강글자) / dark / icon
 func style_button(b: Button, kind: String = "secondary", fs: int = FS_TITLE) -> void:
-	b.add_theme_font_override("font", FONT_TITLE)   # 버튼 글자 = 잘난체(통통 카툰)
+	b.add_theme_font_override("font", FONT_TITLE)   # 버튼 글자 = 서울알림체 Heavy(900)
 	b.add_theme_font_size_override("font_size", fs)
 	b.clip_contents = false
 	var fg := INK

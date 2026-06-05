@@ -2,7 +2,7 @@ extends Control
 ## 개발자 테스트 메뉴 (DEV 전용) — 직업/등급/스테이지/난이도/치트 세팅 후 게임 진입.
 ## UI는 코드로 구성. 스킬·아이템은 빈 슬롯(시스템 생기면 연결).
 
-const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
 const JOBS := [["base", "맨몸"], ["sheriff", "보안관"], ["maid", "메이드"], ["jazz", "음악가"]]
 const INK := Color(0.0275, 0.0235, 0.0275)
 const ORANGE := Color(0.9882, 0.3137, 0.0)
