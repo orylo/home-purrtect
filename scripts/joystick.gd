@@ -38,6 +38,8 @@ func _input(event: InputEvent) -> void:
 
 func _handle_press(pressed: bool, pos: Vector2, index: int) -> void:
 	if pressed:
+		if Touch.is_blocked(pos):
+			return                       # 디버그 오버레이 등 UI 위 터치는 조이스틱/점프로 안 샘
 		# 왼쪽 + 조작 띠 안에서 시작한 터치만 조이스틱으로
 		if not _active and pos.x < size.x * 0.5 and pos.y > Layout.band_top():
 			_active = true
