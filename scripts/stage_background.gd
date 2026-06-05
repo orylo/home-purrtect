@@ -46,15 +46,23 @@ const POOL_COUNT := {
 }
 ## 특정 스테이지 지면 고정(보스 등). 키="막-스테이지". 다른 스테이지도 여기 추가하면 고정.
 const FIXED_GROUND := {
+	"1-2":  "res://assets/backgrounds/wall/test/BG_Ground1.png",   # 신규 21:9 풀프레임 테스트
 	"1-3":  "res://assets/backgrounds/wall/ground/fixed/1-3.png",
 	"1-10": "res://assets/backgrounds/wall/ground/fixed/1-10.png",
 	"1-20": "res://assets/backgrounds/wall/ground/fixed/1-20.png",
 }
 ## 특정 스테이지 원경 고정. 키="막-스테이지".
 const FIXED_FAR := {
+	"1-2":  "res://assets/backgrounds/wall/test/BG_Far1.png",      # 신규 21:9 풀프레임 테스트
 	"1-10": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
 	"1-20": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
 }
+## 신규 21:9 풀프레임 배경 스테이지 — far·ground를 같은 커버 스케일로 꽉 채워 그림(패럴랙스 올림·지면 휴리스틱 OFF).
+##   디자인이 far+ground 같은 2520x1080 캔버스로 정렬돼 있어 바닥선(310px 설계)이 자동으로 ground_y에 맞음.
+const FULLFRAME_STAGES := {
+	"1-2": true,
+}
+var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음)
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 직전 판 반복 방지(세션 동안만 기억 — 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
 static var _last_far := ""
@@ -82,11 +90,12 @@ func _pick_backgrounds() -> void:
 	var theme := _theme_for(GameState.stage_major, GameState.stage_minor)
 	var cnt: Dictionary = POOL_COUNT.get(theme, {})
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
+	_fullframe = FULLFRAME_STAGES.has(key)     # 신규 21:9 풀프레임 배경?
 	# 원경 = 고정 스테이지면 고정, 아니면 랜덤(직전 판과 다르게)
 	if far_texture == null:
 		if FIXED_FAR.has(key):
 			far_texture = _load_tex(FIXED_FAR[key])
-			_far_lift = FAR_LIFT_DEFAULT       # 고정 원경은 높이도 고정(랜덤 X)
+			_far_lift = 0.0 if _fullframe else FAR_LIFT_DEFAULT   # 풀프레임=안 띄움(far+ground 정렬), 그 외 고정값
 		else:
 			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)), [_last_far])
 			if far_texture != null:

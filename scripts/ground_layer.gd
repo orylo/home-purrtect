@@ -19,15 +19,21 @@ func _draw() -> void:
 	if bg == null or bg.ground_texture == null:
 		return
 	var tex: Texture2D = bg.ground_texture
-	var surf: float = bg._ground_surf
 	var vis := get_viewport().get_visible_rect().size
 	var t := tex.get_size()
-	var below_frac := 1.0 - surf
-	var sc := vis.x / t.x
-	if below_frac > 0.02:
-		var sc_center := 2.0 * (vis.y - Layout.ground_y()) / (below_frac * t.y)
-		var sc_cap := (vis.x + 2.0 * GROUND_CROP_MAX) / t.x
-		sc = clampf(sc_center, vis.x / t.x, sc_cap)
+	var sc: float
+	if bg.get("_fullframe"):
+		# 풀프레임 21:9 배경 = far와 같은 커버 스케일로 꽉(높이맞춤·바닥고정). 설계상 발선이 ground_y에 맞음.
+		sc = maxf(vis.x / t.x, vis.y / t.y)
+	else:
+		# 기존: 발선을 '길 구간 중앙'에 두는 휴리스틱(좌우 크롭 상한).
+		var surf: float = bg._ground_surf
+		var below_frac := 1.0 - surf
+		sc = vis.x / t.x
+		if below_frac > 0.02:
+			var sc_center := 2.0 * (vis.y - Layout.ground_y()) / (below_frac * t.y)
+			var sc_cap := (vis.x + 2.0 * GROUND_CROP_MAX) / t.x
+			sc = clampf(sc_center, vis.x / t.x, sc_cap)
 	var w := t.x * sc
 	var h := t.y * sc
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, vis.y - h), Vector2(w, h)), false)  # 하단 고정
