@@ -1,0 +1,90 @@
+class_name DialoguePanel
+extends RefCounted
+## 공용 NPC 대화창 — "인게임 이벤트 펑거스 대화창" 스타일(크림 패널 + 잉크 외곽 + 초상화 + 이름띠 + 본문).
+##   게임 내 모든 대화(펑거스 이벤트 / 펄·맥스 컷씬 등)가 동일하게 쓰도록 한 곳에서 빌드 → 통일.
+##   build()가 parent에 하단 박스를 붙이고 노드 참조 dict 반환. 타이핑/탭/보이스는 호출부가 담당.
+
+const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
+const INK := Color("241F1B")
+const PAPER := Color("F3E3BE")
+const PAPER_DEEP := Color("E4CB95")
+const CHEESE_DEEP := Color("D4912A")
+const BOX_H := 236.0
+
+
+static func _sb(bg: Color, radius: int = 10) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.set_border_width_all(4)
+	s.border_color = INK
+	s.set_corner_radius_all(radius)
+	s.content_margin_left = 18.0
+	s.content_margin_right = 18.0
+	s.content_margin_top = 10.0
+	s.content_margin_bottom = 10.0
+	return s
+
+
+static func _mk_label(fsize: int, col: Color, pos: Vector2) -> Label:
+	var l := Label.new()
+	l.add_theme_font_override("font", FONT)
+	l.add_theme_font_size_override("font_size", fsize)
+	l.add_theme_color_override("font_color", col)
+	l.position = pos
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return l
+
+
+## 단색 초상화 플레이스홀더(스프라이트 없는 NPC용) — 그 색으로 채운 텍스처.
+static func solid_portrait(col: Color) -> ImageTexture:
+	var img := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	img.fill(col)
+	return ImageTexture.create_from_image(img)
+
+
+## parent(CanvasLayer/Control)에 하단 대화 박스 빌드 → {box, face, name_lbl, text_lbl, hint_lbl, choices}.
+##   portrait=초상화 텍스처(null이면 초상화 칸 없이 본문이 왼쪽부터).
+static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dictionary:
+	var box := Panel.new()
+	box.add_theme_stylebox_override("panel", _sb(PAPER, 12))
+	box.position = Vector2(24, vp.y - BOX_H - 24)
+	box.size = Vector2(vp.x - 48, BOX_H)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(box)
+
+	var face: TextureRect = null
+	var tx := 32.0
+	if portrait != null:
+		var port_sz := BOX_H - 32.0
+		var port := Panel.new()
+		port.add_theme_stylebox_override("panel", _sb(PAPER_DEEP, 8))
+		port.position = Vector2(16, 16)
+		port.size = Vector2(port_sz, port_sz)
+		port.clip_contents = true
+		port.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(port)
+		face = TextureRect.new()
+		face.texture = portrait
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		face.set_anchors_preset(Control.PRESET_FULL_RECT)
+		face.offset_left = 8; face.offset_top = 8; face.offset_right = -8; face.offset_bottom = -8
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		port.add_child(face)
+		tx = 16.0 + port_sz + 24.0
+
+	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
+	box.add_child(name_lbl)
+	var text_lbl := _mk_label(24, INK, Vector2(tx, 62))
+	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text_lbl.size = Vector2(box.size.x - tx - 24.0, 92)
+	box.add_child(text_lbl)
+	var choices := HBoxContainer.new()
+	choices.add_theme_constant_override("separation", 16)
+	choices.position = Vector2(tx, 156)
+	choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(choices)
+	var hint := _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 176.0, BOX_H - 40.0))
+	hint.text = "▶ 탭하여 계속"
+	box.add_child(hint)
+	return {"box": box, "face": face, "name_lbl": name_lbl, "text_lbl": text_lbl, "hint_lbl": hint, "choices": choices}

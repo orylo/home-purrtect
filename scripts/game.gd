@@ -284,6 +284,10 @@ func _zoom_and_cutscene(focus: Vector2, pages: Array, voice: String = "") -> voi
 	await _play_cutscene(pages, voice)
 
 
+## 컷씬 화자(voice) → 대화창 이름·초상화 색(스프라이트 없는 NPC 플레이스홀더 색).
+const CUT_VOICE_NAME := {"pearl": "펄", "max": "맥스"}
+const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.52, 0.32)}
+
 ## 다중 페이지 컷씬(플레이스홀더) — 각 페이지 = {"img": 그림 설명, "line": 대사}. 탭으로 넘김.
 ##   voice = NPC 재잘 보이스 프로필("pearl"/"max"/""=무음). 화자가 한 명일 때 전 페이지 동일.
 func _play_cutscene(pages: Array, voice: String = "") -> void:
@@ -322,21 +326,6 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 	imglbl.position = box.position + Vector2(28.0, 0.0)
 	imglbl.size = Vector2(iw - 56.0, ih)
 	layer.add_child(imglbl)
-	# 대사(이미지 아래, 골드) — voice 있으면 한 글자씩 + 재잘 보이스
-	var dlg: Label = null
-	if line != "":
-		dlg = Label.new()
-		dlg.add_theme_font_override("font", FONT)
-		dlg.add_theme_font_size_override("font_size", 30)
-		dlg.add_theme_color_override("font_color", Color("F2B33D"))
-		dlg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		dlg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		dlg.text = line
-		dlg.position = Vector2(60.0, vp.y * 0.58)
-		dlg.size = Vector2(vp.x - 120.0, vp.y * 0.30)
-		if voice != "" and VoiceBlip.VOICE_PROFILES.has(voice):
-			dlg.visible_characters = 0   # 타이핑은 아래에서
-		layer.add_child(dlg)
 	# 페이지 카운터(우상단)
 	var pc := Label.new()
 	pc.add_theme_font_override("font", FONT)
@@ -347,17 +336,15 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 	pc.size = Vector2(120.0, 26.0)
 	pc.position = Vector2(vp.x - 150.0, 28.0)
 	layer.add_child(pc)
-	# 힌트
-	var hint := Label.new()
-	hint.add_theme_font_override("font", FONT)
-	hint.add_theme_font_size_override("font_size", 22)
-	hint.add_theme_color_override("font_color", Color("D4912A"))
-	hint.text = "▶ 탭하여 계속"
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.size = Vector2(vp.x, 30.0)
-	hint.position = Vector2(0.0, vp.y - 70.0)
-	layer.add_child(hint)
-	# 탭(전체)
+	# ── 대화창 = 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 스타일) ──
+	var portrait: Texture2D = null
+	if CUT_VOICE_COL.has(voice):
+		portrait = DialoguePanel.solid_portrait(CUT_VOICE_COL[voice])
+	var dp := DialoguePanel.build(layer, vp, portrait)
+	dp["name_lbl"].text = String(CUT_VOICE_NAME.get(voice, ""))
+	dp["text_lbl"].text = line
+	var tlbl: Label = dp["text_lbl"]
+	# 탭(전체) — 타이핑 중이면 스킵, 아니면 다음
 	var tap := Button.new()
 	tap.flat = true
 	tap.focus_mode = Control.FOCUS_NONE
@@ -371,18 +358,19 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 		else:
 			done[0] = true)            # 그 외 탭 = 다음 페이지
 	# 보이스 있으면 한 글자씩 표시 + 재잘 블립
-	if dlg != null and voice != "" and VoiceBlip.VOICE_PROFILES.has(voice):
+	if voice != "" and VoiceBlip.VOICE_PROFILES.has(voice) and line != "":
 		typing[0] = true
 		VoiceBlip.reset(voice)
+		tlbl.visible_characters = 0
 		var n := line.length()
-		var d := VoiceBlip.char_sec(voice)
+		var dt := VoiceBlip.char_sec(voice)
 		var k := 0
 		while k < n and typing[0]:
-			dlg.visible_characters = k + 1
+			tlbl.visible_characters = k + 1
 			VoiceBlip.blip(voice, line[k], k, n)
 			k += 1
-			await get_tree().create_timer(d, true).timeout
-		dlg.visible_characters = -1
+			await get_tree().create_timer(dt, true).timeout
+		tlbl.visible_characters = -1
 		typing[0] = false
 	while not done[0]:
 		await get_tree().process_frame

@@ -382,48 +382,13 @@ func _build_ui(dim_alpha: float) -> void:
 	_tap.pressed.connect(_on_tap)
 	_ui.add_child(_tap)
 
-	var box_h := 236.0
-	var box := Panel.new()
-	box.add_theme_stylebox_override("panel", _sb(PAPER, 12))
-	box.position = Vector2(24, vp.y - box_h - 24)
-	box.size = Vector2(vp.x - 48, box_h)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_ui.add_child(box)
-
-	# 얼굴(초상화) — 박스 안에 클립
-	var port_sz := box_h - 32.0
-	var port := Panel.new()
-	port.add_theme_stylebox_override("panel", _sb(PAPER_DEEP, 8))
-	port.position = Vector2(16, 16)
-	port.size = Vector2(port_sz, port_sz)
-	port.clip_contents = true
-	port.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(port)
-	var face := TextureRect.new()
-	face.texture = FUNGUS.get_frame_texture("idle", 0)
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	face.set_anchors_preset(Control.PRESET_FULL_RECT)
-	face.offset_left = 8; face.offset_top = 8; face.offset_right = -8; face.offset_bottom = -8
-	face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	port.add_child(face)
-	_face = face
-
-	var tx := 16.0 + port_sz + 24.0
-	_name_lbl = _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
-	box.add_child(_name_lbl)
-	_text_lbl = _mk_label(24, INK, Vector2(tx, 62))
-	_text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text_lbl.size = Vector2(box.size.x - tx - 24.0, 92)
-	box.add_child(_text_lbl)
-	_choices = HBoxContainer.new()
-	_choices.add_theme_constant_override("separation", 16)
-	_choices.position = Vector2(tx, 156)
-	_choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(_choices)
-	_hint_lbl = _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 176.0, box_h - 40.0))
-	_hint_lbl.text = "▶ 탭하여 계속"
-	box.add_child(_hint_lbl)
+	# 공용 대화창(DialoguePanel) — 게임 내 모든 대화창과 동일 스타일. 펑거스 초상화 전달.
+	var d := DialoguePanel.build(_ui, vp, FUNGUS.get_frame_texture("idle", 0))
+	_face = d["face"]
+	_name_lbl = d["name_lbl"]
+	_text_lbl = d["text_lbl"]
+	_choices = d["choices"]
+	_hint_lbl = d["hint_lbl"]
 
 
 func _mk_label(fsize: int, col: Color, pos: Vector2) -> Label:
