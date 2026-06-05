@@ -146,13 +146,16 @@ class _SignPlate extends Control:
 	var cap_px := 54.0
 	func _ready() -> void:
 		show_behind_parent = true   # 부모(버튼) 글자 뒤에 그림
-		set_anchors_preset(Control.PRESET_FULL_RECT)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		resized.connect(queue_redraw)   # 버튼 크기 바뀌면 다시 그림
 	func _process(_d: float) -> void:
 		var b := get_parent() as Button
 		if b == null:
 			return
+		# Button은 컨테이너가 아니라 앵커로 자식 크기를 못 맞춤 → 매 프레임 부모 크기로 직접 동기화.
+		if size != b.size or position != Vector2.ZERO:
+			position = Vector2.ZERO
+			size = b.size
+			queue_redraw()
 		var m := b.get_draw_mode()
 		var c := Color.WHITE
 		if m == BaseButton.DRAW_PRESSED or m == BaseButton.DRAW_HOVER_PRESSED:
