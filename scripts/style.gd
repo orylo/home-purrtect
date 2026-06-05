@@ -115,8 +115,10 @@ func signboard_button(b: Button, color: String = "green", fs: int = FS_TITLE) ->
 		sb.texture_margin_bottom = 30.0
 		sb.content_margin_left = SIGN_CAP + 12.0     # 글자가 리벳 위로 안 가게
 		sb.content_margin_right = SIGN_CAP + 12.0
-		sb.content_margin_top = 16.0
-		sb.content_margin_bottom = 16.0
+		# 세로중앙 보정: SB어그로 잉크가 라인박스 안에서 fs의 ~11.5%만큼 위로 앉음 → top↑/bot↓로 끌어내림.
+		var vshift: float = fs * 0.115
+		sb.content_margin_top = 16.0 + vshift
+		sb.content_margin_bottom = maxf(4.0, 16.0 - vshift)
 		if st == "pressed":
 			sb.modulate_color = Color(0.9, 0.9, 0.9)
 		elif st == "disabled":

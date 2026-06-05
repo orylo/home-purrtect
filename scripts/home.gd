@@ -535,31 +535,32 @@ func _show_coachmark(c: Dictionary) -> void:
 # 좌상단 코인 숫자 칸 — 흰(밖)+잉크(테두리)+크림(채움), 골든 숫자. 아이콘 스트로크 스타일과 통일.
 class _CoinBox extends Control:
 	const FONT_NUM := preload("res://assets/fonts/SBAggro-Bold.ttf")
-	const TINT := Color(0.22, 0.19, 0.16)   # 명판 블랙 틴트(리벳 음영은 남게 너무 안 어둡게)
+	const PLATE := preload("res://assets/ui/home/coin_plate.png")  # 크림+블랙+흰 더블스트로크 명판
+	const CAP := 66.0       # 9-slice 좌우 캡(코너+리벳+흰스트로크 = 54 + 패딩12)
+	const CAP_TB := 42      # 상하 캡(30 + 패딩12)
 	var _np: NinePatchRect
 	var _lbl: Label
 	var pad_left := 60.0    # 코인 겹침 영역(왼쪽 리벳 가림) — home이 설정
 	var box_h := 80.0       # home이 설정
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_np = NinePatchRect.new()                         # 명판(블랙) 9-slice: 좌우 리벳캡 고정, 가운데 신축
-		_np.texture = Design.SIGN_TEX["cream"]
-		_np.patch_margin_left = int(Design.SIGN_CAP)
-		_np.patch_margin_right = int(Design.SIGN_CAP)
-		_np.patch_margin_top = 30
-		_np.patch_margin_bottom = 30
-		_np.modulate = TINT
+		_np = NinePatchRect.new()                         # 명판(크림) 9-slice: 좌우 리벳캡 고정, 가운데 신축
+		_np.texture = PLATE
+		_np.patch_margin_left = int(CAP)
+		_np.patch_margin_right = int(CAP)
+		_np.patch_margin_top = CAP_TB
+		_np.patch_margin_bottom = CAP_TB
 		_np.set_anchors_preset(Control.PRESET_FULL_RECT)
 		_np.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_np)
 		_lbl = Label.new()
 		_lbl.add_theme_font_override("font", FONT_NUM)
-		_lbl.add_theme_color_override("font_color", Color("F2B33D"))   # 골든
+		_lbl.add_theme_color_override("font_color", Color("241F1B"))   # 블랙(잉크)
 		_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 		_lbl.offset_left = pad_left
-		_lbl.offset_right = -(Design.SIGN_CAP + 14.0)
+		_lbl.offset_right = -(CAP + 14.0)
 		_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_lbl)
 	func set_count(n: int) -> void:
@@ -570,7 +571,7 @@ class _CoinBox extends Control:
 		_lbl.add_theme_font_size_override("font_size", fsz)
 		_lbl.text = s
 		var tw: float = FONT_NUM.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1.0, fsz).x
-		size = Vector2(pad_left + tw + Design.SIGN_CAP + 28.0, box_h)   # 오른쪽으로만 신축
+		size = Vector2(pad_left + tw + CAP + 28.0, box_h)   # 오른쪽으로만 신축
 	func _commafy(n: int) -> String:
 		var s := str(n)
 		var out := ""

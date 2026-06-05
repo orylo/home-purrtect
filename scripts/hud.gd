@@ -347,19 +347,27 @@ func _center_label(text: String, kind: String, color: Color) -> Label:
 ## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(칸 정중앙) + 우하단 개수 뱃지(코너에 걸침).
 ##   탭하면 아이템 설명 툴팁(아이템 도감 문구). id="coin" 또는 전리품 id.
 const TILE_SZ := 88.0
+const TEX_SLOT := preload("res://assets/ui/slots/slot2_sq.png")   # 하단 HUD 소지품칸과 동일 슬롯 텍스처
 func _reward_tile(tex: Texture2D, count_text: String, id: String, item_name: String) -> Control:
-	var tile := Panel.new()
+	var tile := Control.new()
 	tile.custom_minimum_size = Vector2(TILE_SZ, TILE_SZ)
 	tile.clip_contents = false   # 뱃지가 코너 밖으로 살짝 걸치도록(클립 끔)
-	tile.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
+	# 칸 배경 = 하단 소지품 슬롯과 같은 텍스처(9-slice로 모서리 보존)
+	var bg := NinePatchRect.new()
+	bg.texture = TEX_SLOT
+	bg.patch_margin_left = 46; bg.patch_margin_right = 46
+	bg.patch_margin_top = 46; bg.patch_margin_bottom = 46
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tile.add_child(bg)
 	if tex != null:
 		var ic := TextureRect.new()
 		ic.texture = tex
-		# 아이콘은 칸 정중앙(비율유지 축소). 더는 개수 자리 확보로 위로 밀지 않는다.
+		# 아이콘은 칸(크림 내부) 정중앙. 슬롯 테두리만큼 안쪽으로 들임.
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		ic.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ic.offset_left = 8; ic.offset_top = 8; ic.offset_right = -8; ic.offset_bottom = -8
+		ic.offset_left = 14; ic.offset_top = 14; ic.offset_right = -14; ic.offset_bottom = -14
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tile.add_child(ic)
 	# 개수 뱃지(크림 알약 + 잉크 외곽 + 잉크 숫자) - 우하단 코너에 걸침
@@ -408,8 +416,28 @@ func _count_badge(text: String) -> Control:
 # -- 전리품 설명 툴팁 -------------------------------------------------------
 var _loot_entries: Array = []   # 보상 타일들(탭 히트테스트용)
 var _loot_tip: Control = null   # 현재 떠 있는 설명 툴팁
+var _loot_tail: Control = null   # 말풍선 꼬리
 var _loot_overlay: Control = null   # 화면 전체 클릭 캐처(다른 칸 전환/바깥 탭 닫기)
 var _loot_tip_id: String = ""   # 현재 툴팁이 가리키는 id(같은 칸 다시 탭 = 닫기)
+
+
+## 말풍선 꼬리 - 크림 채움 + 잉크 빗변. dir="down"(툴팁 위→꼬리 아래) / "up".
+class _TipTail extends Control:
+	var dir := "down"
+	const COL := Color("f3e3be")   # PAPER
+	const BRD := Color("241f1b")   # INK
+	func _draw() -> void:
+		var w := 26.0
+		var h := 14.0
+		var o := 4.0   # 박스 안으로 겹쳐 테두리 가림
+		var pts: PackedVector2Array
+		if dir == "down":
+			pts = PackedVector2Array([Vector2(-w * 0.5, -o), Vector2(w * 0.5, -o), Vector2(0, h)])
+		else:
+			pts = PackedVector2Array([Vector2(-w * 0.5, o), Vector2(w * 0.5, o), Vector2(0, -h)])
+		draw_colored_polygon(pts, COL)
+		draw_line(pts[0], pts[2], BRD, 3.0)
+		draw_line(pts[1], pts[2], BRD, 3.0)
 
 
 ## 타일 직접 탭(툴팁이 아직 없을 때 첫 진입)
@@ -456,9 +484,14 @@ func _open_loot_tip(id: String, item_name: String, tile: Control) -> void:
 	ov.gui_input.connect(_on_overlay_input)
 	clear_panel.add_child(ov)
 	_loot_overlay = ov
-	# 툴팁 카드
+	# 툴팁 카드(텍스트 영역 상하좌우 마진)
 	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 3, 12))
+	var cbox := Design.panel_box(Design.PAPER, 3, 12)
+	cbox.content_margin_left = 18.0
+	cbox.content_margin_right = 18.0
+	cbox.content_margin_top = 14.0
+	cbox.content_margin_bottom = 14.0
+	card.add_theme_stylebox_override("panel", cbox)
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 4)
@@ -477,6 +510,11 @@ func _open_loot_tip(id: String, item_name: String, tile: Control) -> void:
 	ov.add_child(card)
 	_loot_tip = card
 	_loot_tip_id = id
+	# 말풍선 꼬리(어떤 아이템인지 가리킴)
+	var tail := _TipTail.new()
+	tail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ov.add_child(tail)
+	_loot_tail = tail
 	_position_loot_tip.call_deferred(card, tile)
 
 
@@ -487,13 +525,28 @@ func _position_loot_tip(card: Control, tile: Control) -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var tr := tile.get_global_rect()
 	var cs := card.get_combined_minimum_size()
-	var x: float = tr.position.x + tr.size.x * 0.5 - cs.x * 0.5
-	var y: float = tr.position.y - cs.y - 10.0
+	var tcx: float = tr.position.x + tr.size.x * 0.5   # 타일 가로 중심(꼬리가 가리킬 곳)
+	var gap := 16.0   # 꼬리 길이만큼 타일과 띄움
+	var above := true
+	var x: float = tcx - cs.x * 0.5
+	var y: float = tr.position.y - cs.y - gap
 	if y < 8.0:
-		y = tr.position.y + tr.size.y + 10.0
+		above = false
+		y = tr.position.y + tr.size.y + gap
 	x = clampf(x, 8.0, vp.x - cs.x - 8.0)
 	y = clampf(y, 8.0, vp.y - cs.y - 8.0)
 	card.global_position = Vector2(x, y)
+	# 꼬리: 카드 가장자리(위/아래)에서 타일 중심을 가리킴
+	if is_instance_valid(_loot_tail):
+		var t := _loot_tail as _TipTail
+		var tx: float = clampf(tcx, x + 18.0, x + cs.x - 18.0)
+		if above:
+			t.dir = "down"
+			t.global_position = Vector2(tx, y + cs.y)
+		else:
+			t.dir = "up"
+			t.global_position = Vector2(tx, y)
+		t.queue_redraw()
 
 
 func _loot_desc(id: String) -> String:
@@ -507,8 +560,11 @@ func _dismiss_loot_tip() -> void:
 		_loot_overlay.queue_free()
 	if is_instance_valid(_loot_tip):
 		_loot_tip.queue_free()
+	if is_instance_valid(_loot_tail):
+		_loot_tail.queue_free()
 	_loot_overlay = null
 	_loot_tip = null
+	_loot_tail = null
 	_loot_tip_id = ""
 
 
