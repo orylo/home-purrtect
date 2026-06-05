@@ -117,15 +117,18 @@ const CUT_SHERIFF := [   # 1-3 보안관 획득(⑤-b, 4장·사일런트+해금
 	{"img": "햇빛 아래, 나무 궤짝이 끼익— 열리며 먼지가 폭 인다.", "line": ""},
 	{"img": "궤짝 안, 카우보이 모자·별 배지·권총집 한 벌이 반짝인다. (★)", "line": ""},
 	{"img": "치즈가 장비를 걸치고 별 배지가 반짝 — 변신 완료(보안관).", "line": ""},
-	{"img": "보안관이 된 치즈, 늠름한 포즈.", "line": "보안관 획득!"},
+	{"img": "보안관이 된 치즈, 늠름한 포즈.", "line": ""},
+	{"img": "보안관이 된 치즈, 늠름한 포즈.", "line": "보안관 획득!", "sys": true},
 ]
 const CUT_PEARL := [   # 1-5 펄 첫 만남(④, 6장)
 	{"img": "옆집 2층 창가의 펄, 우아한 미소. 치즈와 오묘한 눈빛을 주고받는다.", "line": "펄 : …드디어, 이쪽을 봐주셨군요."},
 	{"img": "창가의 펄, 차분히 치즈를 내려다본다.", "line": "펄 : 줄곧 지켜보고 있었답니다. 당신이 이 집을 지키는 모습을…"},
 	{"img": "치즈, 완전히 반한 표정(♥)으로 빛나는 돌을 슥 내민다.", "line": "(치즈, 빛나는 돌을 건넨다)"},
 	{"img": "펄, 받아들고 저도 모르게 환하게 활짝 웃는다(♥) — 진짜 모습.", "line": "펄 : 어머…! 저에게…?"},
-	{"img": "펄, 아차 하고 크흠— 헛기침하며 다시 고고한 여신 표정.", "line": "펄 : …크흠. 나쁘진 않네요. 그럭저럭, 봐줄 만해요.\n\n(펄의 호감도가 1 올랐다 ♥)"},
-	{"img": "펄, 창틀에 기대며 우아하게 손을 내민다.", "line": "펄 : 답례로… 저는 늘 이곳, 집에 있을게요. 싸우러 나서기 전 절 찾아주신다면, 작은 힘을 빌려드리죠.\n\n[ 펄의 축복 해금! ]"},
+	{"img": "펄, 아차 하고 크흠— 헛기침하며 다시 고고한 여신 표정.", "line": "펄 : …크흠. 나쁘진 않네요. 그럭저럭, 봐줄 만해요."},
+	{"img": "펄, 아차 하고 크흠— 헛기침하며 다시 고고한 여신 표정.", "line": "펄의 호감도가 1 올랐다 ♥", "sys": true},
+	{"img": "펄, 창틀에 기대며 우아하게 손을 내민다.", "line": "펄 : 답례로… 저는 늘 이곳, 집에 있을게요. 싸우러 나서기 전 절 찾아주신다면, 작은 힘을 빌려드리죠."},
+	{"img": "펄, 창틀에 기대며 우아하게 손을 내민다.", "line": "펄의 축복 해금!", "sys": true},
 ]
 const CUT_MAX := [   # 1-7 맥스 첫 거래(③, 7장)
 	{"img": "맥스(한쪽 눈 흉터, 입에 성냥개비). 치즈를 알아본 듯 피식.", "line": "맥스 : 요즘 동네가 시끌시끌하길래 누군가 했더니… 너였구만, 응?"},
@@ -134,18 +137,21 @@ const CUT_MAX := [   # 1-7 맥스 첫 거래(③, 7장)
 	{"img": "목소리를 쫙 낮추며 뜸을 들인다.", "line": "맥스 : 근데 말이야, 진짜배기는 따로 있다 이거야… 두구두구두구—"},
 	{"img": "짠, 하고 장비를 꺼내 보인다.", "line": "맥스 : 바로~ 장비 되시겠다! 거리 악사에 초급 메이드까지. 어이, 군침 좀 도는데?"},
 	{"img": "손가락을 까딱, 약 올리듯.", "line": "맥스 : 뭐, 이건 특별 주문이라 네가 재료를 좀 긁어모아 와야 하지만 말이야. 공짜가 어딨어, 안 그래?"},
-	{"img": "엄지로 골목 쪽을 가리킨다.", "line": "맥스 : 요 앞 골목에 죽치고 있을 테니까, 살 거 있으면 언제든 찾아오라구. 어흠!\n\n[ 맥스 상점 · 메이드·음악가 제작 해금! ]"},
+	{"img": "엄지로 골목 쪽을 가리킨다.", "line": "맥스 : 요 앞 골목에 죽치고 있을 테니까, 살 거 있으면 언제든 찾아오라구. 어흠!"},
+	{"img": "엄지로 골목 쪽을 가리킨다.", "line": "맥스 상점 · 메이드·음악가 제작 해금!", "sys": true},
 ]
 const CUT_DOVE := [   # 1-13 비둘기 치료(③, 4장)
 	{"img": "치즈가 비둘기의 다친 다리를 조심스레 감싸 치료해준다.", "line": "비둘기 : 고, 고맙슴다…! 이 은혜 잊지 않겠슴다!"},
 	{"img": "다리를 까딱여보고 멀쩡해지자 푸드덕 일어선다.", "line": "비둘기 : 저 너머에서 쥐떼가 우글우글 훈련하고 있길래, 하늘에서 정찰 좀 하던 참이었슴다."},
 	{"img": "비둘기, 분한 듯 다친 다리를 내려다본다.", "line": "비둘기 : 근데 돌 던지는 녀석 하나가… 제 다리를 정통으로 맞혀버렸지 뭡니까. 으윽, 분함다…!"},
-	{"img": "비둘기, 날개를 펴고 치즈 어깨에 앉으며 경례하듯.", "line": "비둘기 : 은혜는 갚는 법! 부르시면 언제든 날아오겠슴다. 똥 폭격으로 적들을 묶어드리겠슴다!\n\n[ 동료 시스템 해금! ]"},
+	{"img": "비둘기, 날개를 펴고 치즈 어깨에 앉으며 경례하듯.", "line": "비둘기 : 은혜는 갚는 법! 부르시면 언제든 날아오겠슴다. 똥 폭격으로 적들을 묶어드리겠슴다!"},
+	{"img": "비둘기, 날개를 펴고 치즈 어깨에 앉으며 경례하듯.", "line": "동료 시스템 해금!", "sys": true},
 ]
 const CUT_CHIHUAHUA := [   # 1-16 치와와 해방(③, 3장)
 	{"img": "치즈가 케이지 빗장을 척 열어준다.", "line": "치와와 : 으르르… 드디어! 야, 너 때문에 나온 거 아니다, 내가 나온 거야, 알겠냐?!"},
 	{"img": "씩씩대며 폴짝 뛰어나온다.", "line": "치와와 : 낮잠 한숨 자는 사이에 그 빌어먹을 쥐새끼들이! 감히! 이 몸을! 우리에 처넣어?!"},
-	{"img": "분이 안 풀린 채 치즈를 째려보다 흥— 콧방귀.", "line": "치와와 : …뭐, 꺼내준 건 인정한다. 갚아주지. 그 쥐새끼들 싹 다 오른쪽으로 처박아줄 테니까, 부르기나 해!\n\n[ 동료 치와와 합류! ]"},
+	{"img": "분이 안 풀린 채 치즈를 째려보다 흥— 콧방귀.", "line": "치와와 : …뭐, 꺼내준 건 인정한다. 갚아주지. 그 쥐새끼들 싹 다 오른쪽으로 처박아줄 테니까, 부르기나 해!"},
+	{"img": "분이 안 풀린 채 치즈를 째려보다 흥— 콧방귀.", "line": "동료 치와와 합류!", "sys": true},
 ]
 const CUT_GAMEOVER := [   # 게임오버 영감의 전보(3장)
 	{"img": "치즈가 문밖으로 뻥— 쫓겨나 빗속에 나뒹군다. (비)", "line": ""},
@@ -293,11 +299,13 @@ const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.5
 func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
-		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), voice)
+		var is_sys: bool = bool(p.get("sys", false))   # 시스템 알림 페이지(호감도·해금 등) → 펑거스 음색·초상화/이름표 없음·가운데 정렬
+		var pv: String = "fungus" if is_sys else voice
+		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys)
 
 
 ## 컷씬 한 페이지: 어두운 바탕 + 회색 "이미지 플레이스홀더([그림] 설명)" + 대사 + 페이지수 + 탭.
-func _cut_page(img: String, line: String, idx: int, total: int, voice: String = "") -> void:
+func _cut_page(img: String, line: String, idx: int, total: int, voice: String = "", sys: bool = false) -> void:
 	var vp := get_viewport_rect().size
 	var layer := CanvasLayer.new()
 	layer.layer = 80
@@ -337,13 +345,20 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 	pc.position = Vector2(vp.x - 150.0, 28.0)
 	layer.add_child(pc)
 	# ── 대화창 = 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 스타일) ──
+	#   sys=시스템 알림: 초상화·이름표 없이 박스 전체폭 가운데 정렬(화자 대사와 분리).
 	var portrait: Texture2D = null
-	if CUT_VOICE_COL.has(voice):
+	if not sys and CUT_VOICE_COL.has(voice):
 		portrait = DialoguePanel.solid_portrait(CUT_VOICE_COL[voice])
 	var dp := DialoguePanel.build(layer, vp, portrait)
-	dp["name_lbl"].text = String(CUT_VOICE_NAME.get(voice, ""))
+	dp["name_lbl"].text = "" if sys else String(CUT_VOICE_NAME.get(voice, ""))
 	dp["text_lbl"].text = line
 	var tlbl: Label = dp["text_lbl"]
+	if sys:
+		var sbox: Control = dp["box"]
+		tlbl.position = Vector2(24.0, 18.0)
+		tlbl.size = Vector2(sbox.size.x - 48.0, sbox.size.y - 64.0)
+		tlbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tlbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# 탭(전체) — 타이핑 중이면 스킵, 아니면 다음
 	var tap := Button.new()
 	tap.flat = true
