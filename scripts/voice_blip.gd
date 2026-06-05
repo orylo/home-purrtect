@@ -22,7 +22,7 @@ const VOICE_PROFILES := {
 	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": "res://assets/audio/voice/blip_pearl.wav"},  # 또박또박·우아·느림
 	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": "res://assets/audio/voice/blip_max.wav"},  # 능글·낮음·느긋
 	"system": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 32.0, "sample_path": ""},  # 시스템 알림 = 합성음(녹음 안 씀). 녹음 펑거스와 구분되는 "기계 비프" 톤.
-	"gold":   {"base_freq": 180.0, "jitter": 0.08, "waveform": "triangle", "blip_every": 2, "char_ms": 48.0, "sample_path": "res://assets/audio/voice/blip_gold.wav", "sample_pitch": 0.70},  # 골드 영감 = 맥스 소스(더 긴 음절) 0.70배(살짝 저음)·48ms(느릿) 노인
+	"gold":   {"base_freq": 180.0, "jitter": 0.08, "waveform": "triangle", "blip_every": 1, "char_ms": 48.0, "sample_path": "res://assets/audio/voice/blip_gold.wav", "sample_pitch": 0.70},  # 골드 영감 = 맥스 소스(더 긴 음절) 0.70배(살짝 저음)·48ms(느릿) 노인. 글자마다 소리(every1=일정)
 }
 
 ## 샘플 재생 피치 배율(profile "sample_pitch", 기본 1.0). <1=낮게(굵게)·길게, >1=높게. 합성음 프로필엔 영향 없음.
