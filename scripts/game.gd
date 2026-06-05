@@ -199,6 +199,7 @@ func _on_inscene_event() -> void:
 	if player.has_method("set_event_idle"):
 		player.set_event_idle(true)
 	if not GameState.cheats.get("skip_events", false):   # DEV 이벤트스킵(전투만): 클리어 컷씬 생략
+		Music.set_override("menu")   # 클리어 후 컷씬 = 전투 BGM 종료, 비전투 트랙(테스트로 menu). 컷씬 끝→홈도 menu라 끊김 없음. (추후 컷씬 전용곡 생기면 교체)
 		match GameState.stage_minor:
 			3: await _event_crate()
 			5: await _event_pearl()
