@@ -42,23 +42,18 @@ func _ready() -> void:
 			$DevButton.add_theme_stylebox_override(st, circle)   # 모든 상태 동일 → 호버 변화 없음
 
 
-	# [이야기] = 프롤로그 컷씬 다시보기(좌하단). 다시보기는 끝나면 시작화면으로 복귀.
-	var vp := get_viewport_rect().size
-	var story := Design.button(tr("ui.start.story"), "secondary", Design.FS_BODY)
-	story.custom_minimum_size = Vector2(150, 52)
-	story.position = Vector2(40, vp.y - 80)
-	story.pressed.connect(func():
-		GameState.prologue_return = "start"
-		get_tree().change_scene_to_file("res://scenes/prologue.tscn"))
-	add_child(story)
-	# [처음부터] = 진행 초기화(세이브 있을 때만 노출, 확인 팝업 거침). 이야기 버튼 오른쪽.
+	# [처음부터] = 진행 초기화(세이브 있을 때만 노출, 확인 팝업 거침). 좌하단 앵커 고정(웹 리사이즈에도 안 밀림).
 	if GameState.has_save():
 		var fresh := Design.button(tr("ui.start.newgame"), "secondary", Design.FS_BODY)
 		fresh.custom_minimum_size = Vector2(150, 52)
-		fresh.position = Vector2(200, vp.y - 80)
+		fresh.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		fresh.offset_left = 40.0
+		fresh.offset_top = -80.0
+		fresh.offset_right = 40.0 + 150.0
+		fresh.offset_bottom = -28.0
 		fresh.pressed.connect(_confirm_new_game)
 		add_child(fresh)
-	# ※ 프롤로그 자동재생 폐기 — 이제 [게임 시작](세이브 없을 때=새 게임)·[처음부터]를 눌렀을 때만 재생.
+	# ※ 프롤로그 자동재생·[이야기] 다시보기 폐기 — 이제 [게임 시작](세이브 없을 때=새 게임)·[처음부터]를 눌렀을 때만 재생.
 
 
 func _layout_title() -> void:
