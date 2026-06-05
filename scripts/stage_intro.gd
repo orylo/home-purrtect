@@ -150,7 +150,8 @@ func _draw() -> void:
 		return
 	var sc: float = _npc.scale.x                        # height 280 스케일
 	var rx := 95.0 * sc                                 # 발 반폭(프레임 ~190px/2) × 스케일
-	draw_set_transform(Vector2(_npc.position.x, Layout.ground_y()), 0.0, Vector2(1.0, 0.28))
+	var gy := Layout.ground_y() - rx * Layout.SHADOW_LIFT_FRAC   # 접지점 보정 lift
+	draw_set_transform(Vector2(_npc.position.x, gy), 0.0, Vector2(1.0, 0.28))
 	draw_circle(Vector2.ZERO, rx, Color(0, 0, 0, 0.3))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 

@@ -62,6 +62,10 @@ const GROUND_DROP: float = 80.0            # (구) 바닥선 내림 — 현재 �
 #   폰(720)에서 ≈513 = 종전 값과 사실상 동일. ※ safe_bottom 안 뺌(배경 풀블리드라 바닥은 배경 비율 따름).
 const GROUND_LINE_FRAC: float = 1.0 - 310.0 / 1080.0   # ≈ 0.7130
 
+# 발밑 그림자를 "자기 가로반경 × 이 비율"만큼 위로 올림(접지점에 붙게 — '바닥 아래 유리판' 느낌 방지).
+#   치즈·적·펑거스 그림자 공통. 키우면 더 위로. 0이면 종전(바닥선에 그대로).
+const SHADOW_LIFT_FRAC: float = 0.18
+
 # 버튼이 화면 가장자리(아래/오른쪽)에서 떨어지는 공통 마진
 const CONTROL_EDGE_MARGIN: float = 34.0
 

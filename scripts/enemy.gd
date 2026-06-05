@@ -486,7 +486,8 @@ func _draw() -> void:
 		var sfd: Array = SHADOW_FOOT[_id]
 		sh_x = float(sfd[0]) * _sprite_sc * (-1.0 if (_use_sprite and anim.flip_h) else 1.0)   # 발 중심으로(반전 반영)
 		sh_rx = maxf(sh_rx, float(sfd[1]) * _sprite_sc)                                          # 발폭이 넓으면 그만큼
-	draw_set_transform(Vector2(sh_x, 0.0), 0.0, Vector2(1.0, 0.28))
+	var sh_lift := sh_rx * sh_t * Layout.SHADOW_LIFT_FRAC   # 접지점에 붙게 살짝 위로
+	draw_set_transform(Vector2(sh_x, -sh_lift), 0.0, Vector2(1.0, 0.28))
 	draw_circle(Vector2.ZERO, sh_rx * sh_t, Color(0, 0, 0, 0.3 * sh_t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
