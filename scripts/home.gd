@@ -62,6 +62,13 @@ func _build() -> void:
 		cat.scale = Vector2(sc, sc)
 		var foot_y: float = vp.y - 100.0 * k               # 바닥에서 발 100px 위
 		cat.position = Vector2(vp.x * 0.5, foot_y - (bot - fh * 0.5) * sc)
+		# 발밑 그림자(검정 30% 납작 타원) — 치즈 뒤(먼저 add). 고양이 가로 중심·발 위치 기준.
+		var foot_x: float = cat.position.x + ((left + right) * 0.5 - fw * 0.5) * sc
+		var sh_rx: float = (right - left) * sc * 0.45
+		var sh := _FootShadow.new()
+		sh.rx = sh_rx
+		sh.position = Vector2(foot_x, foot_y - sh_rx * Layout.SHADOW_LIFT_FRAC)
+		add_child(sh)
 		add_child(cat)
 		# 탭 영역(고양이 보이는 부분) → hit 모션
 		var tb := Button.new()
@@ -510,9 +517,18 @@ func _show_coachmark(c: Dictionary) -> void:
 			ov.queue_free())
 
 
-# 홈 치즈 — 인게임처럼 idle 사이클(첫 프레임 1초 유지 → idle 1회 재생 → 반복) + 탭=hit 1회.
+# 발밑 그림자 — 인게임과 동일(검정 30% 납작 타원, y스케일 0.28).
+class _FootShadow extends Node2D:
+	var rx := 80.0
+	func _draw() -> void:
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.28))
+		draw_circle(Vector2.ZERO, rx, Color(0, 0, 0, 0.3))
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+# 홈 치즈 — 인게임처럼 idle 사이클(첫 프레임 0.5초 유지 → idle 1회 재생 → 반복) + 탭=hit 1회.
 class _HomeCat extends AnimatedSprite2D:
-	const HOLD := 1.0
+	const HOLD := 0.5
 	var _phase := "hold"   # hold(첫프레임 유지) / play(idle 1회) / hit
 	var _t := 0.0
 	func _ready() -> void:
