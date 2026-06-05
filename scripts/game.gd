@@ -348,21 +348,23 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 	pc.size = Vector2(120.0, 26.0)
 	pc.position = Vector2(vp.x - 150.0, 28.0)
 	layer.add_child(pc)
-	# ── 대화창 = 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 스타일) ──
+	# ── 대화창 = 공용 DialoguePanel ── ★대사 있을 때만(무대사 장면은 대화창 미노출).
 	#   sys=시스템 알림: 초상화·이름표 없이 박스 전체폭 가운데 정렬(화자 대사와 분리).
-	var portrait: Texture2D = null
-	if not sys and CUT_VOICE_COL.has(voice):
-		portrait = DialoguePanel.solid_portrait(CUT_VOICE_COL[voice])
-	var dp := DialoguePanel.build(layer, vp, portrait)
-	dp["name_lbl"].text = "" if sys else String(CUT_VOICE_NAME.get(voice, ""))
-	dp["text_lbl"].text = line
-	var tlbl: Label = dp["text_lbl"]
-	if sys:
-		var sbox: Control = dp["box"]
-		tlbl.position = Vector2(24.0, 18.0)
-		tlbl.size = Vector2(sbox.size.x - 48.0, sbox.size.y - 64.0)
-		tlbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tlbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var tlbl: Label = null
+	if line != "":
+		var portrait: Texture2D = null
+		if not sys and CUT_VOICE_COL.has(voice):
+			portrait = DialoguePanel.solid_portrait(CUT_VOICE_COL[voice])
+		var dp := DialoguePanel.build(layer, vp, portrait)
+		dp["name_lbl"].text = "" if sys else String(CUT_VOICE_NAME.get(voice, ""))
+		dp["text_lbl"].text = line
+		tlbl = dp["text_lbl"]
+		if sys:
+			var sbox: Control = dp["box"]
+			tlbl.position = Vector2(24.0, 18.0)
+			tlbl.size = Vector2(sbox.size.x - 48.0, sbox.size.y - 64.0)
+			tlbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			tlbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# 탭(전체) ─ 타이핑 중이면 스킵, 아니면 다음
 	var tap := Button.new()
 	tap.flat = true
@@ -376,8 +378,8 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 			typing[0] = false          # 타이핑 중 탭 = 스킵(전체표시)
 		else:
 			done[0] = true)            # 그 외 탭 = 다음 페이지
-	# 보이스 있으면 한 글자씩 표시 + 재잘 블립
-	if voice != "" and VoiceBlip.VOICE_PROFILES.has(voice) and line != "":
+	# 보이스 있으면 한 글자씩 표시 + 재잘 블립(대화창 있을 때만)
+	if tlbl != null and voice != "" and VoiceBlip.VOICE_PROFILES.has(voice) and line != "":
 		typing[0] = true
 		VoiceBlip.reset(voice)
 		tlbl.visible_characters = 0
