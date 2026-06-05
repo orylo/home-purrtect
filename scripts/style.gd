@@ -51,8 +51,8 @@ const FS_CAPTION := 18
 const FS_NUM := 30
 
 # 글자 외곽선 두께 (design.md §2.2 위계표) - STROKE는 갱신본 명칭, OUTLINE은 하위호환 별칭
-const STROKE := {"display": 7, "display_s": 4, "title": 3, "body": 1, "caption": 0, "num": 3}
-const OUTLINE := {"display": 8, "display_s": 5, "title": 3, "body": 0, "caption": 0, "num": 3}
+const STROKE := {"display": 12, "display_s": 8, "title": 5, "body": 2, "caption": 0, "num": 5}
+const OUTLINE := {"display": 12, "display_s": 8, "title": 5, "body": 0, "caption": 0, "num": 5}
 const FS := {"display": FS_DISPLAY_L, "display_s": FS_DISPLAY_S, "title": FS_TITLE, "body": FS_BODY, "caption": FS_CAPTION, "num": FS_NUM}
 
 # --- 모션 토큰 (design.md §5, 지속 초) ---
@@ -131,7 +131,7 @@ func signboard_button(b: Button, color: String = "green", fs: int = FS_TITLE) ->
 		b.add_theme_color_override(cn, fg)
 	if color != "cream":
 		b.add_theme_color_override("font_outline_color", INK)
-		b.add_theme_constant_override("outline_size", 6)
+		b.add_theme_constant_override("outline_size", maxi(8, int(fs * 0.18)))   # fs 비례 두꺼운 외곽선
 	if not b.has_meta("_sfx"):
 		b.set_meta("_sfx", true)
 		b.pressed.connect(func(): Sfx.play("click"))

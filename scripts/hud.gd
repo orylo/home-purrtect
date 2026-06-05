@@ -236,7 +236,7 @@ func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	clear_title.add_theme_font_size_override("font_size", 64)
 	clear_title.add_theme_color_override("font_color", Design.CHEESE)
 	clear_title.add_theme_color_override("font_outline_color", Design.INK)
-	clear_title.add_theme_constant_override("outline_size", 6)
+	clear_title.add_theme_constant_override("outline_size", 12)
 
 	_build_clear_content(star_info, bonus, show_notice, ev)
 	# 라우팅: (파밍 재도전) 맵 복귀 / 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스) / 일반(D·없음)
@@ -499,7 +499,7 @@ func _open_loot_tip(id: String, item_name: String, tile: Control) -> void:
 	card.add_child(vb)
 	var title := Design.label(item_name, "title", Design.CHEESE_DEEP)
 	title.add_theme_color_override("font_outline_color", Design.INK)
-	title.add_theme_constant_override("outline_size", 4)
+	title.add_theme_constant_override("outline_size", 6)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_child(title)
 	var body := Design.label(_loot_desc(id), "body", Design.INK)
