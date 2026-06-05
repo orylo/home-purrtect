@@ -194,6 +194,35 @@ func panel_box(bg: Color = PAPER, border := 5, radius := 12) -> StyleBoxFlat:
 	sb.shadow_offset = Vector2(0, 8)
 	return sb
 
+
+## 툴팁 ─ 크림 바탕 + 얇은 본문 폰트(FONT) + 가는 잉크 테두리. 자동 줄바꿈(max_w 폭). PanelContainer라 내용맞춤.
+func tooltip(text: String, max_w: float = 340.0, fs: int = 20) -> PanelContainer:
+	var box := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = PAPER
+	sb.set_corner_radius_all(12)
+	sb.set_border_width_all(2)
+	sb.border_color = INK
+	sb.content_margin_left = 16.0
+	sb.content_margin_right = 16.0
+	sb.content_margin_top = 10.0
+	sb.content_margin_bottom = 10.0
+	sb.shadow_color = Color(INK.r, INK.g, INK.b, 0.35)
+	sb.shadow_size = 0
+	sb.shadow_offset = Vector2(0, 4)
+	box.add_theme_stylebox_override("panel", sb)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_override("font", FONT)              # 얇은 본문 폰트(어그로체 Medium)
+	lbl.add_theme_font_size_override("font_size", fs)
+	lbl.add_theme_color_override("font_color", INK)
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.custom_minimum_size = Vector2(max_w, 0.0)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(lbl)
+	return box
+
 # 빈티지 간판 패널 텍스처(나노바나나) ─ 장식 코너 크림 패널(불투명, 9-slice 가능)
 const TEX_SIGNBOARD := preload("res://assets/ui/panels/panel_signboard.png")
 

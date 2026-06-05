@@ -460,14 +460,15 @@ func _show_coachmark(c: Dictionary) -> void:
 	ring.r = radius
 	ov.add_child(ring)
 
-	# 안내 문구(구멍 위쪽에 배치)
-	var lbl := Design.label(String(c["text"]), "title", Design.CHEESE)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl.size = Vector2(vp.x - 120.0, 120.0)
-	lbl.position = Vector2(60.0, maxf(40.0, center.y - radius - 130.0))
-	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ov.add_child(lbl)
+	# 안내 = 툴팁(크림·얇은 폰트)을 하이라이트 아이콘 옆에 배치(화면 중앙 쪽). 크기 확정 후 위치.
+	var tip := Design.tooltip(String(c["text"]), 320.0)
+	ov.add_child(tip)
+	await get_tree().process_frame
+	var ts := tip.size
+	var on_left: bool = center.x < vp.x * 0.5
+	var tx: float = (rect.position.x + rect.size.x + 18.0) if on_left else (rect.position.x - ts.x - 18.0)
+	var ty: float = center.y - ts.y * 0.5
+	tip.position = Vector2(clampf(tx, 12.0, vp.x - ts.x - 12.0), clampf(ty, 12.0, vp.y - ts.y - 12.0))
 	var hint := Design.label("▶ 탭하여 계속", "caption", Design.CHEESE_DEEP)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.size = Vector2(vp.x, 30.0)
