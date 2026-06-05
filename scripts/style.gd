@@ -5,7 +5,7 @@ extends Node
 ## 버튼=Design.style_button(b, kind) / 패널=Design.make_panel(panel, ...).
 
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")        # 본문·숫자·캡션
-const FONT_TITLE := preload("res://assets/fonts/ClimateCrisisKR-2040.ttf")  # 타이틀·버튼(Climate Crisis KR 2040 = 2번째 두꺼운 웨이트. TTF, 한글+기호 ★▶♥◆ 커버. ✦만 없으나 미사용)
+const FONT_TITLE := preload("res://assets/fonts/ClimateCrisisKR-1990.ttf")  # 타이틀·버튼(Climate Crisis KR 1990 = 2번째 두꺼운 웨이트. 연도 빠를수록 두꺼움: 1979 최두께→2050 최얇음. 한글+기호 ★▶♥◆ 커버)
 const TITLE_KINDS := ["display", "display_s", "title"]
 
 # --- 컬러 토큰 (design.md §1) ---
