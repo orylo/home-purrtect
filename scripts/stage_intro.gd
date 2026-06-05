@@ -23,7 +23,6 @@ const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) — 급하지 않게
 const EVENTS := {
 	"1-1": {
 		"name": "펑거스",
-		"intro_music": "boss",                              # 전투 전 인트로 동안 보스 BGM(전투 시작 큐에서 battle로 복귀)
 		"intro": [                                          # ① 전투 시작 전 (?→펑거스 정체 공개)
 			{"text": "흐흐… 드디어 돌아왔다, 나의 안식처여……", "name": "?", "anim": "idle"},
 			{"text": "…뭐야? 웬 고양이가 길을 막고 서 있지? 비켜라, 여긴 내 집이다!", "name": "?", "anim": "fear"},
@@ -151,8 +150,9 @@ func _run_intro() -> void:
 	#   인트로 대화 전에 새어나가는 것을 방지(battle_starting은 hold 중엔 안 뜸).
 	if _spawner != null and _spawner.has_method("hold_intro"):
 		_spawner.hold_intro()
-	# 인트로 전용 BGM(예: 1-1 보스 음악). 전투 시작 큐(battle_starting)에서 game.gd가 clear_override → battle 복귀.
-	var im: String = _data.get("intro_music", "")
+	# 펑거스 등장 = 보스 BGM(stage_intro NPC는 전부 펑거스). 기본 "boss", 필요시 intro_music로 개별 지정/해제("").
+	#   전투 시작 큐(battle_starting)에서 game.gd가 clear_override → battle 복귀.
+	var im: String = _data.get("intro_music", "boss")
 	if im != "":
 		Music.set_override(im)
 	await get_tree().process_frame                    # 플레이어/뷰포트 준비
@@ -234,6 +234,10 @@ func play_outro() -> void:
 	if _hud != null:
 		_hud.visible = false
 	await _await_cat_landed()                          # 점프 중 클리어 → 착지까지 기다린 뒤 퇴장 이벤트
+	# 펑거스 등장 = 보스 BGM(클리어 후 퇴장 대화 동안). 퇴장 끝에 clear_override → battle 복귀.
+	var om: String = _data.get("outro_music", "boss")
+	if om != "":
+		Music.set_override(om)
 	get_tree().paused = true
 	_set_cat_idle(true)
 	_set_bg_alive(true)
@@ -268,6 +272,7 @@ func play_outro() -> void:
 		_hud.visible = true
 	_set_cat_idle(false)
 	_set_bg_alive(false)
+	Music.clear_override()                             # 펑거스 퇴장 → 보스 BGM 해제(클리어 화면은 battle)
 	get_tree().paused = false
 	_busy = false
 
