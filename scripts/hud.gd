@@ -272,6 +272,8 @@ func _build_clear_content(star_info: Dictionary, bonus: int, show_notice: bool, 
 		if is_instance_valid(n):
 			n.queue_free()
 	_clear_dyn.clear()
+	_dismiss_loot_tip()
+	_loot_entries.clear()
 	var vp := get_viewport().get_visible_rect().size
 
 	# ① 별 3개(채움/빈칸) - 큰 별 줄
@@ -296,11 +298,12 @@ func _build_clear_content(star_info: Dictionary, bonus: int, show_notice: bool, 
 	# ④ 보상 박스(코인 + 전리품) - 물건화 패널 안 타일 그리드
 	var tiles: Array = []
 	if GameState.run_coins > 0:
-		tiles.append(_reward_tile(_coin_tex(), _commafy(GameState.run_coins)))
+		tiles.append(_reward_tile(_coin_tex(), _commafy(GameState.run_coins), "coin", "코인"))
 	for id in GameState.MAT_ORDER:
 		var cnt := int(GameState.run_loot.get(id, 0))
 		if cnt > 0:
-			tiles.append(_reward_tile(_mat_tex(id), "×%d" % cnt))
+			var nm := String(GameState.MATERIALS.get(id, {}).get("name", id))
+			tiles.append(_reward_tile(_mat_tex(id), _commafy(cnt), id, nm))
 	if tiles.size() > 0:
 		_add_dyn(box, _center_label("획득", "caption", Design.INK_CREAM))
 		var panel := PanelContainer.new()
@@ -341,30 +344,172 @@ func _center_label(text: String, kind: String, color: Color) -> Label:
 	return l
 
 
-## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(슬롯에 맞춰 축소) + 하단 개수(§3.5)
-func _reward_tile(tex: Texture2D, count_text: String) -> Control:
+## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(칸 정중앙) + 우하단 개수 뱃지(코너에 걸침).
+##   탭하면 아이템 설명 툴팁(아이템 도감 문구). id="coin" 또는 전리품 id.
+const TILE_SZ := 88.0
+func _reward_tile(tex: Texture2D, count_text: String, id: String, item_name: String) -> Control:
 	var tile := Panel.new()
-	tile.custom_minimum_size = Vector2(88, 88)
-	tile.clip_contents = true   # 혹시라도 넘치면 칸 밖으로 안 나가게
+	tile.custom_minimum_size = Vector2(TILE_SZ, TILE_SZ)
+	tile.clip_contents = false   # 뱃지가 코너 밖으로 살짝 걸치도록(클립 끔)
 	tile.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER, 3, Design.RADIUS_CARD))
 	if tex != null:
 		var ic := TextureRect.new()
 		ic.texture = tex
-		# ★ expand_mode 기본값(KEEP_SIZE)은 최소크기=원본픽셀 → 큰 아이콘이 슬롯을 뚫음.
-		#   IGNORE_SIZE로 컨트롤 크기에 맞춰 축소 + 비율유지 중앙정렬.
+		# 아이콘은 칸 정중앙(비율유지 축소). 더는 개수 자리 확보로 위로 밀지 않는다.
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		ic.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ic.offset_left = 6; ic.offset_top = 2; ic.offset_right = -6; ic.offset_bottom = -22
+		ic.offset_left = 8; ic.offset_top = 8; ic.offset_right = -8; ic.offset_bottom = -8
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tile.add_child(ic)
-	var cnt := Design.label(count_text, "caption", Design.INK)
-	cnt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cnt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	cnt.offset_top = -24.0; cnt.offset_bottom = -2.0
-	cnt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tile.add_child(cnt)
+	# 개수 뱃지(크림 알약 + 잉크 외곽 + 잉크 숫자) - 우하단 코너에 걸침
+	tile.add_child(_count_badge(count_text))
+	# 탭 → 설명 툴팁. 빈 영역(IGNORE면 부모로 전달) 방지 위해 STOP.
+	tile.mouse_filter = Control.MOUSE_FILTER_STOP
+	tile.set_meta("loot_id", id)
+	tile.set_meta("loot_name", item_name)
+	tile.gui_input.connect(_on_tile_input.bind(tile))
+	_loot_entries.append(tile)
 	return tile
+
+
+## 개수 뱃지 = 크림 알약(잉크 외곽선) + 잉크 숫자. 글자수에 맞춰 가로폭 자동.
+func _count_badge(text: String) -> Control:
+	var bh := 30.0
+	var fs := 18
+	var tw: float = Design.FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, fs).x
+	var bw: float = maxf(bh, tw + 18.0)
+	var badge := Panel.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Design.PAPER
+	sb.set_corner_radius_all(int(bh * 0.5))
+	sb.set_border_width_all(3)
+	sb.border_color = Design.INK
+	badge.add_theme_stylebox_override("panel", sb)
+	badge.custom_minimum_size = Vector2(bw, bh)
+	badge.size = Vector2(bw, bh)
+	# 우하단 코너에 걸치게(살짝 바깥으로)
+	badge.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	badge.offset_left = -bw + 8.0
+	badge.offset_top = -bh + 8.0
+	badge.offset_right = 8.0
+	badge.offset_bottom = 8.0
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := Design.label(text, "caption", Design.INK)
+	l.add_theme_font_size_override("font_size", fs)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.set_anchors_preset(Control.PRESET_FULL_RECT)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(l)
+	return badge
+
+
+# -- 전리품 설명 툴팁 -------------------------------------------------------
+var _loot_entries: Array = []   # 보상 타일들(탭 히트테스트용)
+var _loot_tip: Control = null   # 현재 떠 있는 설명 툴팁
+var _loot_overlay: Control = null   # 화면 전체 클릭 캐처(다른 칸 전환/바깥 탭 닫기)
+var _loot_tip_id: String = ""   # 현재 툴팁이 가리키는 id(같은 칸 다시 탭 = 닫기)
+
+
+## 타일 직접 탭(툴팁이 아직 없을 때 첫 진입)
+func _on_tile_input(event: InputEvent, tile: Control) -> void:
+	if _is_tap(event):
+		var id := String(tile.get_meta("loot_id", ""))
+		var nm := String(tile.get_meta("loot_name", ""))
+		_open_loot_tip(id, nm, tile)
+		tile.accept_event()
+
+
+## 오버레이(툴팁 떠 있는 동안) 탭 - 칸 위면 전환/닫기, 바깥이면 닫기
+func _on_overlay_input(event: InputEvent) -> void:
+	if not _is_tap(event):
+		return
+	# 오버레이는 화면 전체(원점 앵커) → 이벤트 로컬좌표 == 전역좌표
+	var pos: Vector2 = event.position
+	for t in _loot_entries:
+		if is_instance_valid(t) and t.get_global_rect().has_point(pos):
+			var id := String(t.get_meta("loot_id", ""))
+			if id == _loot_tip_id:
+				_dismiss_loot_tip()   # 같은 칸 다시 탭 = 닫기
+			else:
+				_open_loot_tip(id, String(t.get_meta("loot_name", "")), t)
+			return
+	_dismiss_loot_tip()   # 바깥 영역 탭 = 닫기
+
+
+func _is_tap(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		return event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	if event is InputEventScreenTouch:
+		return event.pressed
+	return false
+
+
+## 설명 툴팁 열기(기존 건 정리하고 새로). name 골든 + desc 본문.
+func _open_loot_tip(id: String, item_name: String, tile: Control) -> void:
+	_dismiss_loot_tip()
+	# 화면 전체 캐처(타일 위에) - 다음 탭부터 여기서 처리
+	var ov := Control.new()
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.mouse_filter = Control.MOUSE_FILTER_STOP
+	ov.gui_input.connect(_on_overlay_input)
+	clear_panel.add_child(ov)
+	_loot_overlay = ov
+	# 툴팁 카드
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", Design.panel_box(Design.PAPER, 3, 12))
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 4)
+	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(vb)
+	var title := Design.label(item_name, "title", Design.CHEESE_DEEP)
+	title.add_theme_color_override("font_outline_color", Design.INK)
+	title.add_theme_constant_override("outline_size", 4)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vb.add_child(title)
+	var body := Design.label(_loot_desc(id), "body", Design.INK)
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.custom_minimum_size = Vector2(300.0, 0.0)
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vb.add_child(body)
+	ov.add_child(card)
+	_loot_tip = card
+	_loot_tip_id = id
+	_position_loot_tip.call_deferred(card, tile)
+
+
+## 툴팁을 해당 칸 위(공간 없으면 아래)에 가운데 정렬, 화면 안으로 클램프
+func _position_loot_tip(card: Control, tile: Control) -> void:
+	if not (is_instance_valid(card) and is_instance_valid(tile)):
+		return
+	var vp := get_viewport().get_visible_rect().size
+	var tr := tile.get_global_rect()
+	var cs := card.get_combined_minimum_size()
+	var x: float = tr.position.x + tr.size.x * 0.5 - cs.x * 0.5
+	var y: float = tr.position.y - cs.y - 10.0
+	if y < 8.0:
+		y = tr.position.y + tr.size.y + 10.0
+	x = clampf(x, 8.0, vp.x - cs.x - 8.0)
+	y = clampf(y, 8.0, vp.y - cs.y - 8.0)
+	card.global_position = Vector2(x, y)
+
+
+func _loot_desc(id: String) -> String:
+	if id == "coin":
+		return "맥스의 상점에서 쓰는 돈.\n전투에서 침입자를 막아낼수록 차곡차곡 쌓인다."
+	return String(GameState.MAT_DESC.get(id, "아직 알려지지 않은 물건이다."))
+
+
+func _dismiss_loot_tip() -> void:
+	if is_instance_valid(_loot_overlay):
+		_loot_overlay.queue_free()
+	if is_instance_valid(_loot_tip):
+		_loot_tip.queue_free()
+	_loot_overlay = null
+	_loot_tip = null
+	_loot_tip_id = ""
 
 
 func _mat_tex(id: String) -> Texture2D:
