@@ -60,6 +60,11 @@ func _build() -> void:
 		spr.position = Vector2(vp.x * 0.5, foot_y - (bot - fh * 0.5) * sc)  # centered 스프라이트: 발이 foot_y에 오게
 		add_child(spr)
 
+	# ── 상/하단 그라데이션 딤(배경 위 버튼 가독) — 1080 기준 150px. 치즈 위·버튼 아래 레이어 ──
+	var dim_h := 150.0 * (vp.y / 1080.0)
+	_edge_scrim(true, dim_h)
+	_edge_scrim(false, dim_h)
+
 	# ── 좌상단: "N막 N스테이지"(옛 게이지 위치) ──
 	var stage := Design.framed_plate("%d막 %d스테이지" % [GameState.stage_major, GameState.stage_minor], "title")
 	stage.position = Vector2(E, E)
@@ -348,6 +353,42 @@ func _dev_wbtn(parent: Control, t: String, pos: Vector2, fn: Callable) -> void:
 	b.size = Vector2(280, 48); b.custom_minimum_size = b.size
 	b.pressed.connect(fn)
 	parent.add_child(b)
+
+
+# --- 상/하단 그라데이션 딤(스크림) — 배경 위에서 버튼이 또렷하게 ---
+func _edge_scrim(top: bool, h: float) -> void:
+	var tr := TextureRect.new()
+	tr.texture = _vgrad(top)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if top:
+		tr.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		tr.offset_top = 0.0
+		tr.offset_bottom = h
+	else:
+		tr.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		tr.offset_top = -h
+		tr.offset_bottom = 0.0
+	add_child(tr)
+
+## 세로 그라데이션 텍스처(잉크색). top=true: 위 진함→아래 투명 / false: 위 투명→아래 진함.
+func _vgrad(top: bool) -> GradientTexture2D:
+	var c := Design.INK
+	var a := 0.5
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 1.0])
+	if top:
+		g.colors = PackedColorArray([Color(c.r, c.g, c.b, a), Color(c.r, c.g, c.b, 0.0)])
+	else:
+		g.colors = PackedColorArray([Color(c.r, c.g, c.b, 0.0), Color(c.r, c.g, c.b, a)])
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill_from = Vector2(0.0, 0.0)
+	gt.fill_to = Vector2(0.0, 1.0)
+	gt.width = 4
+	gt.height = 128
+	return gt
 
 
 # --- 실내 배경 = Home_BG (세로 고정 · 가로 자동 블리딩 · 가운데) ---
