@@ -21,15 +21,43 @@ func _build() -> void:
 	# ── 배경(실내 플레이스홀더) ─ 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
 	_room_placeholder(vp)
 
-	# ── 중앙: 치즈(대기) ─ 레퍼런스만큼 크게 ──
+	# ── 중앙: 치즈(대기) ─ 1080 기준 키 500px, 바닥에서 발 100px 위(알파 bbox로 정확 정렬) ──
 	var frames := load(GameState.job_frames_path())
 	if frames:
 		var spr := AnimatedSprite2D.new()
 		spr.sprite_frames = frames
-		if (frames as SpriteFrames).has_animation("idle"):
-			spr.play("idle")
-		spr.scale = Vector2(2.1, 2.1)                       # ★확대(기존보다 크게)
-		spr.position = Vector2(vp.x * 0.5, vp.y * 0.66)     # 받침 위 중앙
+		var sf := frames as SpriteFrames
+		var anim := "idle" if sf.has_animation("idle") else sf.get_animation_names()[0]
+		spr.play(anim)
+		var tex := sf.get_frame_texture(anim, 0)
+		var fh := tex.get_size().y
+		var fw := tex.get_size().x
+		# 프레임 내 고양이 실제 영역(알파 top/bot) 측정 → 정확한 키·발 정렬(없으면 프레임 전체)
+		var top := 0.0
+		var bot := fh
+		var im := tex.get_image()
+		if im != null:
+			var t := -1
+			var b := -1
+			for y in int(fh):
+				var op := false
+				for x in range(0, int(fw), 4):
+					if im.get_pixel(x, y).a > 0.1:
+						op = true
+						break
+				if op:
+					if t < 0:
+						t = y
+					b = y
+			if t >= 0:
+				top = float(t)
+				bot = float(b)
+		var cat_native: float = maxf(bot - top + 1.0, 1.0)
+		var k: float = vp.y / 1080.0                       # 1080 기준 → 실제 높이 환산
+		var sc: float = (500.0 * k) / cat_native           # 보이는 키 = 500px(1080기준)
+		spr.scale = Vector2(sc, sc)
+		var foot_y: float = vp.y - 100.0 * k               # 바닥에서 발 100px 위
+		spr.position = Vector2(vp.x * 0.5, foot_y - (bot - fh * 0.5) * sc)  # centered 스프라이트: 발이 foot_y에 오게
 		add_child(spr)
 
 	# ── 좌상단: "N막 N스테이지"(옛 게이지 위치) ──
