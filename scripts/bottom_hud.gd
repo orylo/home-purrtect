@@ -61,10 +61,10 @@ func _draw() -> void:
 
 	var d := Layout.ACT_R * 2.2   # 원형 슬롯 지름(텍스처 자체 여백 포함)
 
-	# 동료 (원, 키 4) — 장착 동료 + 쿨타임. 없으면 흐리게.
+	# 동료 (원, 키 4) — 동료 안 껴도 슬롯은 항상 풀 오퍼시티(빈 슬롯 표시).
 	var comp: String = GameState.equipped_companion
 	if comp == "":
-		_tex(TEX_RND_COMP, L["companion"], d, d, Color(1, 1, 1, 0.4))
+		_tex(TEX_RND_COMP, L["companion"], d, d)
 		_label(font, 22, "동료", L["companion"], Color(TXT, 0.45))
 	else:
 		var cbtn := get_parent().get_node_or_null("CompanionButton")
@@ -76,20 +76,23 @@ func _draw() -> void:
 		else:
 			_label(font, 24, COMP_SHORT.get(comp, "동료"), L["companion"])
 
-	# 스킬 1~4 — 장착 슬롯대로. 비활성=흐리게, 쿨 중엔 남은 초.
-	var skills: Array = L["skills"]
+	# 스킬 슬롯 — 활성 칸 = 공격버튼에 가까운 "오른쪽 nslots개"만 풀 오퍼시티, 나머지는 opacity 0(숨김).
+	#   길냥이(base)=0칸 → 전부 숨김 / 등급1·2=2칸 / 3·4=3칸 / 5=4칸. 빈 슬롯도 풀 표시(스킬 끼면 그 칸에 아이콘=추후).
+	var skills: Array = L["skills"]                 # 왼→오 (skills[마지막]=공격버튼에 가장 가까움)
 	var sbtn := get_parent().get_node_or_null("SkillButton")
 	var equipped: Array = GameState.equipped_for(GameState.selected_job)
 	var nslots: int = GameState.skill_slots(GameState.selected_job)
 	var ds := Layout.SKILL_BTN_R * 2.2
+	var first_active: int = skills.size() - nslots  # 이 인덱스부터 오른쪽이 활성
 	for k in skills.size():
-		var active: bool = k < nslots and k < equipped.size()
-		if not active:
-			_tex(TEX_RND_SKILL, skills[k], ds, ds, Color(1, 1, 1, 0.28))
-			continue
-		var sid: String = equipped[k]
-		var cd: float = sbtn.cd_left(k) if sbtn else 0.0
-		_tex(TEX_RND_SKILL, skills[k], ds, ds, _mod(Input.is_action_pressed("skill_%d" % (k + 1))))
+		if k < first_active:
+			continue                                # 비활성 = opacity 0 (아예 안 그림)
+		var i := k - first_active                   # 논리 스킬 인덱스(0..nslots-1)
+		var sid: String = equipped[i] if i < equipped.size() else ""
+		_tex(TEX_RND_SKILL, skills[k], ds, ds, _mod(Input.is_action_pressed("skill_%d" % (i + 1))))
+		if sid == "":
+			continue                                # 빈 활성 슬롯 = 풀 오퍼시티 프레임만(아이콘 없음)
+		var cd: float = sbtn.cd_left(i) if sbtn else 0.0
 		if cd > 0.0:
 			draw_circle(skills[k], Layout.SKILL_BTN_R, Color(0, 0, 0, 0.5))   # 쿨 중 어둡게
 			_label(font, 30, str(int(ceil(cd))), skills[k])
