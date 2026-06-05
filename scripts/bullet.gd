@@ -82,6 +82,8 @@ func setup(cfg: Dictionary) -> void:
 
 
 func _ready() -> void:
+	# 클리어·이벤트(대화 팝업) 등 트리 일시정지 중에도 탄환은 계속 날아가게(허공 정지 방지).
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	# 적의 "몸 히트박스"(Area2D)에만 맞도록 area_entered 사용
 	area_entered.connect(_on_area_entered)
 	_start_x = global_position.x
@@ -157,6 +159,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
+	# 트리 일시정지(클리어·대화 팝업) 중엔 날아가되 피격 판정은 보류(그냥 통과 → 시각적 비행만).
+	if get_tree().paused:
+		return
 	# 깨지는 중이면 데미지 없음
 	if _shattering:
 		return
