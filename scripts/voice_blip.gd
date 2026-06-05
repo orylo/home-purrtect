@@ -22,7 +22,11 @@ const VOICE_PROFILES := {
 	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": "res://assets/audio/voice/blip_pearl.wav"},  # 또박또박·우아·느림
 	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": "res://assets/audio/voice/blip_max.wav"},  # 능글·낮음·느긋
 	"system": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 32.0, "sample_path": ""},  # 시스템 알림 = 합성음(녹음 안 씀). 녹음 펑거스와 구분되는 "기계 비프" 톤.
+	"gold":   {"base_freq": 180.0, "jitter": 0.08, "waveform": "triangle", "blip_every": 2, "char_ms": 42.0, "sample_path": "res://assets/audio/voice/blip_gold.wav", "sample_pitch": 0.62},  # 골드 영감 = 맥스 소스(더 긴 음절) 0.62배로 깔아 낮고 느릿(노인)
 }
+
+## 샘플 재생 피치 배율(profile "sample_pitch", 기본 1.0). <1=낮게(굵게)·길게, >1=높게. 합성음 프로필엔 영향 없음.
+const DEFAULT_SAMPLE_PITCH := 1.0
 
 ## 무음 처리할 글자(공백·개행·일부 문장부호 — 글자에만 블립).
 const SILENT := [" ", "\n", "\t", " ", "「", "」", "(", ")", "·", "—", "-", "ㅡ", "\"", "'"]
@@ -83,9 +87,10 @@ func blip(profile_id: String, ch: String, char_index: int, total: int) -> void:
 	var p: AudioStreamPlayer = _next_player()
 	var sample_path: String = String(prof.get("sample_path", ""))
 	if sample_path != "":
-		# ── 샘플 .ogg 스왑 훅: base_freq 대신 pitch_scale로 음절 변조 ──
+		# ── 샘플 스왑: base_freq 대신 pitch_scale로 음절 변조 + sample_pitch로 전체 톤 이동(골드=0.62 낮게) ──
 		p.stream = _load_sample(sample_path)
-		p.pitch_scale = clampf(freq / base, 0.5, 2.0)
+		var sp: float = float(prof.get("sample_pitch", DEFAULT_SAMPLE_PITCH))
+		p.pitch_scale = clampf((freq / base) * sp, 0.3, 2.0)
 	else:
 		# ── 기본: 절차적 합성음(파형 1개 + pitch_scale 변조) ──
 		p.stream = _tone(String(prof.get("waveform", "sine")))

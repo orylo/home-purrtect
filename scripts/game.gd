@@ -155,7 +155,7 @@ const CUT_CHIHUAHUA := [   # 1-16 치와와 해방(③, 3장)
 ]
 const CUT_GAMEOVER := [   # 게임오버 영감의 전보(3장)
 	{"img": "치즈가 문밖으로 뻥— 쫓겨나 빗속에 나뒹군다. (비)", "line": ""},
-	{"img": "골드의 전보가 클로즈업된다.", "line": "골드 : 침입 발생! 넌 해고— …아니다. 마지막 기회를 주마. 정신 차려라! — G"},
+	{"img": "골드의 전보가 클로즈업된다.", "line": "골드 : 침입 발생! 넌 해고— …아니다. 마지막 기회를 주마. 정신 차려라! — G", "voice": "gold"},
 	{"img": "치즈가 닫힌 문 앞에서 무릎 꿇고 싹싹 빈다 → 벌떡 일어나 주먹 불끈!", "line": "치즈가 싹싹 빈 덕분에 한 번 더 기회를 얻었다! 이번엔 진짜 잘 지켜보자."},
 ]
 
@@ -300,7 +300,7 @@ func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
 		var is_sys: bool = bool(p.get("sys", false))   # 시스템 알림 페이지(호감도·해금 등) → 합성 시스템음·초상화/이름표 없음·가운데 정렬
-		var pv: String = "system" if is_sys else voice
+		var pv: String = "system" if is_sys else String(p.get("voice", voice))   # 페이지별 voice 지정(예: 게임오버 골드 대사) > 컷씬 기본 voice
 		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys)
 
 

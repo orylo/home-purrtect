@@ -38,6 +38,8 @@ var _dlg: Control          # 공용 DialoguePanel 박스(인게임 이벤트 대
 var _dlg_name: Label
 var _dlg_line: Label
 var _hint: Label
+var _typing := false       # 골드 대사 타이핑 중 여부(탭=즉시완성)
+var _type_gen := 0         # 타이핑 세대(장면 전환 시 +1 → 이전 코루틴 중단)
 
 
 func _ready() -> void:
@@ -113,6 +115,8 @@ func _mklabel(fs: int, col: Color) -> Label:
 
 
 func _goto(idx: int) -> void:
+	_type_gen += 1          # 이전 타이핑 코루틴 무효화
+	_typing = false
 	if idx >= BEATS.size():
 		_finish()
 		return
@@ -129,8 +133,8 @@ func _goto(idx: int) -> void:
 		_cap.visible = false
 	if b.has("speaker"):
 		_dlg_name.text = String(b["speaker"])
-		_dlg_line.text = String(b.get("line", ""))
 		_dlg.visible = true
+		_type_gold(String(b.get("line", "")), _type_gen)   # 골드 목소리로 한 글자씩(비동기)
 	else:
 		_dlg.visible = false
 	# 음악 큐
@@ -140,6 +144,25 @@ func _goto(idx: int) -> void:
 		var vp := get_viewport().get_visible_rect().size
 		Fx.burst(String(b["fx"]), Vector2(vp.x * 0.5 + 120, vp.y * 0.5 - 40), 0.7, 80)
 	queue_redraw()
+
+
+# 골드 영감 대사를 한 글자씩 + 골드 보이스 블립. gen 불일치/장면전환 시 즉시 중단.
+func _type_gold(text: String, gen: int) -> void:
+	_typing = true
+	VoiceBlip.reset("gold")
+	_dlg_line.text = text
+	_dlg_line.visible_characters = 0
+	var n := text.length()
+	var dt := VoiceBlip.char_sec("gold")
+	var k := 0
+	while k < n and _typing and gen == _type_gen:
+		_dlg_line.visible_characters = k + 1
+		VoiceBlip.blip("gold", text[k], k, n)
+		k += 1
+		await get_tree().create_timer(dt).timeout
+	if gen == _type_gen:
+		_dlg_line.visible_characters = -1   # 전체 표시
+		_typing = false
 
 
 func _set_music(cue: String) -> void:
@@ -174,7 +197,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		adv = true
 	if adv:
 		get_viewport().set_input_as_handled()
-		_goto(_i + 1)
+		if _typing:
+			_typing = false            # 타이핑 중 탭 = 즉시 전체표시(다음 X)
+			_dlg_line.visible_characters = -1
+		else:
+			_goto(_i + 1)
 
 
 func _finish() -> void:
