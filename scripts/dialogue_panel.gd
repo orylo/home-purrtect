@@ -86,9 +86,10 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 
 	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
 	box.add_child(name_lbl)
-	var text_lbl := _mk_label(24, INK, Vector2(tx, 62))
+	var text_lbl := _mk_label(27, INK, Vector2(tx, 60))   # 본문 24→27(캐주얼 카툰 가독치 ~3.75%)
 	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text_lbl.size = Vector2(box.size.x - tx - 24.0, 92)
+	# 본문 칸 폭 제한(최대 820px) → 한 줄 글자수↓(가독). 박스가 더 좁으면 그에 맞춤.
+	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 820.0), 116)
 	box.add_child(text_lbl)
 	var choices := HBoxContainer.new()
 	choices.add_theme_constant_override("separation", 16)
