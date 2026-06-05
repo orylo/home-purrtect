@@ -167,6 +167,30 @@ func set_wave(current: int, total: int) -> void:
 	_wave_total = total
 
 
+## 전투 시작 큐 — 첫 웨이브 시작 시 "전투 시작!" 배너를 짧게 띄운다.
+##   인게임 이벤트(대화)→전투 전환을 명확히. 트럼펫 팡파르 + 팝인→유지→페이드.
+func show_battle_start() -> void:
+	var vp := get_viewport().get_visible_rect().size
+	var banner := Design.label("전투 시작!", "display", Design.CHEESE)   # 잘난체 64·골든·INK 외곽(웹 안전)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	banner.size = Vector2(vp.x, 130.0)
+	banner.position = Vector2(0.0, vp.y * 0.42 - 65.0)
+	banner.pivot_offset = Vector2(vp.x * 0.5, 65.0)   # 중앙 기준 스케일
+	banner.z_index = 100
+	add_child(banner)
+	Sfx.play("trumpet", 1.0, -2.0)                    # 출정 팡파르
+	banner.scale = Vector2(0.5, 0.5)
+	banner.modulate.a = 0.0
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(banner, "scale", Vector2(1.0, 1.0), 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(banner, "modulate:a", 1.0, 0.18)
+	t.chain().tween_interval(0.7)
+	t.chain().tween_property(banner, "modulate:a", 0.0, 0.35)
+	t.chain().tween_callback(banner.queue_free)
+
+
 func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	Sfx.play("clear")
 	# 깨끗한 결과 화면(쿠키런 톤) — 전투 HUD(체력·조이스틱·하단버튼 등) 숨기고 클리어 패널만.

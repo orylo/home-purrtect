@@ -27,6 +27,8 @@ func _on_wave_for_timing(current: int, _total: int) -> void:
 	if current == 1:                # 첫 웨이브 스폰 = 측정 시작(인트로 등은 이미 끝난 뒤)
 		_battle_time = 0.0
 		_timing = true
+		if hud.has_method("show_battle_start"):   # "전투 시작!" 큐(이벤트→전투 전환 명확화)
+			hud.show_battle_start()
 
 
 func _process(delta: float) -> void:
