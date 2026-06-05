@@ -95,13 +95,12 @@ func _build() -> void:
 	var tr_cy: float = MOCK["tr2"].y * bg_sc                       # 우상단 아이콘 세로 중심
 	var coin_h: float = ICON_TR2.get_height() * bg_sc             # 코인(우상단 아이콘 크기)
 	var coin_w: float = ICON_COIN.get_width() * (coin_h / float(ICON_COIN.get_height()))
-	var box_h: float = coin_h * 0.70                               # 알약(코인보다 낮아 코인이 위아래로 삐져나옴)
-	var pill_w: float = 230.0 * bg_sc
-	# 알약(숫자칸) 먼저 = 뒤. 코인이 위에 올라가게.
+	var box_h: float = coin_h * 0.72                               # 명판(코인보다 낮아 코인이 위아래로 삐져나옴)
+	# 명판(블랙) 숫자칸 먼저 = 뒤. 왼쪽 리벳은 코인이 가리고, 숫자 늘면 오른쪽으로만 신축.
 	var cb := _CoinBox.new()
-	cb.text_pad_left = coin_w * 0.6 + 8.0                          # 숫자가 코인 아래로 안 깔리게
+	cb.box_h = box_h
+	cb.pad_left = coin_w * 0.55 + 16.0                             # 코인 겹침(왼쪽 리벳 가림)만큼 숫자 우측으로
 	cb.position = Vector2(E + coin_w * 0.45, tr_cy - box_h * 0.5)
-	cb.size = Vector2(pill_w, box_h)
 	add_child(cb)
 	cb.set_count(GameState.coins)
 	_coin_box = cb
@@ -536,25 +535,42 @@ func _show_coachmark(c: Dictionary) -> void:
 # 좌상단 코인 숫자 칸 — 흰(밖)+잉크(테두리)+크림(채움), 골든 숫자. 아이콘 스트로크 스타일과 통일.
 class _CoinBox extends Control:
 	const FONT_NUM := preload("res://assets/fonts/SBAggro-Bold.ttf")
+	const TINT := Color(0.22, 0.19, 0.16)   # 명판 블랙 틴트(리벳 음영은 남게 너무 안 어둡게)
+	var _np: NinePatchRect
 	var _lbl: Label
-	var text_pad_left := 14.0    # 코인이 겹치는 만큼 숫자를 오른쪽으로 밀기
+	var pad_left := 60.0    # 코인 겹침 영역(왼쪽 리벳 가림) — home이 설정
+	var box_h := 80.0       # home이 설정
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_np = NinePatchRect.new()                         # 명판(블랙) 9-slice: 좌우 리벳캡 고정, 가운데 신축
+		_np.texture = Design.SIGN_TEX["cream"]
+		_np.patch_margin_left = int(Design.SIGN_CAP)
+		_np.patch_margin_right = int(Design.SIGN_CAP)
+		_np.patch_margin_top = 30
+		_np.patch_margin_bottom = 30
+		_np.modulate = TINT
+		_np.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_np)
 		_lbl = Label.new()
 		_lbl.add_theme_font_override("font", FONT_NUM)
 		_lbl.add_theme_color_override("font_color", Color("F2B33D"))   # 골든
 		_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-		_lbl.offset_left = text_pad_left
-		_lbl.offset_right = -16.0
+		_lbl.offset_left = pad_left
+		_lbl.offset_right = -(Design.SIGN_CAP + 14.0)
 		_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_lbl)
 	func set_count(n: int) -> void:
 		if _lbl == null:
 			return
-		_lbl.add_theme_font_size_override("font_size", int(size.y * 0.52))
-		_lbl.text = _commafy(n)
+		var s := _commafy(n)
+		var fsz := int(box_h * 0.5)
+		_lbl.add_theme_font_size_override("font_size", fsz)
+		_lbl.text = s
+		var tw: float = FONT_NUM.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1.0, fsz).x
+		size = Vector2(pad_left + tw + Design.SIGN_CAP + 28.0, box_h)   # 오른쪽으로만 신축
 	func _commafy(n: int) -> String:
 		var s := str(n)
 		var out := ""
@@ -565,19 +581,6 @@ class _CoinBox extends Control:
 			if c % 3 == 0 and i > 0:
 				out = "," + out
 		return out
-	func _draw() -> void:
-		var sw := 3.0                       # 흰 외곽 두께
-		var rad := int(size.y * 0.5)        # 풀 알약(레퍼런스)
-		var wsb := StyleBoxFlat.new()
-		wsb.bg_color = Color(1, 1, 1, 1)
-		wsb.set_corner_radius_all(rad + int(sw))
-		draw_style_box(wsb, Rect2(Vector2.ZERO, size))
-		var isb := StyleBoxFlat.new()
-		isb.bg_color = Color("F3E3BE")      # 크림
-		isb.set_border_width_all(3)
-		isb.border_color = Color("241F1B")  # 잉크
-		isb.set_corner_radius_all(rad)
-		draw_style_box(isb, Rect2(sw, sw, size.x - 2.0 * sw, size.y - 2.0 * sw))
 
 
 # 발밑 그림자 — 인게임과 동일(검정 30% 납작 타원, y스케일 0.28).

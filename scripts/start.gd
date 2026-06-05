@@ -20,8 +20,8 @@ func _version_plate() -> void:
 
 
 func _ready() -> void:
-	# [게임 시작] = 게임으로 "진입/수락" → 골드 브랜드 CTA(베벨). 전투 돌입 아니므로 빨강 아님(design.md §1 CTA규칙)
-	Design.style_button($StartButton, "brand", Design.FS_DISPLAY_S)
+	# [게임 시작] = 명판 버튼(레드) 테스트 적용
+	Design.signboard_button($StartButton, "red", Design.FS_DISPLAY_S)
 	# 텍스트 = tr()(로컬라이즈 파이프라인 레퍼런스). 키→문구는 assets/i18n/ui.csv. 지금은 ko 고정.
 	$StartButton.text = tr("ui.start.continue") if GameState.has_save() else tr("ui.start.play")
 	$StartButton.pressed.connect(_on_start)
