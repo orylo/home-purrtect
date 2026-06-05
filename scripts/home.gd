@@ -553,7 +553,8 @@ class _CoinBox extends Control:
 		_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_lbl)
 	func _cap_w() -> float:
-		return CAP_PX * (size.y / float(PLATE.get_height()))   # 세로 균일 스케일에 맞춘 캡 폭
+		# ★box_h(확정 높이) 기준. size.y는 set_count 도중 옛값일 수 있어 사용 금지.
+		return CAP_PX * (box_h / float(PLATE.get_height()))   # 세로 균일 스케일에 맞춘 캡 폭
 	func _draw() -> void:
 		var th: float = PLATE.get_height()
 		var tw: float = PLATE.get_width()
@@ -578,6 +579,9 @@ class _CoinBox extends Control:
 		size = Vector2(pad_left + tw + _cap_w() + 28.0, box_h)   # 오른쪽으로만 신축
 		_lbl.offset_left = pad_left
 		_lbl.offset_right = -(_cap_w() + 14.0)
+		# 세로중앙 보정: SB어그로 잉크가 라인박스 안에서 fsz의 ~11.5% 위로 앉음 → rect를 아래로 내려 시각 중앙.
+		_lbl.offset_top = fsz * 0.23
+		_lbl.offset_bottom = 0.0
 		queue_redraw()
 	func _commafy(n: int) -> String:
 		var s := str(n)
