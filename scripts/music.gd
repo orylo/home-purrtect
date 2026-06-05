@@ -49,6 +49,9 @@ func _process(_delta: float) -> void:
 	var sc := get_tree().current_scene
 	if sc == null:
 		return
+	# 전투 씬을 벗어나면 이벤트 오버라이드 자동 해제(메뉴·홈에 보스음악 새는 것 방지).
+	if _override != "" and sc.scene_file_path != "res://scenes/main.tscn":
+		_override = ""
 	var key: String = SCENE_TRACK.get(sc.scene_file_path, "menu")
 	if key == "battle" and BOSS_STAGES.has("%d-%d" % [GameState.stage_major, GameState.stage_minor]):
 		key = "boss"                         # 보스 스테이지면 보스 BGM

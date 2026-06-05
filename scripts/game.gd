@@ -33,6 +33,7 @@ func _on_wave_for_timing(current: int, _total: int) -> void:
 
 ## 전투 시작 큐 — 첫 웨이브 대기 시작 시(적 등장보다 ~1.5s 먼저) 배너+팡파르
 func _on_battle_starting() -> void:
+	Music.clear_override()                  # 인트로 전용 BGM(보스 등) 해제 → 씬 기준 battle BGM 복귀
 	if hud.has_method("show_battle_start"):
 		hud.show_battle_start()
 
