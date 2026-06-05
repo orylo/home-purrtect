@@ -3,7 +3,7 @@ extends CanvasLayer
 ## 게임 진행 중에 스테이지 점프 / 직업 변경 / 특정 적 스폰 / 치트.
 
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
-const ENEMY_SCENE := preload("res://scenes/enemy_mouse.tscn")
+const ENEMY_SCENE := preload("res://scenes/enemy.tscn")
 ## 스폰 버튼 순서(적 10종)
 const SPAWN_ORDER := [
 	"gray", "gray_roller", "gray_thrower",

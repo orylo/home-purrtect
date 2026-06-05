@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/enemy_mouse.gd" id="1_mouse"]
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_mouse"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/enemies/mouse/mouse_frames.tres" id="2_mframes"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mouse"]

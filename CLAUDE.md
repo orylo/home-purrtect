@@ -73,7 +73,7 @@ home-purrtect/
 │  ├─ select.tscn           # 직업 선택 화면
 │  ├─ dev_menu.tscn         # 개발자 메뉴(직업/Lv/스테이지/난이도/치트)
 │  ├─ main.tscn             # 실제 게임 플레이(치즈·스포너·HUD·배경·디버그오버레이)
-│  ├─ enemy_mouse.tscn      # 범용 적(쥐 스프라이트 + def로 종류별 구성)
+│  ├─ enemy.tscn      # 범용 적(쥐 스프라이트 + def로 종류별 구성)
 │  ├─ bullet.tscn / enemy_bullet.tscn  # 치즈 탄환 / 적 탄환
 │  └─ pop_effect.tscn       # 처치 "펑!" 이펙트
 ├─ scripts/                 # .gd (씬별 스크립트 + 오토로드)
@@ -100,7 +100,7 @@ home-purrtect/
 
 ### 코드 맵 (주요 스크립트)
 - `player.gd` — 치즈: 이동/점프/앉기, 근접·원거리 자동전환 평타, 크리, 몸으로 밀기, 상태이상(독·둔화), 발밑 그림자·데미지 숫자.
-- `enemy_mouse.gd` — 범용 적(`def`로 스탯·외형·행동 주입): 근접 찌르기 / 원거리 발사(직선·포물선) / 공중 / 방어력 / placeholder 드로잉.
+- `enemy.gd` — 범용 적(`def`로 스탯·외형·행동 주입): 근접 찌르기 / 원거리 발사(직선·포물선) / 공중 / 방어력 / placeholder 드로잉.
 - `enemy_data.gd` — 적 정의 + 스테이지 웨이브 데이터.
 - `bullet.gd` / `enemy_bullet.gd` — 치즈 탄환(직업별 모양·포물선·깨짐) / 적 탄환(placeholder).
 - `spawner.gd` — 현재 스테이지(`GameState.stage_minor`)의 웨이브를 읽어 종류별로 스폰.

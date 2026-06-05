@@ -16,7 +16,7 @@ const PAPER_DEEP := Color("E4CB95")
 const CHEESE := Color("F2B33D")
 const CHEESE_DEEP := Color("D4912A")
 
-const SPRITE_FOOT := 81.875   # enemy_mouse 기준: 발(원점)→스프라이트 중심 오프셋
+const SPRITE_FOOT := 81.875   # enemy 기준: 발(원점)→스프라이트 중심 오프셋
 const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) — 급하지 않게
 
 ## 스테이지별 이벤트 데이터
