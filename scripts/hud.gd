@@ -347,27 +347,20 @@ func _center_label(text: String, kind: String, color: Color) -> Label:
 ## 보상 타일 = 크림 칸(잉크 외곽) + 아이콘(칸 정중앙) + 우하단 개수 뱃지(코너에 걸침).
 ##   탭하면 아이템 설명 툴팁(아이템 도감 문구). id="coin" 또는 전리품 id.
 const TILE_SZ := 88.0
-const TEX_SLOT := preload("res://assets/ui/slots/slot2_sq.png")   # 하단 HUD 소지품칸과 동일 슬롯 텍스처
 func _reward_tile(tex: Texture2D, count_text: String, id: String, item_name: String) -> Control:
-	var tile := Control.new()
+	# 칸 = 벡터 둥근네모(card_box) + 진한 크림(PAPER_DEEP) 채움 + 잉크 외곽
+	var tile := Panel.new()
 	tile.custom_minimum_size = Vector2(TILE_SZ, TILE_SZ)
 	tile.clip_contents = false   # 뱃지가 코너 밖으로 살짝 걸치도록(클립 끔)
-	# 칸 배경 = 하단 소지품 슬롯과 같은 텍스처(9-slice로 모서리 보존)
-	var bg := NinePatchRect.new()
-	bg.texture = TEX_SLOT
-	bg.patch_margin_left = 46; bg.patch_margin_right = 46
-	bg.patch_margin_top = 46; bg.patch_margin_bottom = 46
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tile.add_child(bg)
+	tile.add_theme_stylebox_override("panel", Design.card_box(Design.PAPER_DEEP, 3, Design.RADIUS_CARD))
 	if tex != null:
 		var ic := TextureRect.new()
 		ic.texture = tex
-		# 아이콘은 칸(크림 내부) 정중앙. 슬롯 테두리만큼 안쪽으로 들임.
+		# 아이콘은 칸 정중앙(비율유지 축소).
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		ic.set_anchors_preset(Control.PRESET_FULL_RECT)
-		ic.offset_left = 14; ic.offset_top = 14; ic.offset_right = -14; ic.offset_bottom = -14
+		ic.offset_left = 8; ic.offset_top = 8; ic.offset_right = -8; ic.offset_bottom = -8
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tile.add_child(ic)
 	# 개수 뱃지(크림 알약 + 잉크 외곽 + 잉크 숫자) - 우하단 코너에 걸침
