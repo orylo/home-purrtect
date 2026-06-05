@@ -54,8 +54,16 @@ const FULL_GROUND_FMT := "res://assets/backgrounds/wall/ground_full/ground%02d.p
 const FULL_FAR_COUNT := 8
 const FULL_GROUND_COUNT := 10
 ## per-stage 풀프레임 override — 키="막-스테이지" → res 경로. 그 스테이지만 고정(비면 풀 랜덤).
-const FIXED_FAR := {}
-const FIXED_GROUND := {}
+const FIXED_FAR := {
+	"1-1":  "res://assets/backgrounds/wall/far_full/far08.png",
+	"1-3":  "res://assets/backgrounds/wall/far_full/far02.png",
+	"1-20": "res://assets/backgrounds/wall/far_full/far01.png",
+}
+const FIXED_GROUND := {
+	"1-1":  "res://assets/backgrounds/wall/ground_full/ground04.png",
+	"1-3":  "res://assets/backgrounds/wall/ground_full/ground06.png",
+	"1-20": "res://assets/backgrounds/wall/ground_full/ground03.png",
+}
 var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음). 현재 전 스테이지 true.
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 직전 판 반복 방지(세션 동안만 기억 — 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
