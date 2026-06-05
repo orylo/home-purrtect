@@ -70,28 +70,32 @@ func _build() -> void:
 	var bg_x0 := (vp.x - 2520.0 * bg_sc) * 0.5
 	var coach := []
 
-	# 좌상단: 지도 → 스테이지맵
+	# 좌상단: 지도 → 스테이지맵 / 우하단: 출격 → 전투
 	_icon_btn(ICON_MAP, bg_x0, bg_sc, MOCK["map"], func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
-	# 우하단: 출격 → 전투
 	_icon_btn(ICON_SORTIE, bg_x0, bg_sc, MOCK["sortie"], func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
-	# 우상단3(우): 메뉴(가방) — 항상
-	_icon_btn(ICON_TR3, bg_x0, bg_sc, MOCK["tr3"], _show_bag)
-	# 우상단2(중): 펄(해금 1-5)
-	if GameState.cleared_stages.has(5):
-		var pr := _icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): get_tree().change_scene_to_file("res://scenes/pearl.tscn"))
-		coach.append({"id": "pearl", "rect": pr, "text": "펄에게 가면, 출격 전 축복을 하나 받을 수 있어요."})
-	# 우상단1(좌): 맥스(해금 1-7)
-	if GameState.cleared_stages.has(7):
-		var mr := _icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
-		coach.append({"id": "max", "rect": mr, "text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
-		if GameState.cleared_stages.has(9):
-			coach.append({"id": "skill", "rect": mr, "text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
+	# 우상단 3(좌→우): 알림 / 메일 / 설정 — 셋 다 항상 노출
+	_icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): _toast_msg("알림 ─ 준비중"))
+	_icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): _toast_msg("메일 ─ 준비중"))
+	_icon_btn(ICON_TR3, bg_x0, bg_sc, MOCK["tr3"], func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐")))
 	# 좌하단: 전투 준비(해금 1-3)
 	if GameState.cleared_stages.has(3):
 		var ppr := _icon_btn(ICON_PREP, bg_x0, bg_sc, MOCK["prep"], func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
 		coach.append({"id": "prep", "rect": ppr, "text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
 		if GameState.cleared_stages.has(13):
 			coach.append({"id": "dove", "rect": ppr, "text": "맥스에게 호루라기를 사서 동료를 장착하면, 전투 중 불러낼 수 있어요!"})
+
+	# 펄·맥스 — 아직 아이콘 없어 플레이스홀더(텍스트 버튼, 좌측 중앙 스택, 해금 게이팅)
+	var npc_sz := Vector2(160, 64)
+	var pearl_pos := Vector2(E, vp.y * 0.42)
+	var max_pos := Vector2(E, vp.y * 0.42 + npc_sz.y + 14.0)
+	if GameState.cleared_stages.has(5):
+		_btn("펄", pearl_pos, npc_sz, "paper", Design.FS_TITLE, func(): get_tree().change_scene_to_file("res://scenes/pearl.tscn"))
+		coach.append({"id": "pearl", "rect": Rect2(pearl_pos, npc_sz), "text": "펄에게 가면, 출격 전 축복을 하나 받을 수 있어요."})
+	if GameState.cleared_stages.has(7):
+		_btn("맥스", max_pos, npc_sz, "paper", Design.FS_TITLE, func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
+		coach.append({"id": "max", "rect": Rect2(max_pos, npc_sz), "text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
+		if GameState.cleared_stages.has(9):
+			coach.append({"id": "skill", "rect": Rect2(max_pos, npc_sz), "text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
 
 	# 보유 코인 — 우상단 아이콘 묶음 왼쪽
 	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
@@ -357,9 +361,9 @@ func _vgrad(top: bool) -> GradientTexture2D:
 
 # --- 홈 아이콘(외곽 스트로크 입힌 가공본) + 목업 assets.png 좌표(2520×1080 기준) ---
 const ICON_MAP := preload("res://assets/ui/home/map.png")        # 좌상단: 지도
-const ICON_TR1 := preload("res://assets/ui/home/tr1.png")        # 우상단1(좌): 맥스
-const ICON_TR2 := preload("res://assets/ui/home/tr2.png")        # 우상단2(중): 펄
-const ICON_TR3 := preload("res://assets/ui/home/tr3.png")        # 우상단3(우): 메뉴
+const ICON_TR1 := preload("res://assets/ui/home/tr1.png")        # 우상단1(좌): 알림
+const ICON_TR2 := preload("res://assets/ui/home/tr2.png")        # 우상단2(중): 메일
+const ICON_TR3 := preload("res://assets/ui/home/tr3.png")        # 우상단3(우): 설정
 const ICON_PREP := preload("res://assets/ui/home/prep.png")      # 좌하단: 전투준비
 const ICON_SORTIE := preload("res://assets/ui/home/sortie.png")  # 우하단: 출격
 const MOCK := {  # 목업 내 각 아이콘 중심(2520×1080) — 템플릿 매칭값
