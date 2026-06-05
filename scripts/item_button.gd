@@ -1,10 +1,10 @@
 extends Control
-## 전투 중 소모품 사용 (로드맵 4단계) — 하단 아이템칸 1~3 (터치/클릭) + 키 1·2·3.
+## 전투 중 소모품 사용 (로드맵 4단계) ─ 하단 아이템칸 1~3 (터치/클릭) + 키 1·2·3.
 ##   슬롯에 배치된 소모품(GameState.item_slots)을 보유(inventory)>0일 때 사용.
 ##   효과: 낡은 붕대=회복30 / 말린 멸치=공격버프 8s / 폭죽=광역60.
 ##   그림은 bottom_hud가 그림. 좌표는 Layout.bottom_row 공유. (attack_button 패턴)
 
-const DEBOUNCE := 0.35   # 한 번 탭이 두 번 먹는 것 방지(쿨다운 아님 — 재고로 제한)
+const DEBOUNCE := 0.35   # 한 번 탭이 두 번 먹는 것 방지(쿨다운 아님 ─ 재고로 제한)
 
 var _cd := [0.0, 0.0, 0.0]
 var used = Callable()   # (선택) 사용 알림 콜백

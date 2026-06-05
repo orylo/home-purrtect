@@ -1,27 +1,27 @@
 extends Control
-## 프롤로그 컷씬 — 입양과 운명의 교차 (브리프 §6-B + 세계관 기둥1 "빗속 상실")
-##   탭/클릭/스페이스로 다음 장면. [건너뛰기]로 종료. 임시 비주얼(도형·빗줄기·기호) — 그림은 나중에 교체.
+## 프롤로그 컷씬 ─ 입양과 운명의 교차 (브리프 §6-B + 세계관 기둥1 "빗속 상실")
+##   탭/클릭/스페이스로 다음 장면. [건너뛰기]로 종료. 임시 비주얼(도형·빗줄기·기호) ─ 그림은 나중에 교체.
 ##   음악: 슬픔(prologue_sad) → 온기(prologue_warm). 자체 재생(Music 오토로드는 이 씬에서 무음).
 ##   끝나면 GameState.prologue_seen=true 저장 후 시작화면으로.
 
-const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 const SAD := preload("res://assets/music/prologue_sad.wav")
 const WARM := preload("res://assets/music/prologue_warm.wav")
 
 # 장면 데이터 (순서대로)
 const BEATS := [
 	{"bg": Color(0.10, 0.12, 0.18), "rain": 2.0, "music": "sad",
-		"cap": "비 오는 거리, 종이박스 속 —\n어린 치즈는 혼자가 아니었다.", "vis": "two_cats"},
+		"cap": "비 오는 거리, 종이박스 속 ─\n어린 치즈는 혼자가 아니었다.", "vis": "two_cats"},
 	{"bg": Color(0.06, 0.07, 0.11), "rain": 3.2, "music": "sad",
 		"cap": "어느 거센 비 오는 밤,\n재난이 둘을 갈라놓았다…", "vis": "loss"},
 	{"bg": Color(0.16, 0.16, 0.21), "rain": 1.6, "music": "warm",
 		"cap": "검은 우산 하나가 다가와,\n젖은 길냥이에게 손을 내밀었다.", "vis": "umbrella"},
 	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
-		"cap": "따뜻한 저택. 그때 벽 구멍에서\n쥐 한 마리와 눈이 마주쳤다 — 뻥!", "vis": "house", "fx": "light_bulb"},
+		"cap": "따뜻한 저택. 그때 벽 구멍에서\n쥐 한 마리와 눈이 마주쳤다 ─ 뻥!", "vis": "house", "fx": "light_bulb"},
 	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
 		"speaker": "골드 영감", "line": "허허! 쥐를 잡는 솜씨가 제법이야.\n너, 마음에 든다.", "vis": "oldman"},
 	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
-		"speaker": "골드 영감", "line": "세계일주를 다녀오마. 길게 걸릴 게야.\n이 집에 쥐새끼 한 마리라도 들이는 날엔 — 넌 그날로 길바닥이야.", "vis": "oldman"},
+		"speaker": "골드 영감", "line": "세계일주를 다녀오마. 길게 걸릴 게야.\n이 집에 쥐새끼 한 마리라도 들이는 날엔 ─ 넌 그날로 길바닥이야.", "vis": "oldman"},
 ]
 
 var _i := -1
@@ -77,7 +77,7 @@ func _build_ui() -> void:
 	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_cap.add_theme_constant_override("outline_size", 8)
 	add_child(_cap)
-	# 영감 대화창 — 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 프레임·스타일로 통일).
+	# 영감 대화창 ─ 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 프레임·스타일로 통일).
 	#   골드 영감은 초상화 에셋이 없어 portrait 생략(본문 왼쪽부터). 진행 힌트는 기존 _hint 하나로 통일.
 	var vp := get_viewport().get_visible_rect().size
 	var dlg := DialoguePanel.build(self, vp)
@@ -86,7 +86,7 @@ func _build_ui() -> void:
 	_dlg_line = dlg["text_lbl"]
 	(dlg["hint_lbl"] as Label).visible = false
 	_dlg.visible = false
-	# 건너뛰기(우상단) — 누르면 전체 건너뜀(_finish). 버튼은 클릭을 받아야 하므로 mouse_filter 기본(STOP).
+	# 건너뛰기(우상단) ─ 누르면 전체 건너뜀(_finish). 버튼은 클릭을 받아야 하므로 mouse_filter 기본(STOP).
 	var skip := Design.button("건너뛰기", "secondary", Design.FS_BODY)
 	skip.custom_minimum_size = Vector2(150, 52)
 	skip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -250,7 +250,7 @@ func _draw() -> void:
 			draw_line(Vector2(vp.x * 0.30 + 18, gy - 8), Vector2(vp.x * 0.30 + 60, gy + 2),
 					Color(0.55, 0.5, 0.5), 4.0)
 		"oldman":
-			# 뒷모습 실루엣(코트 + 모자) — 얼굴 안 보임
+			# 뒷모습 실루엣(코트 + 모자) ─ 얼굴 안 보임
 			var cx := vp.x * 0.62
 			draw_rect(Rect2(cx - 90, gy - 300, 180, 300), Color(0.10, 0.10, 0.13), true)  # 코트
 			draw_circle(Vector2(cx, gy - 320), 56.0, Color(0.12, 0.12, 0.15))             # 머리

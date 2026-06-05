@@ -57,8 +57,8 @@
 > 보석 5종: 조약돌=rank-1 / 자수정=rank-4 / 사파이어=rank-3 / 루비=red / 다이아=흰+blue.
 ---
 ## 2. 타이포그래피 `[확정]`
-- **본문·UI·숫자·대사 = 서울알림체 Bold(700)** `[적용됨 v0.0.155]` — `SeoulAlrim-Bold.ttf`. `style.gd FONT`·`dialogue_panel FONT/FONT_DIALOGUE`·project.godot custom_font·ThemeDB.fallback.
-- **타이틀·버튼 = 서울알림체 Heavy(900)** `[적용됨 v0.0.155]` — `SeoulAlrim-Heavy.ttf`. 제목·보스명·"클리어"·버튼. `style.gd FONT_TITLE`. (이전: Pretendard[본문]+잘난체→Climate Crisis[타이틀] → 전량 서울알림체로 통일. projectnoonnu woff2 → TTF 변환.)
+- **본문·UI·숫자·대사 = 어그로체 M(500)** `[적용됨 v0.0.156]` — `SBAggro-Medium.ttf`. `style.gd FONT`·`dialogue_panel FONT/FONT_DIALOGUE`·project.godot custom_font·ThemeDB.fallback.
+- **타이틀·버튼 = 어그로체 B(700)** `[적용됨 v0.0.156]` — `SBAggro-Bold.ttf`. 제목·보스명·"클리어"·버튼. `style.gd FONT_TITLE`. (폰트 변천: Pretendard+잘난체 → Climate Crisis → 서울알림체 → **SB 어그로체(projectnoonnu)** 전량 통일. woff→TTF 변환. ★어그로체엔 em-dash(—) 글리프 없어 코드 표시문자 전부 ─(box)로 치환.)
 - **영문 타이틀 = Luckiest Guy** `[확정]` — "HOME PURRTECT"·"CLEAR!".
 - ⚠️ **로고/메인 타이틀은 "폰트"가 아니라 "그래픽"**(글자 효과 §2.2).
 ### 2.1 타입 스케일 (1560×720 UI 좌표 px)

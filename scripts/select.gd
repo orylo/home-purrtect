@@ -1,9 +1,9 @@
 extends Control
-## 전투준비 = 장비창(로드아웃) + 탭 픽커 — v3 (Brawl Stars식 펀치: 큰 캐릭터·아이콘 스탯칩·굵은 위계, 우리 카툰 톤)
+## 전투준비 = 장비창(로드아웃) + 탭 픽커 ─ v3 (Brawl Stars식 펀치: 큰 캐릭터·아이콘 스탯칩·굵은 위계, 우리 카툰 톤)
 ##  좌: 큰 치즈 + 이름 + 등급 배지   /   우: 스탯 칩 + 장비 슬롯(직업/동료/스킬/소지품)   /   하단: [출격]
 ##  슬롯 탭 → 인벤토리 픽커(보유 목록 + 설명 + 장착). ★직업=등급별 장비. (시스템밸런스 §5.2)
 
-const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 const JOB_ORDER := ["base", "sheriff", "maid", "jazz"]
 const IDLE_FPS := 9.0
 const ITEM_ICON := {

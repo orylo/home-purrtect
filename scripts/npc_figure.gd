@@ -1,5 +1,5 @@
 extends Control
-## NPC 캐릭터 placeholder — 고양이풍 도형(머리+귀+몸+표정). 진짜 아트 나오면 교체.
+## NPC 캐릭터 placeholder ─ 고양이풍 도형(머리+귀+몸+표정). 진짜 아트 나오면 교체.
 ## set_fig(색, 표정)로 색·기분 변경. 표정: neutral/happy/annoyed/shy
 
 var body_color := Color(0.6, 0.5, 0.7)

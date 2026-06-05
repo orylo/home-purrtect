@@ -12,7 +12,7 @@ extends Node
 const REF_W: float = 1920.0
 const REF_H: float = 1080.0
 
-# === iOS 안전영역(노치·홈인디케이터) 인셋 — 배경은 풀블리드, UI/조작/바닥만 안으로 ===
+# === iOS 안전영역(노치·홈인디케이터) 인셋 ─ 배경은 풀블리드, UI/조작/바닥만 안으로 ===
 #   웹(iOS standalone)에서만 CSS env(safe-area-inset-*)를 읽어 채운다. 그 외엔 0(무변화).
 #   값은 뷰포트 px 기준(CSS px × 뷰포트/innerW). left/top/right/bottom.
 var _safe := Vector4.ZERO
@@ -51,10 +51,10 @@ func safe_top() -> float:    return _safe.y
 func safe_right() -> float:  return _safe.z
 func safe_bottom() -> float: return _safe.w
 
-# 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠) — 화면 아래에서 고정 픽셀(버튼 크기 일정)
+# 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠) ─ 화면 아래에서 고정 픽셀(버튼 크기 일정)
 const CONTROL_BAND_HEIGHT: float = 264.0   # 띠 높이(화면 px 고정)
-const CONTROL_BAND_GAP: float = 22.0       # (구) 바닥선↔띠 간격 — 현재 ground_y는 비율식이라 미사용
-const GROUND_DROP: float = 80.0            # (구) 바닥선 내림 — 현재 미사용(비율식 ground_y로 대체)
+const CONTROL_BAND_GAP: float = 22.0       # (구) 바닥선↔띠 간격 ─ 현재 ground_y는 비율식이라 미사용
+const GROUND_DROP: float = 80.0            # (구) 바닥선 내림 ─ 현재 미사용(비율식 ground_y로 대체)
 
 # 바닥선(캐릭터가 서는 선) = 화면 높이 × 이 비율(위에서). 배경이 height-fit(상하 꽉)이라
 #   배경 바닥선도 화면높이 고정비율에 위치 → 발선을 같은 비율로 잡아야 폰(720)·PC(16:9 877) 등
@@ -62,14 +62,14 @@ const GROUND_DROP: float = 80.0            # (구) 바닥선 내림 — 현재 �
 #   폰(720)에서 ≈513 = 종전 값과 사실상 동일. ※ safe_bottom 안 뺌(배경 풀블리드라 바닥은 배경 비율 따름).
 const GROUND_LINE_FRAC: float = 1.0 - 310.0 / 1080.0   # ≈ 0.7130
 
-# 발밑 그림자를 "자기 가로반경 × 이 비율"만큼 위로 올림(접지점에 붙게 — '바닥 아래 유리판' 느낌 방지).
+# 발밑 그림자를 "자기 가로반경 × 이 비율"만큼 위로 올림(접지점에 붙게 ─ '바닥 아래 유리판' 느낌 방지).
 #   치즈·적·펑거스 그림자 공통. 키우면 더 위로. 0이면 종전(바닥선에 그대로).
 const SHADOW_LIFT_FRAC: float = 0.18
 
 # 버튼이 화면 가장자리(아래/오른쪽)에서 떨어지는 공통 마진
 const CONTROL_EDGE_MARGIN: float = 34.0
 
-# 공격 버튼(우하단 코너 1/4 원)의 반경 — 그림과 터치 판정이 공유
+# 공격 버튼(우하단 코너 1/4 원)의 반경 ─ 그림과 터치 판정이 공유
 const ATTACK_BUTTON_RADIUS: float = 145.0
 
 # === 하단 단일 행 버튼 배치 (그림=bottom_hud / 입력=attack_button 공유) ===
@@ -126,7 +126,7 @@ func cover_scale() -> float:
 	return maxf(v.x / REF_W, v.y / REF_H)
 
 
-## 조작 띠(하단 딤 + 버튼)의 윗변 y좌표 — 홈인디케이터 인셋만큼 위로(바닥선도 따라 올라감)
+## 조작 띠(하단 딤 + 버튼)의 윗변 y좌표 ─ 홈인디케이터 인셋만큼 위로(바닥선도 따라 올라감)
 func band_top() -> float:
 	return _vis().y - CONTROL_BAND_HEIGHT - safe_bottom()
 

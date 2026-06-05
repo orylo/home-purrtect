@@ -1,25 +1,25 @@
 extends Node
-## 게임 전역 상태 (오토로드 "GameState") — 씬이 바뀌어도 유지.
+## 게임 전역 상태 (오토로드 "GameState") ─ 씬이 바뀌어도 유지.
 ## 지금은 선택한 직업만. (나중에 보유 직업·동전·진행도 등 확장)
 
 signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). enemy._die에서 emit.
 
-## 빌드 버전 — 시작/선택 화면에 "X.Y.Z ver." 로 표시. 의미체계(CLAUDE.md "버전 체계" 참조):
+## 빌드 버전 ─ 시작/선택 화면에 "X.Y.Z ver." 로 표시. 의미체계(CLAUDE.md "버전 체계" 참조):
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.155"
+const BUILD := "0.0.156"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 서울알림체를 쓰도록 전역 기본 폰트 지정
 func _ready() -> void:
-	var f := load("res://assets/fonts/SeoulAlrim-Bold.ttf")
+	var f := load("res://assets/fonts/SBAggro-Medium.ttf")
 	if f:
 		ThemeDB.fallback_font = f
 	# ★언어: 지금은 한국어 고정(영어기기에서도 안 튀게). 추후 언어분기 시 set_language()로 전환.
 	#   번역 파이프라인은 깔려있음(assets/i18n/ui.csv → tr()). docs/지침_로컬라이즈.md 참조.
 	TranslationServer.set_locale(language)
-	# 부팅 시 진행 복원(세이브 있으면) — 시작화면이 코인·프롤로그본여부 등 올바른 상태를 갖도록.
+	# 부팅 시 진행 복원(세이브 있으면) ─ 시작화면이 코인·프롤로그본여부 등 올바른 상태를 갖도록.
 	if AUTOSAVE:
 		load_game()   # 파일 없으면 무동작
 
@@ -37,26 +37,26 @@ const DEV := true
 func is_dev() -> bool:
 	return DEV
 
-## 진행 자동 저장/이어하기 — 플레이어 모드 진행을 user://save.json에 저장(개발자 모드는 저장 안 함).
+## 진행 자동 저장/이어하기 ─ 플레이어 모드 진행을 user://save.json에 저장(개발자 모드는 저장 안 함).
 ##   true = 새로고침·재방문해도 이어하기. (개발자 모드 테스트는 항상 개발자 메뉴로 설정해 진입)
 const AUTOSAVE := true
 
 ## --- 이번 판 런 설정 (게임 본체가 이것만 읽어 실행) ---
 var mode: String = "player"        # "player" | "dev"
-var sandbox: bool = false           # 테스트 스테이지(자동 웨이브 없음 — 디버그로 직접 스폰)
+var sandbox: bool = false           # 테스트 스테이지(자동 웨이브 없음 ─ 디버그로 직접 스폰)
 var difficulty: float = 1.0        # 적 스탯 배율 M (시스템밸런스 §3)
 var cheats := {"godmode": false, "enemy_oneshot": false, "enemy_count_mult": 1.0}
 var coins: int = 0                 # 재화(상점 시스템 때 사용)
 var bgm_enabled: bool = true       # 배경음악 켜짐(홈 [설정] 토글, Music 오토로드가 읽음)
 var voice_enabled: bool = true     # NPC 재잘거림 보이스 켜짐(VoiceBlip이 읽음, 사운드 옵션)
-var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(다시보기/기록용 — 자동재생 게이트는 아님)
+var prologue_seen: bool = false    # 프롤로그 컷씬 봤는지(다시보기/기록용 ─ 자동재생 게이트는 아님)
 var prologue_return: String = "start"  # 프롤로그 끝난 뒤 갈 곳(임시·비저장): 새 게임=「home」 / 다시보기=「start」
 var coachmark_seen: Array = []     # 홈 코치마크 본 항목 id 목록(1회성, 예: "prep"/"pearl"/"max")
-var stage_stars: Dictionary = {}   # 별 최고기록 {"1-1": best_star(1~3)} — 재도전으로 max 갱신
+var stage_stars: Dictionary = {}   # 별 최고기록 {"1-1": best_star(1~3)} ─ 재도전으로 max 갱신
 var allstar_claimed: Array = []    # 구간 올스타 보상 1회 지급 플래그(act1_1_10/act1_11_20/act1_full)
-var replaying: bool = false        # (임시·비저장) 스테이지 맵 [재도전] 파밍 중 — true면 클리어해도 진행 안 올리고 맵 복귀
+var replaying: bool = false        # (임시·비저장) 스테이지 맵 [재도전] 파밍 중 ─ true면 클리어해도 진행 안 올리고 맵 복귀
 
-## --- 등급 배율 (시스템밸런스 §2.2) — hp/원거리/근거리에 곱함 ---
+## --- 등급 배율 (시스템밸런스 §2.2) ─ hp/원거리/근거리에 곱함 ---
 ## ★합성 승급 모델(2026-06-04): 다음 등급 = 직전 등급 장비 + 재료(+코인). 합성 시 직전 등급 소모(등급당 0/1개).
 ##   배율은 "장착된 등급"(equipped_grade) 기준. (자산관리 §2 / 시스템밸런스 §2.2)
 const LV_MULT := [1.0, 1.5, 2.2, 3.2, 4.5]
@@ -99,7 +99,7 @@ func craft_grade_cost(job: String) -> int:
 	var ng := next_grade(job)
 	return GRADE_COST[ng - 2] if ng >= 2 else 0
 
-## 다음 등급 승급에 필요한 재료(없으면 {}) — 2등급만 정의, 3~5는 코인만.
+## 다음 등급 승급에 필요한 재료(없으면 {}) ─ 2등급만 정의, 3~5는 코인만.
 func grade_mats(job: String) -> Dictionary:
 	var ng := next_grade(job)
 	return GRADE_CRAFT.get(job, {}).get(ng, {})
@@ -156,7 +156,7 @@ func dev_set_job(job: String, grade: int) -> void:
 
 ## --- 소모품 (상점 구매·보유, 시스템밸런스 §5.4) ---
 ## 전투 중 실제 사용은 다음 조각(소모품 탭·HUD). 지금은 "사서 보유"까지.
-## type: "food"(소모품 도감) / "toy"(장난감 도감) — 전투에선 동일 슬롯 일회용. 도감 분류용.
+## type: "food"(소모품 도감) / "toy"(장난감 도감) ─ 전투에선 동일 슬롯 일회용. 도감 분류용.
 ## ※ 전투 중 실제 사용·휴대 최대 5개·쥐덫 설치 메커니즘은 [구현 대기](현재 구매·보유까지).
 const CONSUMABLES := {
 	"bandage":     {"name": "낡은 붕대", "price": 40,  "type": "food", "desc": "체력 30 회복"},
@@ -165,10 +165,10 @@ const CONSUMABLES := {
 	"firecracker": {"name": "폭죽",      "price": 80,  "type": "toy",  "desc": "광역 60 데미지"},
 	"bomb":        {"name": "폭탄",      "price": 150, "type": "toy",  "desc": "광역 120 데미지"},
 	"pepper":      {"name": "후추통",    "price": 70,  "type": "toy",  "desc": "5초 광역 둔화(피해 없음)"},
-	"mousetrap":   {"name": "쥐덫",      "price": 90,  "type": "toy",  "desc": "설치 — 밟은 적 3초 묶음"},
+	"mousetrap":   {"name": "쥐덫",      "price": 90,  "type": "toy",  "desc": "설치 ─ 밟은 적 3초 묶음"},
 }
 var inventory := {"bandage": 0, "milk": 0, "anchovy": 0, "firecracker": 0, "bomb": 0, "pepper": 0, "mousetrap": 0}
-## 전투 준비 소모품 슬롯(종류만 저장, 양은 inventory 따라감) — 로드맵 4단계
+## 전투 준비 소모품 슬롯(종류만 저장, 양은 inventory 따라감) ─ 로드맵 4단계
 var item_slots := ["", "", ""]
 
 func consumable_price(id: String) -> int:
@@ -198,7 +198,7 @@ const MATERIALS := {
 	"sparrow_feather": {"name": "참새 깃털",   "sell": 3},
 	"honey_drop":      {"name": "벌꿀",        "sell": 4},
 	"spider_silk":     {"name": "거미줄 실",   "sell": 3},
-	# 연상 잡템(침입자 드랍 10%) — 매입가 출처: 기획_전리품보석도감.md §2 (플레이테스트 튜닝 대상)
+	# 연상 잡템(침입자 드랍 10%) ─ 매입가 출처: 기획_전리품보석도감.md §2 (플레이테스트 튜닝 대상)
 	"cheese_crumb":    {"name": "치즈 부스러기", "sell": 1},
 	"cheese":          {"name": "치즈 조각",   "sell": 4},
 	"nail":            {"name": "녹슨 못",     "sell": 2},
@@ -208,7 +208,7 @@ const MATERIALS := {
 	"cotton":          {"name": "솜뭉치",      "sell": 1},
 	"bread":           {"name": "빵 조각",     "sell": 1},
 	"honeycomb":       {"name": "벌집",        "sell": 4},
-	# 보석 18종 사다리(등급별 독립 드랍 · §5.5) — 자갈~다이아
+	# 보석 18종 사다리(등급별 독립 드랍 · §5.5) ─ 자갈~다이아
 	"gem_gravel":      {"name": "얼룩 자갈",     "sell": 15},
 	"gem_pebble":      {"name": "빛나는 조약돌", "sell": 30},
 	"gem_shell":       {"name": "조개껍데기",   "sell": 55},
@@ -229,19 +229,19 @@ const MATERIALS := {
 	"gem_diamond":     {"name": "다이아몬드",  "sell": 50000},
 }
 const MAT_ORDER := ["fur_gray", "fur_black", "wheel", "sack", "bat_wing", "sparrow_feather", "honey_drop", "spider_silk", "cheese_crumb", "cheese", "nail", "button", "thread_spool", "safety_pin", "cotton", "bread", "honeycomb", "gem_gravel", "gem_pebble", "gem_shell", "gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz", "gem_amber", "gem_amethyst", "gem_garnet", "gem_rose", "gem_teal", "gem_sapphire", "gem_emerald", "gem_pearl", "gem_teardrop", "gem_ruby", "gem_diamond"]
-## 보석 사다리 순서(자갈→다이아) — 펄 헌납·도감 등에서 사용
+## 보석 사다리 순서(자갈→다이아) ─ 펄 헌납·도감 등에서 사용
 const GEM_ORDER := ["gem_gravel", "gem_pebble", "gem_shell", "gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz", "gem_amber", "gem_amethyst", "gem_garnet", "gem_rose", "gem_teal", "gem_sapphire", "gem_emerald", "gem_pearl", "gem_teardrop", "gem_ruby", "gem_diamond"]
 var materials := {}   # id -> 보유 수 (lazy: 없으면 0)
 var run_loot := {}    # 이번 전투에서 얻은 전리품(클리어 화면 표시용, 세이브 안 함)
 var run_coins: int = 0   # 이번 전투에서 번 코인(처치+첫클리어 보너스, 클리어 화면 표시용)
 
-## 전투 시작 시 호출 — 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 + 축복 1회 소비
+## 전투 시작 시 호출 ─ 이번 판 전리품 집계 리셋 + 곳간 축복 동전 배율 + 축복 1회 소비
 ## (player._ready가 game._ready보다 먼저 실행되어 발톱·배는 이미 적용된 뒤 여기서 소비됨)
 func start_battle_loot() -> void:
 	run_loot = {}
 	run_coins = 0
 	run_coin_mult = (1.0 + blessing_pct("coin")) if selected_blessing == "coin" else 1.0
-	selected_blessing = ""   # 축복은 1회용 — 매 출격마다 펄에게 다시 받아야 함(§5.5)
+	selected_blessing = ""   # 축복은 1회용 ─ 매 출격마다 펄에게 다시 받아야 함(§5.5)
 
 ## 코인 획득(보유 + 이번 판 집계 동시). 처치 코인·첫클리어 보너스가 호출.
 func add_coins(n: int) -> void:
@@ -252,7 +252,7 @@ func add_material(id: String, n: int = 1) -> void:
 	materials[id] = int(materials.get(id, 0)) + n
 	run_loot[id] = int(run_loot.get(id, 0)) + n   # 이번 판 집계
 
-## 클리어 화면용 — 이번 판 전리품 요약 문자열("회색쥐 털 ×4, 보석 ×1") / 없으면 ""
+## 클리어 화면용 ─ 이번 판 전리품 요약 문자열("회색쥐 털 ×4, 보석 ×1") / 없으면 ""
 func run_loot_summary() -> String:
 	var parts: Array = []
 	for id in MAT_ORDER:
@@ -289,8 +289,8 @@ const CRAFT_RECIPES := {
 	"jazz": {"name": "음악가", "coin": 500, "mats": {"fur_gray": 12, "wheel": 2, "nail": 1}},
 }
 
-## 1등급(이름없는) 제작 가능? — 레시피 있고, 아직 1등급 미보유, 상점에 노출(해금)됐고, 자원 충분.
-##  (unlocked_jobs = "상점 제작 노출" / owns_job = "이미 1등급 보유" — 새 모델: 둘은 별개)
+## 1등급(이름없는) 제작 가능? ─ 레시피 있고, 아직 1등급 미보유, 상점에 노출(해금)됐고, 자원 충분.
+##  (unlocked_jobs = "상점 제작 노출" / owns_job = "이미 1등급 보유" ─ 새 모델: 둘은 별개)
 func can_craft_job(job: String) -> bool:
 	if not CRAFT_RECIPES.has(job) or owns_job(job) or not is_job_unlocked(job):
 		return false
@@ -411,7 +411,7 @@ func unequip_skill(job: String, id: String) -> bool:
 		save_game()
 	return true
 
-## 스킬 수치(데미지/회복 등) — scaled면 §2.2 Lv 배율 곱함
+## 스킬 수치(데미지/회복 등) ─ scaled면 §2.2 Lv 배율 곱함
 func skill_value(id: String) -> float:
 	var s: Dictionary = SKILLS.get(id, {})
 	var v := float(s.get("base", 0.0))
@@ -423,7 +423,7 @@ func skill_value(id: String) -> float:
 ## 만남(meet 스테이지·무료 이벤트) 후 호루라기를 맥스에서 구매. 슬롯 1개 → 매 판 택1, 전투 중 호출.
 ## kind: 전투 발동 종류. meet: 만남 스테이지(1-13/1-16).
 const COMPANIONS := {
-	"dove":      {"name": "비둘기", "price": 300, "cd": 22.0, "meet": 13, "kind": "dove_bomb",  "dmg": 10.0, "slow_dur": 3.0, "slow_pct": 0.40, "desc": "전방 광역 똥 폭격 — 3초 둔화 40%↓ + 딜"},
+	"dove":      {"name": "비둘기", "price": 300, "cd": 22.0, "meet": 13, "kind": "dove_bomb",  "dmg": 10.0, "slow_dur": 3.0, "slow_pct": 0.40, "desc": "전방 광역 똥 폭격 ─ 3초 둔화 40%↓ + 딜"},
 	"chihuahua": {"name": "치와와", "price": 500, "cd": 30.0, "meet": 16, "kind": "dog_charge", "dmg": 5.0,  "desc": "좌→우로 달리며 지상 침입자 전부 밀어냄"},
 }
 const COMPANION_ORDER := ["dove", "chihuahua"]
@@ -523,7 +523,7 @@ var stage_minor: int = 1
 
 ## 해금된 직업(플레이어 모드). 항상 맨몸 포함. 해금 타임라인(§6-A):
 ##   1-3 클리어(→1-4) = 보안관 / 1-7 클리어(→1-8) = 메이드·음악가.
-##   (본 게임에선 1-7 상점 구매지만 상점 전이라 클리어로 해금 — 상점 붙으면 구매로 교체.)
+##   (본 게임에선 1-7 상점 구매지만 상점 전이라 클리어로 해금 ─ 상점 붙으면 구매로 교체.)
 ## 개발자 모드는 이 값과 무관(개발자 메뉴에서 4종 자유 선택).
 var unlocked_jobs: Array = ["base"]
 
@@ -539,7 +539,7 @@ func is_job_unlocked(job: String) -> bool:
 const FIRST_CLEAR_STAR2_MULT := 1.5   # ★2 = round(base × 1.5)
 const FIRST_CLEAR_STAR3_MULT := 2.0   # ★3 = base × 2
 
-## 스테이지 클리어 보상 — 첫 클리어면 보너스 코인 지급(파밍은 0). 지급액 반환(연출용).
+## 스테이지 클리어 보상 ─ 첫 클리어면 보너스 코인 지급(파밍은 0). 지급액 반환(연출용).
 ##   base = 20 + 5×스테이지번호 (§5.1) + 보스 보너스(1-10 +100 / 1-20 +200)
 ##   별 차등: ★1=base / ★2=round(base×1.5) / ★3=base×2 (첫 클리어 시점 별로 1회 고정).
 func award_stage_clear(stars: int = 1) -> int:
@@ -563,7 +563,7 @@ func award_stage_clear(stars: int = 1) -> int:
 
 # ── ★ 스테이지 별점 시스템 (시스템밸런스 §5.7) ──────────────────────────────
 #   클리어 "전투 실시간" 기준 ★1~3. 별=추가 당근일 뿐 진행 게이팅 금지(BM 원칙).
-#   계수는 상수(추후 난이도별 튜닝 가능). 시작값 — 플레이테스트 튜닝 대상.
+#   계수는 상수(추후 난이도별 튜닝 가능). 시작값 ─ 플레이테스트 튜닝 대상.
 const STAR_PER_WAVE_T2 := 30.0   # 일반: ★2 기준 = 웨이브수 × 30s
 const STAR_PER_WAVE_T3 := 20.0   # 일반: ★3 기준 = 웨이브수 × 20s
 const STAR_BOSS_T2 := 180.0      # 보스(1-10/1-20): ★2 = 180s
@@ -571,7 +571,7 @@ const STAR_BOSS_T3 := 120.0      # 보스: ★3 = 120s
 const BOSS_STAGES := [10, 20]
 const STAR2_GEMS := ["gem_gravel", "gem_pebble", "gem_shell"]                 # ★2 첫클리어 = 하급 보석 랜덤(사다리 #1~3)
 const STAR3_GEMS := ["gem_marble", "gem_glass_bead", "gem_agate", "gem_quartz"] # ★3 = 중급 보석 랜덤(#4~7)
-## 구간 올스타(전부 ★3) 컬렉션 보상 — 각 1회
+## 구간 올스타(전부 ★3) 컬렉션 보상 ─ 각 1회
 const ALLSTAR_SEGMENTS := [
 	{"id": "act1_1_10",  "from": 1,  "to": 10, "gem": "gem_amethyst"},   # 자수정
 	{"id": "act1_11_20", "from": 11, "to": 20, "gem": "gem_rose"},        # 로즈쿼츠
@@ -642,8 +642,8 @@ func can_claim_allstar(seg_id: String) -> bool:
 	var p := allstar_segment_progress(seg_id)
 	return p.y > 0 and p.x >= p.y
 
-## [받기] 수령 — 보석 1개 지급 + allstar_claimed 기록(중복 방지). 지급한 보석 id 반환(실패 시 "").
-##   ※ 별점 로직(클리어)은 자동 지급하지 않음 — 수령은 오직 스테이지 맵 [받기]로(수동).
+## [받기] 수령 ─ 보석 1개 지급 + allstar_claimed 기록(중복 방지). 지급한 보석 id 반환(실패 시 "").
+##   ※ 별점 로직(클리어)은 자동 지급하지 않음 ─ 수령은 오직 스테이지 맵 [받기]로(수동).
 func claim_allstar(seg_id: String) -> String:
 	if not can_claim_allstar(seg_id):
 		return ""
@@ -663,7 +663,7 @@ func allstar_progress() -> Vector2i:
 	return Vector2i(earned, 60)
 
 
-## 클리어 이벤트 텍스트(로드맵 2-B) — 해당 스테이지 클리어 시 띄울 해금 이벤트. 없으면 "".
+## 클리어 이벤트 텍스트(로드맵 2-B) ─ 해당 스테이지 클리어 시 띄울 해금 이벤트. 없으면 "".
 ## (지금은 placeholder 안내 텍스트. 나중에 컷신·NPC를 이 자리에 끼움.)
 ## 해금 이벤트 씬으로 넘길 때, 방금 깬 스테이지 번호(이벤트 씬이 읽고 0으로 리셋). 세이브 안 함(전환용)
 var pending_event_stage: int = 0
@@ -671,7 +671,7 @@ var pending_event_stage: int = 0
 func clear_event_for(stage: int) -> String:
 	match stage:
 		3:  return "보안관이 합류했다!\n전투 준비에서 직업으로 선택할 수 있어."
-		5:  return "고양이 숙녀 '펄'을 만났다.\n(펄 시스템은 준비 중 — 로드맵 6단계)"
+		5:  return "고양이 숙녀 '펄'을 만났다.\n(펄 시스템은 준비 중 ─ 로드맵 6단계)"
 		7:  return "맥스의 상점이 열렸다!\n메이드·음악가를 전리품으로 제작할 수 있어."
 		9:  return "맥스가 스킬을 팔기 시작했다!\n상점 [스킬] 탭에서 직업 스킬 구매."
 		10: return "중간보스 펑거스를 물리쳤다!"
@@ -701,7 +701,7 @@ func dev_grant_skills() -> void:
 				equipped_skills[job].append(sid)
 
 
-## 도달한(현재) 스테이지 기준으로 해금 직업 보강 — idempotent(세이브 로드 후에도 안전)
+## 도달한(현재) 스테이지 기준으로 해금 직업 보강 ─ idempotent(세이브 로드 후에도 안전)
 func _check_stage_unlocks() -> void:
 	if stage_minor >= 4:                          # 1-3 클리어 → 보안관 "지급"(1등급 보유)
 		if not unlocked_jobs.has("sheriff"):
@@ -719,7 +719,7 @@ func stage_label() -> String:
 	return "%d-%d" % [stage_major, stage_minor]
 
 
-## 다음 스테이지로(클리어 시) — 도달 스테이지에 맞춰 직업 해금
+## 다음 스테이지로(클리어 시) ─ 도달 스테이지에 맞춰 직업 해금
 func advance_stage() -> void:
 	stage_minor += 1
 	_check_stage_unlocks()
@@ -733,23 +733,23 @@ func frontier_stage() -> int:
 		top = maxi(top, int(s))
 	return clampi(top + 1, 1, 20)
 
-## 맵에서 특정 스테이지 파밍 시작 — 진행 포인터를 덮지 않도록 replaying 플래그로 격리.
+## 맵에서 특정 스테이지 파밍 시작 ─ 진행 포인터를 덮지 않도록 replaying 플래그로 격리.
 func begin_replay(n: int) -> void:
 	replaying = true
 	stage_minor = clampi(n, 1, 20)
 
-## 파밍 종료 — 진행 포인터를 프론티어로 복원(맵 진입 전 위치로).
+## 파밍 종료 ─ 진행 포인터를 프론티어로 복원(맵 진입 전 위치로).
 func finish_replay() -> void:
 	replaying = false
 	stage_minor = frontier_stage()
 
 
-## 처음부터(필요 시) — 1-1, 맨몸만
+## 처음부터(필요 시) ─ 1-1, 맨몸만
 ## 세이브 파일 존재 여부(시작화면 [이어하기]/[처음부터] 분기용)
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
 
-## 새 게임 — 진행·별점·올스타 전부 초기화하고 세이브 덮어쓰기. (설정·프롤로그본여부는 유지)
+## 새 게임 ─ 진행·별점·올스타 전부 초기화하고 세이브 덮어쓰기. (설정·프롤로그본여부는 유지)
 func new_game() -> void:
 	reset_progress()
 	stage_stars = {}
@@ -784,7 +784,7 @@ func reset_progress() -> void:
 ##  rmode=원거리 발사방식(straight 일자 / lob 포물선던지기)
 ##  rlimit=일자 사거리(화면폭 대비 비율, 0=끝까지) / misfire=불발 확률(보안관)
 ##  rshape=투사체 모양(dot 흰원 / stone 회색돌 / plate 접시 / note 음표)
-##  rdelay=공격 시작 후 실제 발사까지 딜레이(초) — 모션 타이밍 맞춤
+##  rdelay=공격 시작 후 실제 발사까지 딜레이(초) ─ 모션 타이밍 맞춤
 const JOB_STATS := {
 	"base":    {"hp": 80.0,  "ranged": 6.0,  "near": 8.0,  "atk_spd": 0.9, "move": 1.0,  "crit": 0.05, "crit_type": "strike",    "crit_mult": 1.5, "rmode": "lob",      "rlimit": 0.0, "misfire": 0.0,  "rshape": "stone", "rdelay": 0.2, "melee_targets": 2},
 	"sheriff": {"hp": 140.0, "ranged": 13.0, "near": 11.0, "atk_spd": 0.8, "move": 1.0,  "crit": 0.15, "crit_type": "strike",    "crit_mult": 2.0, "rmode": "straight", "rlimit": 0.0, "misfire": 0.12, "rshape": "dot",   "rdelay": 0.12, "melee_targets": 2},
@@ -797,7 +797,7 @@ const JOB_STATS := {
 #  직업 명칭 & 등급 표기 시스템
 #   · 직업명 = 직업 + Lv 조합으로 결정(직업마다 Lv별 호칭 다름)
 #   · 등급 라벨 = Lv만으로 결정(전 직업 공통), 색은 Lv별
-#   · 맨몸(길냥이)은 Lv/등급 없음 — 직업명만
+#   · 맨몸(길냥이)은 Lv/등급 없음 ─ 직업명만
 # ============================================================
 
 ## 직업별 Lv1~5 호칭. 맨몸은 단일("길냥이").
@@ -864,7 +864,7 @@ func job_stats() -> Dictionary:
 
 
 # ============================================================
-#  진행 저장 (플레이어 모드 전용) — user://save.json
+#  진행 저장 (플레이어 모드 전용) ─ user://save.json
 # ============================================================
 const SAVE_PATH := "user://save.json"
 
@@ -917,7 +917,7 @@ func load_game() -> void:
 		if typeof(cms) == TYPE_ARRAY:
 			for c in cms:
 				coachmark_seen.append(String(c))
-		# 별점(마이그레이션: 없으면 빈 값 — 이미 클리어한 판은 best 0에서 재도전으로 갱신, 첫클리어 보상은 받은 것으로 간주)
+		# 별점(마이그레이션: 없으면 빈 값 ─ 이미 클리어한 판은 best 0에서 재도전으로 갱신, 첫클리어 보상은 받은 것으로 간주)
 		stage_stars = {}
 		var ss = data.get("stage_stars", {})
 		if typeof(ss) == TYPE_DICTIONARY:

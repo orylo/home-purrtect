@@ -1,5 +1,5 @@
 extends Node2D
-## 스테이지 배경 — 1920x1080 이미지를 "커버"로 채우고 바닥에 정렬해 그린다.
+## 스테이지 배경 ─ 1920x1080 이미지를 "커버"로 채우고 바닥에 정렬해 그린다.
 ##
 ## · stage_texture 에 1920x1080 배경 그림을 넣으면 그걸 사용.
 ## · 비어 있으면 임시 배경(하늘 + 땅 + 바닥선)을 그려 동작을 확인할 수 있다.
@@ -10,21 +10,21 @@ extends Node2D
 ##   에디터에서 직접 지정하면 그 값이 우선(보스 등 고정 연출용).
 @export var far_texture: Texture2D
 @export var ground_texture: Texture2D
-var near_pieces: Array = []                  # 이번 판 근경 조각 [{corner,tex,phase,spd}] — Foreground가 그림
+var near_pieces: Array = []                  # 이번 판 근경 조각 [{corner,tex,phase,spd}] ─ Foreground가 그림
 ## 바닥선 정렬 확인용 디버그 선(빨강). 그림의 땅과 맞으면 끄면 됨.
 @export var show_ground_line: bool = true
 ## 배경 추가 확대 배율(1.0 = 기본, 비율 유지 커버). 필요 시만 키움.
 @export var bg_zoom: float = 1.0
 ## 배경을 아래로 내리는 양(px). 양수면 그림이 내려가 위쪽이 더 보인다.
 @export var offset_y: float = 0.0
-## 원경 안개(공기원근) — far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
+## 원경 안개(공기원근) ─ far 위에 부드러운 안개를 깔아 멀어 보이게 + 천천히 흐르게.
 @export var fog_enabled: bool = true
 
 const FAR_LIFT_MIN := 150.0                 # 원경(+안개) 올림 범위(px). 매 판 이 사이 랜덤.
 const FAR_LIFT_MAX := 400.0
 const FAR_LIFT_DEFAULT := 200.0             # 원경 고정 스테이지(FIXED_FAR)는 랜덤 대신 이 값으로 고정
 var _far_lift := 150.0                       # 이번 판 실제 올림값(_ready에서 랜덤). 지면·근경은 항상 바닥 고정.
-const FOG_COL := Color(0.97, 0.98, 1.0)    # 안개 색(거의 흰색 — 빈티지 망점)
+const FOG_COL := Color(0.97, 0.98, 1.0)    # 안개 색(거의 흰색 ─ 빈티지 망점)
 # 안개 덩어리 정의(상대값): x0=초기 가로위상, y0=세로위치(화면비), r=반지름(화면높이비),
 #   spd=드리프트 속도(px/s), bob_s/bob_a=세로 일렁임 속도/폭, a=불투명도, ph=위상
 const FOG_BLOBS := [
@@ -53,7 +53,7 @@ const FULL_FAR_FMT := "res://assets/backgrounds/wall/far_full/far%02d.png"
 const FULL_GROUND_FMT := "res://assets/backgrounds/wall/ground_full/ground%02d.png"
 const FULL_FAR_COUNT := 8
 const FULL_GROUND_COUNT := 10
-## per-stage 풀프레임 override — 키="막-스테이지" → res 경로. 그 스테이지만 고정(비면 풀 랜덤).
+## per-stage 풀프레임 override ─ 키="막-스테이지" → res 경로. 그 스테이지만 고정(비면 풀 랜덤).
 ##   ★ 원경(far): 고정 스테이지는 그 그림 + 그 그림도 랜덤 풀에 그대로 남음(다른 스테이지에서도 나올 수 있음).
 ##   ★ 지면(ground): 고정 + 고정분은 랜덤 풀에서 제외(다른 스테이지엔 안 나옴).
 const FIXED_FAR := {
@@ -69,11 +69,11 @@ const FIXED_GROUND := {
 }
 var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음). 현재 전 스테이지 true.
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
-## 직전 판 반복 방지(세션 동안만 기억 — 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
+## 직전 판 반복 방지(세션 동안만 기억 ─ 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
 static var _last_far := ""
 static var _last_ground := ""
 static var _last_near: Array = []
-## 지면 정렬 — 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
+## 지면 정렬 ─ 이미지에서 '서는 면'의 세로 비율. 이 선을 항상 ground_y(기기마다 계산)에 맞춘다.
 const SURF_FRAC := 0.70                      # 지면 이미지에서 '담장-지면 경계'의 세로 비율(기본)
 const GROUND_CROP_MAX := 200.0               # 발선을 길 중앙에 맞추려 키울 때 허용하는 좌우 크롭 상한(px)
 const GROUND_SURF := {                       # 예외 개별 보정: "파일명.png" → 비율
@@ -122,7 +122,7 @@ func _pick_backgrounds() -> void:
 				_last_ground = ground_texture.resource_path
 		if ground_texture == null:
 			ground_texture = _load_tex(DEFAULT_GROUND)
-	# 근경(랜덤) — 기존 그대로 유지(요청)
+	# 근경(랜덤) ─ 기존 그대로 유지(요청)
 	near_pieces = _pick_near(theme, int(cnt.get("near", 0)))
 
 
@@ -211,7 +211,7 @@ func _draw() -> void:
 		draw_line(Vector2(0.0, line_y), Vector2(vis.x, line_y), Color(1, 0, 0, 0.7), 3.0)
 
 
-## 안개(공기원근) — far 위에 부드러운 안개 덩어리를 천천히 흘려 멀어 보이게/살아있게.
+## 안개(공기원근) ─ far 위에 부드러운 안개 덩어리를 천천히 흘려 멀어 보이게/살아있게.
 func _draw_fog(vis: Vector2) -> void:
 	if _fog_tex == null:
 		return
@@ -228,7 +228,7 @@ func _draw_fog(vis: Vector2) -> void:
 		draw_texture_rect(_fog_tex, Rect2(Vector2(x - r, y - r), Vector2(r * 2.0, r * 2.0)), false, col)
 
 
-## 빈티지 망점(halftone) 안개 텍스처 — 흰 점이 가운데 모이고 가장자리로 사라짐.
+## 빈티지 망점(halftone) 안개 텍스처 ─ 흰 점이 가운데 모이고 가장자리로 사라짐.
 ## 고해상도(512)라 블롭으로 확대해 그려도 점이 작고 촘촘하게 유지됨. 세션당 1회만 생성(static 캐시).
 const FOG_TEX_N := 512     # 텍스처 해상도(클수록 점이 작고 촘촘)
 const FOG_CELL := 5.0      # 망점 간격(px, 텍스처 기준)
@@ -257,7 +257,7 @@ func _make_fog_tex() -> ImageTexture:
 	return _shared_fog
 
 
-## 원경(far) — 가운데 정렬 + 위로 올림. 단, 원경 바닥이 ground_y 위로 올라가지 않게 올림값 제한
+## 원경(far) ─ 가운데 정렬 + 위로 올림. 단, 원경 바닥이 ground_y 위로 올라가지 않게 올림값 제한
 ##   (쇠창살 등 투명 지면 틈으로 원경 아래 빈공간이 보이는 것 방지). 적용된 올림값을 _eff_far_lift에 저장(안개도 동일 적용).
 const FAR_ZOOM := 1.0          # 원경 추가 확대(1.0 = 커버 스케일 그대로)
 var _eff_far_lift := 0.0       # 이번 프레임 실제 적용된 원경 올림값(클램프 후)
@@ -272,7 +272,7 @@ func _draw_far(tex: Texture2D, vis: Vector2) -> void:
 	draw_texture_rect(tex, Rect2(Vector2((vis.x - w) * 0.5, (vis.y - h) * 0.5 - _eff_far_lift), Vector2(w, h)), false)
 
 
-## 지면(ground) — 하단 고정 + 발선(ground_y, 기기마다 계산)을 "길(경계~화면바닥) 구간 중앙"에 오게 키운다.
+## 지면(ground) ─ 하단 고정 + 발선(ground_y, 기기마다 계산)을 "길(경계~화면바닥) 구간 중앙"에 오게 키운다.
 ##   길이 얇으면 많이 키워야 하므로 좌우 크롭은 GROUND_CROP_MAX까지만 허용(그 이상은 발선이 약간 위로).
 func _draw_ground(tex: Texture2D, vis: Vector2) -> void:
 	var t := tex.get_size()

@@ -1,8 +1,8 @@
 extends CharacterBody2D
-## 치즈(주인공) — 좌우 이동 + 점프(회피) + 원거리 자동사격 + 몸으로 밀기
+## 치즈(주인공) ─ 좌우 이동 + 점프(회피) + 원거리 자동사격 + 몸으로 밀기
 ##
 ## ★핵심 규칙:
-##   · 치즈는 절대 좌우 반전 안 함 — 언제나 오른쪽을 본다.
+##   · 치즈는 절대 좌우 반전 안 함 ─ 언제나 오른쪽을 본다.
 ##     오른쪽 이동=walk / 왼쪽 이동=back(뒷걸음질) / 정지=idle / 공중=jump / 사격=shoot
 ##   · 적은 통과 못 함(살아있는 관문). 점프해도 적 위로 못 넘어감(적은 키 큰 투명벽).
 ##   · "몸으로 밀기": 오른쪽으로 가며 적과 부딪히면, 속도 규칙에 따라 적을 민다.
@@ -47,8 +47,8 @@ var crit_mult: float = 1.5
 
 ## 원거리 발사방식(직업에서 _ready에 채움)
 var ranged_mode: String = "straight"   # straight 일자 / lob 포물선던지기
-var ranged_limit_frac: float = 0.0      # 일자 사거리(화면폭 비율, 0=끝까지) — 음악가 0.5
-var ranged_misfire: float = 0.0         # 불발 확률 — 보안관
+var ranged_limit_frac: float = 0.0      # 일자 사거리(화면폭 비율, 0=끝까지) ─ 음악가 0.5
+var ranged_misfire: float = 0.0         # 불발 확률 ─ 보안관
 var ranged_shape: String = "dot"        # 투사체 모양(dot/stone/plate/note)
 var ranged_fire_delay: float = 0.0      # 공격 시작 후 발사까지 딜레이(모션 타이밍)
 
@@ -56,7 +56,7 @@ signal died   # HP가 0이 되면 발생(게임오버 연출은 game.gd가 처�
 
 var health: float
 var on_ground: bool = true
-var crouching: bool = false   # 앉기(회피) 중 — 위에서 오는 공격을 피함(추후 큰 적용)
+var crouching: bool = false   # 앉기(회피) 중 ─ 위에서 오는 공격을 피함(추후 큰 적용)
 var _dead: bool = false
 var _anim_reversed: bool = false   # walk 역재생(뒷걸음질) 중인지
 const IDLE_HOLD := 1.0             # idle: 첫 프레임에서 이만큼 유지 후 재생(모든 직업)
@@ -64,7 +64,7 @@ var _idle_phase: String = ""       # ""(미진입) / hold(첫프레임 유지) /
 var _event_idle: bool = false      # 인게임 이벤트 중: 전투 정지, idle 사이클만(트리 일시정지에도 동작)
 var _event_walking: bool = false   # 이벤트 중 지정 위치로 자동 도보
 var _event_walk_target: float = 0.0
-var _event_backstep: bool = false  # true면 좌측 이동 시 back(뒷걸음질, 우향) — 펑거스 밀기용
+var _event_backstep: bool = false  # true면 좌측 이동 시 back(뒷걸음질, 우향) ─ 펑거스 밀기용
 var _idle_hold_t: float = 0.0
 
 # 모션 재생 배속/타이밍 (끝까지 재생, idle은 입력 없을 때만)
@@ -93,7 +93,7 @@ const JAZZ_NOTE_TYPES := 3      # 음표 모양 가짓수(랜덤)
 # 메이드/맨몸(던지기): 저화력·랜덤 포물선
 const LOB_ANGLE_MIN := 0.0      # 던지는 각도 최소(수평)
 const LOB_ANGLE_MAX := 45.0     # 던지는 각도 최대(위로 45도)
-const LOB_POWER := 900.0        # 던지는 힘(사거리) — 조금 늘림
+const LOB_POWER := 900.0        # 던지는 힘(사거리) ─ 조금 늘림
 const LOB_GRAVITY := 1500.0     # 포물선 중력
 # 보안관(총): 장거리·직선·불발(확률은 JOB_STATS misfire=0.12)
 const SHERIFF_BULLET_SPEED := 840.0
@@ -113,9 +113,9 @@ var _poison_tick: float = 0.0    # 다음 독 틱까지
 var _slow_timer: float = 0.0     # 둔화(이동 감속) 남은 시간
 var _poison_fx: AnimatedSprite2D # 독 이펙트(플레이어 자식 = 따라다님, 단일 노드 = 중첩 없음)
 var _slow_fx: AnimatedSprite2D   # 둔화 이펙트(상동)
-# ── 상태이상 밸런스(벌·거미 재정의 2026-06-05, M=1.0 기준) — 중첩 금지·갱신만 ──
+# ── 상태이상 밸런스(벌·거미 재정의 2026-06-05, M=1.0 기준) ─ 중첩 금지·갱신만 ──
 const POISON_DUR := 3.0          # 독 지속(초)
-const POISON_TICK_INT := 1.0     # 독 틱 간격(초) — 1초마다
+const POISON_TICK_INT := 1.0     # 독 틱 간격(초) ─ 1초마다
 const POISON_TICK_DMG := 1.5     # 틱당 데미지 (3틱 ≈ 4.5)
 const SLOW_DUR := 2.5            # 둔화 지속(초)
 const SLOW_MOVE_MULT := 0.65     # 둔화 시 이동 배율(-35%)
@@ -141,11 +141,11 @@ func _ready() -> void:
 	position.y = Layout.ground_y()   # 어떤 기기에서도 바닥에 서도록
 	# 선택 직업 스탯 적용(시스템밸런스 §4)
 	var st: Dictionary = GameState.job_stats()
-	var lvm := GameState.level_mult()          # 등급(Lv) 배율 — hp/원/근에 곱함
+	var lvm := GameState.level_mult()          # 등급(Lv) 배율 ─ hp/원/근에 곱함
 	max_health = st["hp"] * lvm
 	ranged_damage = st["ranged"] * lvm
 	near_damage = st["near"] * lvm
-	# 펄 축복(이번 판) — 발톱=공격+% / 배=체력+% (§5.5, 로드맵 6단계)
+	# 펄 축복(이번 판) ─ 발톱=공격+% / 배=체력+% (§5.5, 로드맵 6단계)
 	match GameState.selected_blessing:
 		"claw":
 			var p := 1.0 + GameState.blessing_pct("atk")
@@ -165,7 +165,7 @@ func _ready() -> void:
 	ranged_shape = st.get("rshape", "dot")
 	ranged_fire_delay = st.get("rdelay", 0.0)
 	health = max_health
-	anim.flip_h = false  # 절대 좌우 반전 안 함 — 치즈는 항상 오른쪽을 본다
+	anim.flip_h = false  # 절대 좌우 반전 안 함 ─ 치즈는 항상 오른쪽을 본다
 	# 선택한 직업의 스프라이트로 교체
 	var frames := load(GameState.job_frames_path())
 	if frames:
@@ -179,14 +179,14 @@ func _ready() -> void:
 	#   layer 4 = 플레이어 / mask 2 = 적만(몸으로 밀기·관문). 적은 mask 4로 플레이어에 막힘.
 	collision_layer = 4
 	collision_mask = 2
-	# 불발 소리(철컥) — 짧은 클릭음을 코드로 생성
+	# 불발 소리(철컥) ─ 짧은 클릭음을 코드로 생성
 	_click_player = AudioStreamPlayer.new()
 	_click_player.stream = _make_click_sound()
 	_click_player.volume_db = -4.0
 	add_child(_click_player)
 
 
-## "철컥" 불발 소리 — 짧게 감쇠하는 노이즈 버스트를 즉석에서 생성.
+## "철컥" 불발 소리 ─ 짧게 감쇠하는 노이즈 버스트를 즉석에서 생성.
 func _make_click_sound() -> AudioStreamWAV:
 	var rate := 22050
 	var n := int(rate * 0.06)
@@ -228,7 +228,7 @@ func _physics_process(delta: float) -> void:
 			var dir := signf(_event_walk_target - global_position.x)
 			var anim_name := "walk"
 			if _event_backstep and dir < 0.0:
-				# 펑거스에게 밀려 뒷걸음질(전투처럼) — 오른쪽 보고 뒤로 물러남.
+				# 펑거스에게 밀려 뒷걸음질(전투처럼) ─ 오른쪽 보고 뒤로 물러남.
 				anim.flip_h = false
 				anim_name = "back"
 			else:
@@ -243,7 +243,7 @@ func _physics_process(delta: float) -> void:
 			if absf(global_position.x - _event_walk_target) <= 6.0:
 				global_position.x = _event_walk_target
 				_event_walking = false
-				# flip 유지 — 걸어온 방향(=목표를 바라보는 방향) 그대로 둠
+				# flip 유지 ─ 걸어온 방향(=목표를 바라보는 방향) 그대로 둠
 		else:
 			velocity = Vector2.ZERO
 			_update_animation(0.0, delta)   # next="idle" → _tick_idle(1초 유지→재생→반복)
@@ -387,14 +387,14 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()   # 발밑 그림자(점프 높이/눕기 반영) + 데미지 숫자 갱신
 
 
-## 발밑 그림자 — 검정 30% 타원. 점프하면 바닥에 남고 작아진다.
+## 발밑 그림자 ─ 검정 30% 타원. 점프하면 바닥에 남고 작아진다.
 ## 누우면(crouch) 좌우로 넓고 + 위로 올라가 "지면에 누운" 느낌.
 func _draw() -> void:
 	var gy_local := Layout.ground_y() - position.y
 	if gy_local < 0.0:
 		gy_local = 0.0
 	var t := clampf(1.0 - gy_local / 500.0, 0.35, 1.0)   # 높이 오를수록 작고 옅게
-	# 그림자 크기를 "현재 sit 스프라이트 프레임"에 직접 맞춤 — 누운 프레임=크게, 선 프레임=작게
+	# 그림자 크기를 "현재 sit 스프라이트 프레임"에 직접 맞춤 ─ 누운 프레임=크게, 선 프레임=작게
 	var blend := 0.0
 	if _sit_phase == "down":
 		# 0프레임(섬)→7프레임(완전히 누움)으로 갈수록 1
@@ -413,11 +413,11 @@ func _draw() -> void:
 	_draw_hurt_popups()
 
 
-## 치즈가 받은 데미지 숫자 — 머리 위로 상승하며 점점 투명(빨강)
+## 치즈가 받은 데미지 숫자 ─ 머리 위로 상승하며 점점 투명(빨강)
 func _draw_hurt_popups() -> void:
 	if _hurt_popups.is_empty():
 		return
-	var font: Font = preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+	var font: Font = preload("res://assets/fonts/SBAggro-Medium.ttf")
 	if font == null:
 		return
 	for p in _hurt_popups:
@@ -433,7 +433,7 @@ func _draw_hurt_popups() -> void:
 		draw_string(font, pos, txt, HORIZONTAL_ALIGNMENT_CENTER, 80.0, fs, col)
 
 
-## 몸으로 밀기 — move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
+## 몸으로 밀기 ─ move_and_slide에서 부딪힌 적을 속도 규칙대로 민다.
 func _push_blocking_enemies() -> void:
 	var my_speed := base_speed * move_multiplier
 	for i in get_slide_collision_count():
@@ -478,7 +478,7 @@ func _handle_attack() -> void:
 			_attack_fired = true                 # 즉시 발사 직업 → 마무리는 천천히
 
 
-## 크리 판정 — 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
+## 크리 판정 ─ 기본 데미지를 받아 (데미지, 넉백, 스턴, 크리여부) 산출.
 ## 평타는 약하게(작은 넉백), 크리 터지면 직업 효과가 강하게.
 func _roll_attack(base_dmg: float) -> Dictionary:
 	var dmg := base_dmg
@@ -495,7 +495,7 @@ func _roll_attack(base_dmg: float) -> Dictionary:
 	return {"dmg": dmg, "kb": kb, "stun": stun, "crit": is_crit}
 
 
-## 근접 공격 — 사정거리 안에서 "가까운 순으로 최대 3마리"만 때린다.
+## 근접 공격 ─ 사정거리 안에서 "가까운 순으로 최대 3마리"만 때린다.
 func _melee_attack() -> void:
 	var hit := _roll_attack(near_damage)
 	# 사정거리 안 적들을 거리와 함께 모은다
@@ -522,7 +522,7 @@ func _melee_attack() -> void:
 		var e = targets[i]["e"]
 		if e.has_method("take_damage"):
 			e.take_damage(hit["dmg"], hit["kb"], hit["stun"], hit["crit"], false)  # 마리별 소리 X
-	# 펀치 소리는 휘두름당 1번만(여러 마리 때려도 한 번) — 맞았을 때만.
+	# 펀치 소리는 휘두름당 1번만(여러 마리 때려도 한 번) ─ 맞았을 때만.
 	# 휘두름 소리와 안 겹치게 0.05초 뒤 재생(근접·원거리 공통 impact, 크리=퍼벅)
 	if n > 0:
 		var was_crit: bool = hit["crit"]
@@ -535,7 +535,7 @@ func _melee_attack() -> void:
 func _fire_ranged() -> void:
 	if bullet_scene == null:
 		return
-	# 보안관 불발 — 총알이 힘없이 나가 바로 앞에 툭 떨어짐(데미지 0) + "철컥" 소리.
+	# 보안관 불발 ─ 총알이 힘없이 나가 바로 앞에 툭 떨어짐(데미지 0) + "철컥" 소리.
 	if ranged_misfire > 0.0 and randf() < ranged_misfire:
 		var dud := bullet_scene.instantiate()
 		dud.global_position = global_position + muzzle_offset
@@ -597,13 +597,13 @@ func _fire_ranged() -> void:
 		bullet.setup(cfg)
 	if ranged_shape == "note":
 		# 음악가 = 트럼펫. 음표 종류별 음높이(빠른 잇단=높게 / 4분=낮게).
-		var note_pitch: Array = [0.85, 0.95, 0.78]   # [0]8분 [1]잇단 [2]4분 — 너무 높지 않게(모기소리 방지), 4분이 가장 듣기 좋음
+		var note_pitch: Array = [0.85, 0.95, 0.78]   # [0]8분 [1]잇단 [2]4분 ─ 너무 높지 않게(모기소리 방지), 4분이 가장 듣기 좋음
 		Sfx.play("trumpet", note_pitch[int(cfg.get("note_type", 0))], -3.0)
 	else:
 		Sfx.play("shoot", 0.85 if is_lob else (1.15 if not is_gun else 1.0))   # 던지기=낮게/총=기본
 	# 보안관 총 발사: 큰 화염 + 화면 흔들림(불발과 확 차이)
 	if is_gun and is_instance_valid(muzzle_fx):
-		muzzle_fx.flash()   # 오른쪽으로 뻗는 직선 총구 화염(코드 드로잉) — 방사형 스프라이트는 손에서 터져 보여 제거
+		muzzle_fx.flash()   # 오른쪽으로 뻗는 직선 총구 화염(코드 드로잉) ─ 방사형 스프라이트는 손에서 터져 보여 제거
 		Fx.request_shake(5.0)
 	elif not is_lob:
 		# 음악가: 음표 발사 순간 작은 반짝(허전함 보완)
@@ -628,7 +628,7 @@ func _nearest_enemy(exclude_air: bool = false) -> Node2D:
 	return nearest
 
 
-## 적의 공격에서 호출 — 데미지를 받는다(넉백 없음).
+## 적의 공격에서 호출 ─ 데미지를 받는다(넉백 없음).
 func take_damage(amount: float, crit: bool = false) -> void:
 	if _dead:
 		return
@@ -638,7 +638,7 @@ func take_damage(amount: float, crit: bool = false) -> void:
 		amount *= (1.0 - _guard_pct)   # 방패 자세: 피해 감소
 	if amount >= 1.0:
 		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0, "crit": crit})   # 받은 데미지 숫자
-		# 적이 치즈 평타에 맞을 때와 동일한 타격 연출(소리+임팩트 번쩍+흔들림) — 크리면 강하게
+		# 적이 치즈 평타에 맞을 때와 동일한 타격 연출(소리+임팩트 번쩍+흔들림) ─ 크리면 강하게
 		Sfx.impact(crit)
 		Fx.request_shake(7.0 if crit else 3.0)
 		Fx.burst("critical_hit" if crit else "impact_flash", global_position + Vector2(0, -110), 0.6 if crit else 0.42, 45)
@@ -651,7 +651,7 @@ func take_damage(amount: float, crit: bool = false) -> void:
 	if health <= 0.0:
 		health = 0.0
 		_dead = true
-		died.emit()   # 게임오버 — game.gd가 연출 처리
+		died.emit()   # 게임오버 ─ game.gd가 연출 처리
 
 
 ## --- 소모품 효과 (로드맵 4단계 §5.4) ---
@@ -701,7 +701,7 @@ func apply_encore(dur: float) -> void:
 	Sfx.play("buff")
 
 
-## 적 발사체/근접의 상태이상 — 독(지속딜) / 둔화(이동 감속)
+## 적 발사체/근접의 상태이상 ─ 독(지속딜) / 둔화(이동 감속)
 func apply_status(st: String) -> void:
 	if _dead or GameState.cheats.get("godmode", false):
 		return
@@ -714,7 +714,7 @@ func apply_status(st: String) -> void:
 			_slow_timer = SLOW_DUR
 
 
-## 독 지속 데미지 — 피격 모션 없이 체력만 깎음(틱마다 호출)
+## 독 지속 데미지 ─ 피격 모션 없이 체력만 깎음(틱마다 호출)
 func _poison_damage(amount: float) -> void:
 	if _dead:
 		return
@@ -726,7 +726,7 @@ func _poison_damage(amount: float) -> void:
 		died.emit()
 
 
-## 상태이상 이펙트 갱신 — 플레이어 자식(따라다님)·단일 노드(중첩 없음). 타이머 살아있으면 표시.
+## 상태이상 이펙트 갱신 ─ 플레이어 자식(따라다님)·단일 노드(중첩 없음). 타이머 살아있으면 표시.
 func _drive_status_fx() -> void:
 	if _poison_timer > 0.0:
 		if _poison_fx == null:
@@ -766,7 +766,7 @@ func _update_animation(direction: float, delta: float) -> void:
 	var next := "idle"
 	var reversed := false
 	if _committed_anim != "":
-		next = _committed_anim   # hit/shoot/melee — 끝까지 재생
+		next = _committed_anim   # hit/shoot/melee ─ 끝까지 재생
 	elif _sit_phase != "":
 		next = "sit"
 	elif _jump_state != "":
@@ -811,7 +811,7 @@ func _update_animation(direction: float, delta: float) -> void:
 		anim.speed_scale = 0.0
 
 
-## 이벤트 중 idle 모드 토글 — 트리 일시정지에도 _physics가 돌게 PROCESS_MODE_ALWAYS로.
+## 이벤트 중 idle 모드 토글 ─ 트리 일시정지에도 _physics가 돌게 PROCESS_MODE_ALWAYS로.
 func set_event_idle(on: bool) -> void:
 	_event_idle = on
 	process_mode = Node.PROCESS_MODE_ALWAYS if on else Node.PROCESS_MODE_INHERIT
@@ -843,7 +843,7 @@ func is_airborne() -> bool:
 	return _jump_state == "air" or position.y < Layout.ground_y() - 1.0
 
 
-## idle 사이클 — 첫 프레임에서 IDLE_HOLD초 유지 → idle 1회 재생 → (재생 끝나면 _on_anim_finished가 다시 유지)
+## idle 사이클 ─ 첫 프레임에서 IDLE_HOLD초 유지 → idle 1회 재생 → (재생 끝나면 _on_anim_finished가 다시 유지)
 func _tick_idle(delta: float) -> void:
 	if _idle_phase == "":
 		# idle 진입: 첫 프레임 고정 + 유지 타이머 시작

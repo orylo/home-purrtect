@@ -1,5 +1,5 @@
 extends Node
-## Music (오토로드) — 화면별 배경음악(BGM). 자동로드라 씬이 바뀌어도 끊기지 않고,
+## Music (오토로드) ─ 화면별 배경음악(BGM). 자동로드라 씬이 바뀌어도 끊기지 않고,
 ## 현재 씬에 맞는 곡으로 자연스럽게 전환된다.
 ##   · 전투(main.tscn)        = battle.wav (술집 피아노 "Drunken Party")
 ##   · 그 외(시작·홈·상점 등) = menu.wav   ("Going Bananas")
@@ -10,14 +10,14 @@ const VOL_DB := -14.0
 const TRACKS := {
 	"menu":   preload("res://assets/music/menu.wav"),
 	"battle": preload("res://assets/music/battle.wav"),
-	"boss":   preload("res://assets/music/boss.wav"),   # 보스전 — 긴박하게
+	"boss":   preload("res://assets/music/boss.wav"),   # 보스전 ─ 긴박하게
 }
 ## 씬 파일 → 트랙. 목록에 없는 씬은 모두 "menu". "none"=무음(그 씬이 직접 음악 재생).
 const SCENE_TRACK := {
 	"res://scenes/main.tscn": "battle",
 	"res://scenes/prologue.tscn": "none",   # 프롤로그는 자체 음악(슬픔→온기) 재생
 }
-## 보스 스테이지 — 전투씬이어도 boss 트랙. 키="막-스테이지".
+## 보스 스테이지 ─ 전투씬이어도 boss 트랙. 키="막-스테이지".
 const BOSS_STAGES := {
 	"1-10": true,
 	"1-20": true,

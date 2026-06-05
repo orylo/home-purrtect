@@ -1,9 +1,9 @@
 extends Control
-## 맥스의 상점 (로드맵 4단계) — 코인을 쓰는 곳. 탭 구조.
+## 맥스의 상점 (로드맵 4단계) ─ 코인을 쓰는 곳. 탭 구조.
 ##   [레벨업] 직업 Lv↑ / [소모품] 붕대·멸치·폭죽 / [전리품 매입] 전리품 팔기 / [제작] 메이드·음악가
 ##   진입: 홈 [맥스 상점]. 나가기: [← 홈].
 
-const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 const BG := preload("res://assets/backgrounds/stage1_wall.jpg")
 const ORANGE := Color(0.9882, 0.3137, 0.0)
 const DARK := Color(0.12, 0.12, 0.16)
@@ -412,7 +412,7 @@ func _refresh() -> void:
 	if job == "base":
 		_job_lbl.text = "길냥이"
 		_lv_lbl.text = "맨몸은 등급이 없어요 (직업을 장착하세요)"
-		_buy_btn.text = "—"
+		_buy_btn.text = "─"
 		_buy_btn.disabled = true
 		for id2 in _inv_lbls.keys():
 			_inv_lbls[id2].text = "보유 %d" % int(GameState.inventory.get(id2, 0))
@@ -424,7 +424,7 @@ func _refresh() -> void:
 	var ng := GameState.next_grade(job)
 	var cost := GameState.craft_grade_cost(job)
 	if ng <= 0:
-		_lv_lbl.text = "전설 등급 보유 (배율 ×%.1f) — 최고 등급" % GameState.LV_MULT[clampi(maxi(1, g) - 1, 0, 4)]
+		_lv_lbl.text = "전설 등급 보유 (배율 ×%.1f) ─ 최고 등급" % GameState.LV_MULT[clampi(maxi(1, g) - 1, 0, 4)]
 		_buy_btn.text = "최고 등급 보유"
 		_buy_btn.disabled = true
 	else:
@@ -438,7 +438,7 @@ func _refresh() -> void:
 				parts.append("%s %d/%d" % [String(GameState.MATERIALS[mid]["name"]), GameState.mat_count(mid), int(mats[mid])])
 			matstr = "   ·   " + "  ".join(parts) + "   ·   직전 등급 소모"
 		_lv_lbl.text = "%s 합성  (배율 ×%.1f → ×%.1f)%s" % [GameState.rank_label(ng, job), cur_mult, next_mult, matstr]
-		_buy_btn.text = "%s 합성  —  %s 코인" % [GameState.rank_label(ng, job), _commafy(cost)]
+		_buy_btn.text = "%s 합성  ─  %s 코인" % [GameState.rank_label(ng, job), _commafy(cost)]
 		_buy_btn.disabled = not GameState.can_craft_grade(job)
 	for id in _inv_lbls.keys():
 		_inv_lbls[id].text = "보유 %d" % int(GameState.inventory.get(id, 0))
@@ -520,7 +520,7 @@ func _text(s: String, fs: int, col: Color) -> Label:
 	var kind := "title" if fs >= 30 else ("caption" if fs <= 18 else "body")
 	return Design.label(s, kind, _ink(col))
 
-## 버튼 폰트/기본 스타일(크림) — 호출부 호환용 래퍼
+## 버튼 폰트/기본 스타일(크림) ─ 호출부 호환용 래퍼
 func _font(b: Button, fs: int) -> void:
 	Design.style_button(b, "paper", fs)
 

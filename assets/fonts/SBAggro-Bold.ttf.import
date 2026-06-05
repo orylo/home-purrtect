@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://c4x5euanacrln"
-path="res://.godot/imported/SeoulAlrim-Bold.ttf-2389f7226eec7d63e549f2e6b1b6d386.fontdata"
+uid="uid://ok7ax7nl02kj"
+path="res://.godot/imported/SBAggro-Bold.ttf-288284fef7775e69bdd5f3178498ed59.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/SeoulAlrim-Bold.ttf"
-dest_files=["res://.godot/imported/SeoulAlrim-Bold.ttf-2389f7226eec7d63e549f2e6b1b6d386.fontdata"]
+source_file="res://assets/fonts/SBAggro-Bold.ttf"
+dest_files=["res://.godot/imported/SBAggro-Bold.ttf-288284fef7775e69bdd5f3178498ed59.fontdata"]
 
 [params]
 

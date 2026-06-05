@@ -1,10 +1,10 @@
 extends CanvasLayer
-## DEV 전용 인게임 디버그 오버레이 — 좌상단 🐞 버튼으로 패널 토글.
+## DEV 전용 인게임 디버그 오버레이 ─ 좌상단 🐞 버튼으로 패널 토글.
 ## 게임 진행 중에 스테이지 점프 / 직업 변경 / 특정 적 스폰 / 치트.
 
-const FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
+const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 const ENEMY_SCENE := preload("res://scenes/enemy.tscn")
-# 가독성 토큰 — 어두운 패널 + 밝은 크림 버튼 + 진한 잉크 글씨(밝은 게임화면 위에서도 또렷).
+# 가독성 토큰 ─ 어두운 패널 + 밝은 크림 버튼 + 진한 잉크 글씨(밝은 게임화면 위에서도 또렷).
 const BG_PANEL := Color("17140F")    # 어두운 패널
 const PAPER := Color("F3E3BE")       # 크림 버튼 바탕
 const PAPER_HI := Color("FBEFCF")    # 버튼 호버
@@ -23,7 +23,7 @@ var _panel: PanelContainer
 
 func _ready() -> void:
 	if not GameState.is_dev() or GameState.mode != "dev":
-		queue_free()      # 개발자 모드(dev)에서만 표시 — 플레이어 모드/출시 빌드엔 안 뜸
+		queue_free()      # 개발자 모드(dev)에서만 표시 ─ 플레이어 모드/출시 빌드엔 안 뜸
 		return
 	layer = 100
 	_build_ui()
@@ -37,7 +37,7 @@ func _build_ui() -> void:
 	btn.pressed.connect(func(): _panel.visible = not _panel.visible)
 	add_child(btn)
 
-	# 가로로 넓고 낮게(상단 띠) — 하단 게임영역(치즈·조작)이 안 가려지게. 반투명(게임 비침).
+	# 가로로 넓고 낮게(상단 띠) ─ 하단 게임영역(치즈·조작)이 안 가려지게. 반투명(게임 비침).
 	_panel = PanelContainer.new()
 	_panel.position = Vector2(10, 58)
 	_panel.visible = false
@@ -65,7 +65,7 @@ func _build_ui() -> void:
 
 	# === c2: 전투 진행 + 스킬/동료 ===
 	_sec(c2, "전투 진행")
-	# 이벤트 스킵(전투만) — 토글. ON이면 인트로/클리어·게임오버 컷씬 전부 생략(인트로는 다음 스테이지 진입부터 적용).
+	# 이벤트 스킵(전투만) ─ 토글. ON이면 인트로/클리어·게임오버 컷씬 전부 생략(인트로는 다음 스테이지 진입부터 적용).
 	var ev := Button.new()
 	var ev_upd := func():
 		var on: bool = GameState.cheats.get("skip_events", false)
@@ -77,7 +77,7 @@ func _build_ui() -> void:
 		GameState.cheats["skip_events"] = not GameState.cheats.get("skip_events", false)
 		ev_upd.call())
 	c2.add_child(ev)
-	# 웨이브 건너뛰기 — 현재 웨이브 즉시 종료 → 다음 웨이브(또는 클리어).
+	# 웨이브 건너뛰기 ─ 현재 웨이브 즉시 종료 → 다음 웨이브(또는 클리어).
 	_btn(c2, "웨이브 건너뛰기 ⏭", func():
 		var sp: Node = get_parent().get_node_or_null("Spawner")
 		if sp != null and sp.has_method("dev_skip_wave"):

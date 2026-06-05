@@ -1,6 +1,6 @@
 extends "res://scripts/npc_talk.gd"
-## 펄 — 미연시풍 대화 화면 (로드맵 6단계, §5.5 / 기획_펄로맨스.md).
-##   출격 축복은 1회용 — 매번 찾아와 받아야 함. 보석 헌납으로 호감도↑.
+## 펄 ─ 미연시풍 대화 화면 (로드맵 6단계, §5.5 / 기획_펄로맨스.md).
+##   출격 축복은 1회용 ─ 매번 찾아와 받아야 함. 보석 헌납으로 호감도↑.
 
 const PINK := Color(1.0, 0.72, 0.86)
 const PURPLE := Color(0.78, 0.55, 0.85)
@@ -48,7 +48,7 @@ func _bless_menu() -> void:
 func _grant(bid: String) -> void:
 	GameState.set_blessing(bid)
 	portrait(PURPLE, "happy")
-	say("펄", PINK, "%s — 이번 한 번뿐이에요.\n부디… 살아 돌아오세요." % String(GameState.BLESSINGS[bid]["name"]))
+	say("펄", PINK, "%s ─ 이번 한 번뿐이에요.\n부디… 살아 돌아오세요." % String(GameState.BLESSINGS[bid]["name"]))
 	choices([["고마워, 펄", _menu]])
 
 

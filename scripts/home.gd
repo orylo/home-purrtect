@@ -1,5 +1,5 @@
 extends Control
-## 홈 화면 (메인 허브) — 카툰 톤(design.md): 크림 패널·잉크 외곽선·빨강 CTA·골든 강조.
+## 홈 화면 (메인 허브) ─ 카툰 톤(design.md): 크림 패널·잉크 외곽선·빨강 CTA·골든 강조.
 ##   상단: 코인(골든)·스테이지 / 가방·설정 / 중앙: 치즈·펄·맥스 진입 / 하단: 전투준비·맵·출격(CTA)
 
 var _toast: Label
@@ -18,10 +18,10 @@ func _build() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var E := float(Design.EDGE)   # 24
 
-	# ── 배경(실내 플레이스홀더) — 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
+	# ── 배경(실내 플레이스홀더) ─ 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
 	_room_placeholder(vp)
 
-	# ── 중앙: 치즈(대기) — 레퍼런스만큼 크게 ──
+	# ── 중앙: 치즈(대기) ─ 레퍼런스만큼 크게 ──
 	var frames := load(GameState.job_frames_path())
 	if frames:
 		var spr := AnimatedSprite2D.new()
@@ -49,16 +49,16 @@ func _build() -> void:
 	var top_specs := [   # 오른쪽부터: 메뉴, 설정, 친구, 편지, 종
 		["메뉴", func(): _show_bag()],
 		["설정", func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐"))],
-		["친구", func(): _toast_msg("친구 — 준비중")],
-		["편지", func(): _toast_msg("메시지 — 준비중")],
-		["종",   func(): _toast_msg("알림 — 준비중")],
+		["친구", func(): _toast_msg("친구 ─ 준비중")],
+		["편지", func(): _toast_msg("메시지 ─ 준비중")],
+		["종",   func(): _toast_msg("알림 ─ 준비중")],
 	]
 	var leftmost := vp.x
 	for i in top_specs.size():
 		var x := vp.x - E - ic_w - i * istep
 		leftmost = x
 		_btn(String(top_specs[i][0]), Vector2(x, E), Vector2(ic_w, ic_h), "paper", Design.FS_CAPTION, top_specs[i][1])
-	# 보유 코인 — 5버튼 왼쪽에(우측정렬)
+	# 보유 코인 ─ 5버튼 왼쪽에(우측정렬)
 	var coin := Design.label("코인 " + _commafy(GameState.coins), "num", Design.CHEESE)
 	coin.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	coin.size = Vector2(240, ic_h)
@@ -67,7 +67,7 @@ func _build() -> void:
 	add_child(coin)
 	_coin_lbl = coin
 
-	# DEV 도구 — "개발자 루트"로 들어온 홈에서만 노출. 일반 [게임 시작]→홈(mode=player)에선 숨김.
+	# DEV 도구 ─ "개발자 루트"로 들어온 홈에서만 노출. 일반 [게임 시작]→홈(mode=player)에선 숨김.
 	#   (시작화면 우하단 개발자 버튼 → 개발자 메뉴 → [홈 화면으로]로 들어와야 mode=dev → 노출)
 	if GameState.is_dev() and GameState.mode == "dev":
 		_btn("DEV 도구", Vector2(E, E + 118.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
@@ -91,7 +91,7 @@ func _build() -> void:
 				func(): get_tree().change_scene_to_file("res://scenes/maxtalk.tscn"))
 		coach.append({"id": "max", "rect": Rect2(max_pos, npc_sz),
 				"text": "맥스의 상점에서 물건을 사고 장비를 만들 수 있어요."})
-		# 1-9: 맥스가 스킬도 팔기 시작(D+ 코치마크 — 맥스 버튼 재강조)
+		# 1-9: 맥스가 스킬도 팔기 시작(D+ 코치마크 ─ 맥스 버튼 재강조)
 		if GameState.cleared_stages.has(9):
 			coach.append({"id": "skill", "rect": Rect2(max_pos, npc_sz),
 					"text": "이제 맥스가 '스킬'도 팔아요. 사서 장착하면 전투 중 쓸 수 있어요."})
@@ -132,7 +132,7 @@ func _process(delta: float) -> void:
 			_toast.visible = false
 
 
-## 가방(인벤토리) 오버레이 — 크림 패널 + 잉크 외곽선(design.md 패널 규칙)
+## 가방(인벤토리) 오버레이 ─ 크림 패널 + 잉크 외곽선(design.md 패널 규칙)
 func _show_bag() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var ov := ColorRect.new()
@@ -153,7 +153,7 @@ func _show_bag() -> void:
 	vb.add_theme_constant_override("separation", 8)
 	vb.custom_minimum_size = Vector2(sc.size.x, 0)
 	sc.add_child(vb)
-	vb.add_child(Design.label("가방 — 보유 현황", "title", Design.INK))
+	vb.add_child(Design.label("가방 ─ 보유 현황", "title", Design.INK))
 	_bag_section(vb, "◆ 전리품")
 	var any_mat := false
 	for id in GameState.MAT_ORDER:
@@ -162,7 +162,7 @@ func _show_bag() -> void:
 			any_mat = true
 			vb.add_child(Design.label("   %s  ×%d" % [String(GameState.MATERIALS[id]["name"]), n], "body"))
 	if not any_mat:
-		vb.add_child(Design.label("   (없음 — 전투에서 침입자 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 ─ 전투에서 침입자 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	_bag_section(vb, "◆ 소모품")
 	var any_item := false
 	for id in ["bandage", "anchovy", "firecracker"]:
@@ -171,10 +171,10 @@ func _show_bag() -> void:
 			any_item = true
 			vb.add_child(Design.label("   %s  ×%d" % [String(GameState.CONSUMABLES[id]["name"]), n], "body"))
 	if not any_item:
-		vb.add_child(Design.label("   (없음 — 맥스 상점에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 ─ 맥스 상점에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	_bag_section(vb, "◆ 보유 스킬")
 	if GameState.owned_skills.is_empty():
-		vb.add_child(Design.label("   (없음 — 맥스 상점 [스킬]에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 ─ 맥스 상점 [스킬]에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	else:
 		var jk := {"sheriff": "보안관", "maid": "메이드", "jazz": "음악가"}
 		for sid in GameState.owned_skills:
@@ -333,13 +333,13 @@ func _room_placeholder(vp: Vector2) -> void:
 	floor.position = Vector2(0, vp.y * 0.66)
 	floor.size = Vector2(vp.x, vp.y * 0.34)
 	add_child(floor)
-	# 중앙 받침(러그/접시 느낌 — 치즈 발밑)
+	# 중앙 받침(러그/접시 느낌 ─ 치즈 발밑)
 	var rug := ColorRect.new()
 	rug.color = Color("8a3b5e")                   # 러그
 	rug.size = Vector2(vp.x * 0.40, vp.y * 0.16)
 	rug.position = Vector2(vp.x * 0.5 - rug.size.x * 0.5, vp.y * 0.66 - rug.size.y * 0.5)
 	add_child(rug)
-	var tag := Design.label("(실내 배경 — 플레이스홀더)", "caption", Design.PAPER_DEEP)
+	var tag := Design.label("(실내 배경 ─ 플레이스홀더)", "caption", Design.PAPER_DEEP)
 	tag.position = Vector2(vp.x * 0.5 - 120, vp.y - 28)
 	tag.size = Vector2(240, 24)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

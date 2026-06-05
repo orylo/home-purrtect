@@ -1,5 +1,5 @@
 extends Control
-## 해금 이벤트 씬 (placeholder) — 이벤트 스테이지 클리어 후 랜딩.
+## 해금 이벤트 씬 (placeholder) ─ 이벤트 스테이지 클리어 후 랜딩.
 ##  GameState.pending_event_stage 에 담긴 스테이지의 clear_event_for() 내용을 보여주고 [계속]→홈.
 ##  나중에 진짜 컷신/대화로 교체(지금은 카드형 알림).
 

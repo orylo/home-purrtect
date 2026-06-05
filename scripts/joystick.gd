@@ -1,6 +1,6 @@
 extends Control
-const UI_FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
-## 가상 조이스틱 (왼손) — 모바일 이동 + 점프
+const UI_FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
+## 가상 조이스틱 (왼손) ─ 모바일 이동 + 점프
 ##
 ## · 화면 왼쪽-아래 영역을 누르면 그 자리에 조이스틱이 생긴다(동적).
 ## · 드래그하면 좌우로 이동(Touch.move_axis 갱신).
@@ -68,7 +68,7 @@ func _handle_drag(pos: Vector2) -> void:
 	_knob = _center + off
 	var thr := base_radius * 0.5
 	if off.y < -thr:
-		# 위로 올리면 점프(한 번만 — 내렸다 다시 올려야 또 점프)
+		# 위로 올리면 점프(한 번만 ─ 내렸다 다시 올려야 또 점프)
 		if not _up_active:
 			Touch.request_jump()
 			_up_active = true
@@ -93,7 +93,7 @@ func _draw() -> void:
 		_draw_knob(_knob)
 		_draw_wasd(_center, 1.0)
 	else:
-		# 쉬는 위치 — 조작 띠의 왼쪽 세로 중앙
+		# 쉬는 위치 ─ 조작 띠의 왼쪽 세로 중앙
 		var band_cy := (Layout.band_top() + size.y) * 0.5
 		var rest := Vector2(Layout.safe_left() + 50.0 + base_radius, band_cy)   # 좌측 노치 안전영역만큼 안으로
 		_draw_pad(rest, 0.85)
@@ -103,13 +103,13 @@ func _draw() -> void:
 
 const TEX_BASE := preload("res://assets/ui/slots/slot2_act.png")   # 전투 HUD 슬롯 에셋
 
-## 베이스 패드 — 전투 HUD 슬롯 텍스처(공격 버튼 아래 슬롯과 동일 톤)
+## 베이스 패드 ─ 전투 HUD 슬롯 텍스처(공격 버튼 아래 슬롯과 동일 톤)
 func _draw_pad(c: Vector2, op: float) -> void:
 	var s := base_radius * 2.3
 	draw_texture_rect(TEX_BASE, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false, Color(1, 1, 1, op))
 
 
-## 노브(손잡이) — 골든 + 잉크 외곽선 + 하이라이트
+## 노브(손잡이) ─ 골든 + 잉크 외곽선 + 하이라이트
 func _draw_knob(c: Vector2) -> void:
 	draw_circle(c + Vector2(0, 3), knob_radius, _col(Design.INK, 0.25))         # 그림자
 	draw_circle(c, knob_radius, Design.CHEESE)
@@ -117,7 +117,7 @@ func _draw_knob(c: Vector2) -> void:
 	draw_circle(c + Vector2(-knob_radius * 0.32, -knob_radius * 0.32), knob_radius * 0.26, _col(Color(1, 1, 1), 0.45))
 
 
-## 상하좌우에 W S A D 키 힌트 — 잉크색(크림 위)
+## 상하좌우에 W S A D 키 힌트 ─ 잉크색(크림 위)
 func _draw_wasd(c: Vector2, op: float) -> void:
 	var font := UI_FONT
 	if font == null:

@@ -1,6 +1,6 @@
 extends Control
-const UI_FONT := preload("res://assets/fonts/SeoulAlrim-Bold.ttf")
-## 하단 HUD (단일 행 — 왼→오):
+const UI_FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
+## 하단 HUD (단일 행 ─ 왼→오):
 ##   아이템1~3(키 1 2 3) / 동료(키 4) / 스킬1~4(키 U I O P) / 근접공격(K) / 원거리공격(L)
 ##   좌하단: 가상 조이스틱(joystick.gd)
 ## 근접/원거리만 실제 작동(입력=attack_button.gd / Touch). 나머지는 시스템 생기면 연결.
@@ -23,7 +23,7 @@ const FILL_ON := Color(0.949, 0.702, 0.239, 0.95) # 눌림 = 골든(cheese)
 const LINE := Color(0.141, 0.122, 0.106, 0.95)    # 잉크 외곽
 const TXT := Color(0.141, 0.122, 0.106, 1.0)      # 잉크 글자
 
-# 나노바나나 에셋 — 슬롯/손 텍스처
+# 나노바나나 에셋 ─ 슬롯/손 텍스처
 const TEX_SLOT_SQ := preload("res://assets/ui/slots/slot2_sq.png")
 const TEX_RND_SKILL := preload("res://assets/ui/slots/slot2_skill.png")
 const TEX_RND_COMP := preload("res://assets/ui/slots/slot2_comp.png")
@@ -46,7 +46,7 @@ func _draw() -> void:
 	var font := UI_FONT
 	var L := Layout.bottom_row(size)
 
-	# 아이템 1~3 (사각 슬롯 텍스처) — 배치된 소모품 이름 + 보유 수
+	# 아이템 1~3 (사각 슬롯 텍스처) ─ 배치된 소모품 이름 + 보유 수
 	var items: Array = L["items"]
 	var sqd := Layout.ITEM_SQ * 1.18
 	for i in items.size():
@@ -61,7 +61,7 @@ func _draw() -> void:
 
 	var d := Layout.ACT_R * 2.2   # 원형 슬롯 지름(텍스처 자체 여백 포함)
 
-	# 동료 (원, 키 4) — 동료 안 껴도 슬롯은 항상 풀 오퍼시티(빈 슬롯 표시).
+	# 동료 (원, 키 4) ─ 동료 안 껴도 슬롯은 항상 풀 오퍼시티(빈 슬롯 표시).
 	var comp: String = GameState.equipped_companion
 	if comp == "":
 		_tex(TEX_RND_COMP, L["companion"], d, d)
@@ -76,7 +76,7 @@ func _draw() -> void:
 		else:
 			_label(font, 24, COMP_SHORT.get(comp, "동료"), L["companion"])
 
-	# 스킬 슬롯 — 활성 칸 = 공격버튼에 가까운 "오른쪽 nslots개"만 풀 오퍼시티, 나머지는 opacity 0(숨김).
+	# 스킬 슬롯 ─ 활성 칸 = 공격버튼에 가까운 "오른쪽 nslots개"만 풀 오퍼시티, 나머지는 opacity 0(숨김).
 	#   길냥이(base)=0칸 → 전부 숨김 / 등급1·2=2칸 / 3·4=3칸 / 5=4칸. 빈 슬롯도 풀 표시(스킬 끼면 그 칸에 아이콘=추후).
 	var skills: Array = L["skills"]                 # 왼→오 (skills[마지막]=공격버튼에 가장 가까움)
 	var sbtn := get_parent().get_node_or_null("SkillButton")
