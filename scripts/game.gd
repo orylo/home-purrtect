@@ -124,7 +124,7 @@ const CUT_SHERIFF := [   # 1-3 보안관 획득(⑤-b, 4장·사일런트+해금
 const CUT_PEARL := [   # 1-5 펄 첫 만남(④, 6장)
 	{"img": "옆집 2층 창가의 펄, 우아한 미소. 치즈와 오묘한 눈빛을 주고받는다.", "line": "펄 : …드디어, 이쪽을 봐주셨군요."},
 	{"img": "창가의 펄, 차분히 치즈를 내려다본다.", "line": "펄 : 줄곧 지켜보고 있었답니다. 당신이 이 집을 지키는 모습을…"},
-	{"img": "치즈, 완전히 반한 표정(♥)으로 빛나는 돌을 슥 내민다.", "line": "(치즈, 빛나는 돌을 건넨다)"},
+	{"img": "치즈, 완전히 반한 표정(♥)으로 빛나는 돌을 슥 내민다.", "line": "(치즈, 빛나는 돌을 건넨다)", "narr": true},
 	{"img": "펄, 받아들고 저도 모르게 환하게 활짝 웃는다(♥) — 진짜 모습.", "line": "펄 : 어머…! 저에게…?"},
 	{"img": "펄, 아차 하고 크흠— 헛기침하며 다시 고고한 여신 표정.", "line": "펄 : …크흠. 나쁘진 않네요. 그럭저럭, 봐줄 만해요."},
 	{"img": "펄, 아차 하고 크흠— 헛기침하며 다시 고고한 여신 표정.", "line": "펄의 호감도가 1 올랐다 ♥", "sys": true},
@@ -302,9 +302,14 @@ const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.5
 func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
-		var is_sys: bool = bool(p.get("sys", false))   # 시스템 알림 페이지(호감도·해금 등) → 합성 시스템음·초상화/이름표 없음·가운데 정렬
-		var pv: String = "system" if is_sys else String(p.get("voice", voice))   # 페이지별 voice 지정(예: 게임오버 골드 대사) > 컷씬 기본 voice
-		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys)
+		var is_sys: bool = bool(p.get("sys", false))    # 시스템 알림(호감도·해금) → 합성 시스템음·초상화/이름표 없음·가운데 정렬
+		var is_narr: bool = bool(p.get("narr", false))  # 내레이션/지문(화자 아님) → 초상화/이름표 없음·가운데·무음
+		var pv: String = ""
+		if is_sys:
+			pv = "system"
+		elif not is_narr:
+			pv = String(p.get("voice", voice))          # 페이지별 voice 지정(예: 게임오버 골드) > 컷씬 기본 voice
+		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys or is_narr)
 
 
 ## 컷씬 한 페이지: 어두운 바탕 + 회색 "이미지 플레이스홀더([그림] 설명)" + 대사 + 페이지수 + 탭.
