@@ -51,10 +51,16 @@ func safe_top() -> float:    return _safe.y
 func safe_right() -> float:  return _safe.z
 func safe_bottom() -> float: return _safe.w
 
-# 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠)
+# 하단 조작 띠(조이스틱·소모품·스킬 버튼이 들어가는 어두운 띠) — 화면 아래에서 고정 픽셀(버튼 크기 일정)
 const CONTROL_BAND_HEIGHT: float = 264.0   # 띠 높이(화면 px 고정)
-const CONTROL_BAND_GAP: float = 22.0       # 바닥선과 띠 윗변 사이 간격
-const GROUND_DROP: float = 80.0            # 바닥선(캐릭터가 서는 선)을 이만큼 아래로 내림
+const CONTROL_BAND_GAP: float = 22.0       # (구) 바닥선↔띠 간격 — 현재 ground_y는 비율식이라 미사용
+const GROUND_DROP: float = 80.0            # (구) 바닥선 내림 — 현재 미사용(비율식 ground_y로 대체)
+
+# 바닥선(캐릭터가 서는 선) = 화면 높이 × 이 비율(위에서). 배경이 height-fit(상하 꽉)이라
+#   배경 바닥선도 화면높이 고정비율에 위치 → 발선을 같은 비율로 잡아야 폰(720)·PC(16:9 877) 등
+#   어떤 뷰포트 높이에서도 발이 배경 바닥선에 유지된다. = 1 - 310/1080 (배경 설계: 바닥에서 310px).
+#   폰(720)에서 ≈513 = 종전 값과 사실상 동일. ※ safe_bottom 안 뺌(배경 풀블리드라 바닥은 배경 비율 따름).
+const GROUND_LINE_FRAC: float = 1.0 - 310.0 / 1080.0   # ≈ 0.7130
 
 # 버튼이 화면 가장자리(아래/오른쪽)에서 떨어지는 공통 마진
 const CONTROL_EDGE_MARGIN: float = 34.0
@@ -121,6 +127,7 @@ func band_top() -> float:
 	return _vis().y - CONTROL_BAND_HEIGHT - safe_bottom()
 
 
-## 캐릭터가 서는 바닥 라인의 y좌표 — 조작 띠보다 위 + GROUND_DROP만큼 아래로
+## 캐릭터가 서는 바닥 라인의 y좌표 = 화면 높이 × GROUND_LINE_FRAC.
+##   배경(height-fit)의 바닥선과 같은 비율 → 폰/PC 등 뷰포트 높이가 달라도 발이 배경 바닥선에 유지.
 func ground_y() -> float:
-	return band_top() - CONTROL_BAND_GAP + GROUND_DROP
+	return _vis().y * GROUND_LINE_FRAC
