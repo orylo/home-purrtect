@@ -10,6 +10,8 @@ const PAPER := Color("F3E3BE")
 const PAPER_DEEP := Color("E4CB95")
 const CHEESE_DEEP := Color("D4912A")
 const BOX_H := 236.0
+## 커스텀 대화창 프레임 이미지(빈티지 테두리). 박스 크기로 늘려 깔고, 본문은 그 위에.
+const FRAME := preload("res://assets/ui/ui_dialogue.png")
 
 
 static func _sb(bg: Color, radius: int = 10) -> StyleBoxFlat:
@@ -45,12 +47,19 @@ static func solid_portrait(col: Color) -> ImageTexture:
 ## parent(CanvasLayer/Control)에 하단 대화 박스 빌드 → {box, face, name_lbl, text_lbl, hint_lbl, choices}.
 ##   portrait=초상화 텍스처(null이면 초상화 칸 없이 본문이 왼쪽부터).
 static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dictionary:
-	var box := Panel.new()
-	box.add_theme_stylebox_override("panel", _sb(PAPER, 12))
+	var box := Control.new()
 	box.position = Vector2(24, vp.y - BOX_H - 24)
 	box.size = Vector2(vp.x - 48, BOX_H)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(box)
+	# 커스텀 프레임 이미지(배경) — 박스 크기로 늘림. 본문/초상화는 이 위에.
+	var frame := TextureRect.new()
+	frame.texture = FRAME
+	frame.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	frame.stretch_mode = TextureRect.STRETCH_SCALE
+	frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(frame)
 
 	var face: TextureRect = null
 	var tx := 32.0
