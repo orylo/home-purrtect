@@ -86,10 +86,11 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 
 	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
 	box.add_child(name_lbl)
-	var text_lbl := _mk_label(27, INK, Vector2(tx, 60))   # 본문 24→27(캐주얼 카툰 가독치 ~3.75%)
+	var text_lbl := _mk_label(36, INK, Vector2(tx, 52))   # 본문 36(화면높이 ~5%, 쿠키런급 큰 글씨)
 	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	# 본문 칸 폭 제한(최대 820px) → 한 줄 글자수↓(가독). 박스가 더 좁으면 그에 맞춤.
-	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 820.0), 116)
+	text_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER   # 칸이 세로로 넓어 1~2줄 가운데 정렬
+	# 본문 칸 폭 제한(최대 880px) → 한 줄 글자수↓(가독). 박스가 더 좁으면 그에 맞춤.
+	text_lbl.size = Vector2(minf(box.size.x - tx - 24.0, 880.0), BOX_H - 52.0 - 18.0)
 	box.add_child(text_lbl)
 	var choices := HBoxContainer.new()
 	choices.add_theme_constant_override("separation", 16)
