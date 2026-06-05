@@ -54,8 +54,13 @@ const FULL_GROUND_FMT := "res://assets/backgrounds/wall/ground_full/ground%02d.p
 const FULL_FAR_COUNT := 8
 const FULL_GROUND_COUNT := 10
 ## per-stage 풀프레임 override — 키="막-스테이지" → res 경로. 그 스테이지만 고정(비면 풀 랜덤).
-##   원경(far)은 전부 랜덤 → FIXED_FAR 비움. 지면(ground)만 고정 + 고정분은 랜덤 풀에서 제외.
-const FIXED_FAR := {}
+##   ★ 원경(far): 고정 스테이지는 그 그림 + 그 그림도 랜덤 풀에 그대로 남음(다른 스테이지에서도 나올 수 있음).
+##   ★ 지면(ground): 고정 + 고정분은 랜덤 풀에서 제외(다른 스테이지엔 안 나옴).
+const FIXED_FAR := {
+	"1-1":  "res://assets/backgrounds/wall/far_full/far08.png",
+	"1-3":  "res://assets/backgrounds/wall/far_full/far02.png",
+	"1-20": "res://assets/backgrounds/wall/far_full/far01.png",
+}
 const FIXED_GROUND := {
 	"1-1":  "res://assets/backgrounds/wall/ground_full/ground04.png",
 	"1-3":  "res://assets/backgrounds/wall/ground_full/ground06.png",
