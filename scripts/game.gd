@@ -157,7 +157,7 @@ const CUT_CHIHUAHUA := [   # 1-16 치와와 해방(③, 3장)
 const CUT_GAMEOVER := [   # 게임오버 영감의 전보(3장)
 	{"img": "치즈가 문밖으로 뻥— 쫓겨나 빗속에 나뒹군다. (비)", "line": ""},
 	{"img": "골드의 전보가 클로즈업된다.", "line": "골드 : 침입 발생! 넌 해고— …아니다. 마지막 기회를 주마. 정신 차려라! — G", "voice": "gold"},
-	{"img": "치즈가 닫힌 문 앞에서 무릎 꿇고 싹싹 빈다 → 벌떡 일어나 주먹 불끈!", "line": "치즈가 싹싹 빈 덕분에 한 번 더 기회를 얻었다! 이번엔 진짜 잘 지켜보자."},
+	{"img": "치즈가 닫힌 문 앞에서 무릎 꿇고 싹싹 빈다 → 벌떡 일어나 주먹 불끈!", "line": "치즈가 싹싹 빈 덕분에 한 번 더 기회를 얻었다! 이번엔 진짜 잘 지켜보자.", "sys": true},
 ]
 
 
@@ -302,14 +302,10 @@ const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.5
 func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
-		var is_sys: bool = bool(p.get("sys", false))    # 시스템 알림(호감도·해금) → 합성 시스템음·초상화/이름표 없음·가운데 정렬
-		var is_narr: bool = bool(p.get("narr", false))  # 내레이션/지문(화자 아님) → 초상화/이름표 없음·가운데·무음
-		var pv: String = ""
-		if is_sys:
-			pv = "system"
-		elif not is_narr:
-			pv = String(p.get("voice", voice))          # 페이지별 voice 지정(예: 게임오버 골드) > 컷씬 기본 voice
-		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys or is_narr)
+		# sys = 화자 아닌 줄(시스템 알림·내레이션 통합) → 초상화/이름표 없음·가운데 정렬·시스템 음색.
+		var is_sys: bool = bool(p.get("sys", false))
+		var pv: String = "system" if is_sys else String(p.get("voice", voice))   # 페이지별 voice(예: 게임오버 골드) > 컷씬 기본 voice
+		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys)
 
 
 ## 컷씬 한 페이지: 어두운 바탕 + 회색 "이미지 플레이스홀더([그림] 설명)" + 대사 + 페이지수 + 탭.
