@@ -1,5 +1,5 @@
 extends Control
-## 개발자 테스트 메뉴 (DEV 전용) ─ 직업/등급/스테이지/난이도/치트 세팅 후 게임 진입.
+## 개발자 테스트 메뉴 (DEV 전용) - 직업/등급/스테이지/난이도/치트 세팅 후 게임 진입.
 ## UI는 코드로 구성. 스킬·아이템은 빈 슬롯(시스템 생기면 연결).
 
 const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
@@ -42,7 +42,7 @@ func _ready() -> void:
 
 	box.add_child(_title("개발자 모드", 48))
 
-	# 미리보기: 직업명(크게) + 등급 라벨(아래 색으로) ─ 기획 §0 표기 구조
+	# 미리보기: 직업명(크게) + 등급 라벨(아래 색으로) - 기획 §0 표기 구조
 	_title_lbl = _title("", 36)
 	_rank_lbl = _title("", 22)
 	box.add_child(_title_lbl)
@@ -127,7 +127,7 @@ func _ready() -> void:
 	cheat_row.add_child(one)
 	box.add_child(cheat_row)
 
-	# 스킬 테스트 ─ 현재 직업 스킬 전부 지급+장착(맨몸이면 보안관으로 전환)
+	# 스킬 테스트 - 현재 직업 스킬 전부 지급+장착(맨몸이면 보안관으로 전환)
 	var grant := CheckBox.new()
 	grant.text = "스킬 지급+장착 (테스트)"
 	_font(grant, 24)
@@ -149,7 +149,7 @@ func _ready() -> void:
 	start_btn.pressed.connect(_on_start)
 	box.add_child(start_btn)
 
-	# 테스트 스테이지(샌드박스) ─ 자동 웨이브 없이 직접 적 스폰해 상성 테스트
+	# 테스트 스테이지(샌드박스) - 자동 웨이브 없이 직접 적 스폰해 상성 테스트
 	var test_btn := Button.new()
 	test_btn.text = "테스트 스테이지 (직접 스폰)"
 	_font(test_btn, 24)
@@ -158,9 +158,9 @@ func _ready() -> void:
 
 	box.add_child(_dim("↑ 침입자 안 나옴. 게임 중 🐞로 직접 스폰", 16))
 
-	# 홈 화면(개발) ─ 전투 대신 홈으로. 홈의 DEV 도구로 코인·스테이지·전리품 조작.
+	# 홈 화면(개발) - 전투 대신 홈으로. 홈의 DEV 도구로 코인·스테이지·전리품 조작.
 	#   골드로 강조해 "전투(빨강 시작)와 별개의 목적지"임을 분명히(전엔 회색이라 못 보고 지나침).
-	box.add_child(_title("─ 또는 ─", 18))
+	box.add_child(_title("- 또는 -", 18))
 	var home_btn := Button.new()
 	home_btn.text = "홈 화면으로 (개발 도구)"
 	_font(home_btn, 28)
@@ -185,7 +185,7 @@ func _on_lv(i: int) -> void:
 	_refresh_preview()
 
 
-## 직업명(Lv별) + 등급 라벨(색) 미리보기 갱신 ─ 기획 §0 표기
+## 직업명(Lv별) + 등급 라벨(색) 미리보기 갱신 - 기획 §0 표기
 func _refresh_preview() -> void:
 	var names: Array = GameState.JOB_TITLES.get(_job, ["?"])
 	_title_lbl.text = names[clampi(_lv - 1, 0, names.size() - 1)]
@@ -206,7 +206,7 @@ func _on_start() -> void:
 
 func _on_test() -> void:
 	_apply_settings()
-	GameState.sandbox = true   # 자동 웨이브 없음 ─ 🐞로 직접 스폰
+	GameState.sandbox = true   # 자동 웨이브 없음 - 🐞로 직접 스폰
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 

@@ -1,5 +1,5 @@
 extends Control
-## 게임 첫 화면 ─ 타이틀 아트 + [게임 시작] 버튼 + 버전 표시.
+## 게임 첫 화면 - 타이틀 아트 + [게임 시작] 버튼 + 버전 표시.
 ## 타이틀 이미지는 가로를 꽉 채우되 "위 정렬"로 그려 상단 텍스트가 안 잘리게 한다.
 
 @onready var title: TextureRect = $Title
@@ -53,7 +53,7 @@ func _ready() -> void:
 		fresh.offset_bottom = -28.0
 		fresh.pressed.connect(_confirm_new_game)
 		add_child(fresh)
-	# ※ 프롤로그 자동재생·[이야기] 다시보기 폐기 ─ 이제 [게임 시작](세이브 없을 때=새 게임)·[처음부터]를 눌렀을 때만 재생.
+	# ※ 프롤로그 자동재생·[이야기] 다시보기 폐기 - 이제 [게임 시작](세이브 없을 때=새 게임)·[처음부터]를 눌렀을 때만 재생.
 
 
 func _layout_title() -> void:

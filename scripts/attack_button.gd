@@ -1,5 +1,5 @@
 extends Control
-## 근접/원거리 공격 버튼 입력 ─ 우하단 두 원형 버튼(좌=근접, 우=원거리).
+## 근접/원거리 공격 버튼 입력 - 우하단 두 원형 버튼(좌=근접, 우=원거리).
 ## 누르고 있는 동안 Touch.melee_held / Touch.ranged_held = true (연사).
 ## 그림은 bottom_hud가 그린다. 좌표는 Layout이 공유.
 

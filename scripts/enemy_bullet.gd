@@ -1,11 +1,11 @@
 extends Node2D
-## 적의 placeholder 발사체 ─ 직선(grav=0) / 포물선(grav>0)으로 날아가
+## 적의 placeholder 발사체 - 직선(grav=0) / 포물선(grav>0)으로 날아가
 ## 치즈(player)에 닿으면 데미지 + 상태이상(독/둔화). 아트 나오면 _draw만 교체.
 
 var _vel := Vector2.ZERO
 var _grav := 0.0
 var damage := 5.0
-var is_crit := false           # 크리 여부(길냥이 동일) ─ 피격 연출용
+var is_crit := false           # 크리 여부(길냥이 동일) - 피격 연출용
 var status := ""           # ""/"poison"/"slow"
 var color := Color(0.8, 0.3, 0.2)
 var shape := "dot"              # dot(원) / stone(회색 돌-투척쥐) / cone(원뿔 독침-벌)
@@ -64,7 +64,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	# 바닥 그림자 ─ 높이(바닥과의 거리)에 따라 크기·농도 변화(치즈/적 그림자와 동일 로직).
+	# 바닥 그림자 - 높이(바닥과의 거리)에 따라 크기·농도 변화(치즈/적 그림자와 동일 로직).
 	var gy: float = _ground_y - global_position.y    # 바닥 위 높이(로컬 y)
 	if gy > 4.0:
 		var t: float = clampf(1.0 - gy / 460.0, 0.22, 1.0)
@@ -82,7 +82,7 @@ func _draw() -> void:
 			draw_arc(Vector2.ZERO, 11.0, 0.0, TAU, 14, Color(0, 0, 0, 0.5), 1.5, true)
 
 
-## 돌멩이 ─ body=color(투척쥐별), 음영/외곽은 거기서 파생. 회색=치즈 돌과 동일 / 검은투척쥐=어둡게.
+## 돌멩이 - body=color(투척쥐별), 음영/외곽은 거기서 파생. 회색=치즈 돌과 동일 / 검은투척쥐=어둡게.
 func _draw_stone() -> void:
 	var r := 16.0
 	var body := color
@@ -95,7 +95,7 @@ func _draw_stone() -> void:
 	draw_arc(Vector2.ZERO, r, 0.0, TAU, 24, edge, 2.0, true)
 
 
-## 흰 거미줄 ─ 거미 전용. 방사형 스포크 + 동심 거미줄(아이템 모양, 블랙 스트로크 없이 흰색).
+## 흰 거미줄 - 거미 전용. 방사형 스포크 + 동심 거미줄(아이템 모양, 블랙 스트로크 없이 흰색).
 func _draw_web() -> void:
 	var r := 17.0
 	var spokes := 8
@@ -113,7 +113,7 @@ func _draw_web() -> void:
 	draw_circle(Vector2.ZERO, 1.8, col)                      # 중심 매듭
 
 
-## 초음파 ─ 박쥐 전용. 진행방향(-X, 왼쪽)으로 열린 동심 호 3겹(밖일수록 옅게) + 살짝 맥동.
+## 초음파 - 박쥐 전용. 진행방향(-X, 왼쪽)으로 열린 동심 호 3겹(밖일수록 옅게) + 살짝 맥동.
 func _draw_sonic() -> void:
 	var base := color if color.v > 0.3 else Color(0.85, 0.95, 1.0)
 	var ph: float = fmod((4.0 - _life) * 3.0, 1.0)          # 0→1 반복(파동 퍼짐)
@@ -124,7 +124,7 @@ func _draw_sonic() -> void:
 		draw_arc(Vector2.ZERO, r, PI - 0.95, PI + 0.95, 18, c, 3.0 - float(i) * 0.5, true)
 
 
-## 원뿔 독침 ─ 벌 전용(진행 방향 +X로 그리고 rotation으로 정렬).
+## 원뿔 독침 - 벌 전용(진행 방향 +X로 그리고 rotation으로 정렬).
 func _draw_cone() -> void:
 	var body := color                                # 벌 노란 몸
 	var tip := Color(0.30, 0.22, 0.05)               # 어두운 침 끝

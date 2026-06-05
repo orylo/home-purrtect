@@ -1,5 +1,5 @@
 extends Node2D
-## 적 스포너 ─ 웨이브 기반 (Phase 4)
+## 적 스포너 - 웨이브 기반 (Phase 4)
 ##
 ## 웨이브마다 정해진 수의 적을 일정 간격으로 등장시킨다.
 ## 한 웨이브의 적을 다 잡으면(전부 처치) 잠깐 쉬고 다음 웨이브.
@@ -7,7 +7,7 @@ extends Node2D
 
 signal wave_started(current: int, total: int)
 signal stage_cleared
-signal battle_starting   # 첫 웨이브 직전(대기 시작) 1회 ─ "전투 시작!" 큐가 적 등장을 선행
+signal battle_starting   # 첫 웨이브 직전(대기 시작) 1회 - "전투 시작!" 큐가 적 등장을 선행
 
 @export var enemy_scene: PackedScene
 @export var spawn_offscreen: float = 140.0   # 화면 밖 오른쪽 이만큼에서 등장
@@ -45,7 +45,7 @@ func release_intro() -> void:
 	_hold = false
 
 
-## DEV: 현재 웨이브 즉시 종료 ─ 남은 스폰 큐 비우고 생존 적 전멸 → 다음 웨이브(또는 스테이지 클리어)로.
+## DEV: 현재 웨이브 즉시 종료 - 남은 스폰 큐 비우고 생존 적 전멸 → 다음 웨이브(또는 스테이지 클리어)로.
 func dev_skip_wave() -> void:
 	if _hold or _state == "cleared":
 		return

@@ -1,5 +1,5 @@
 extends CharacterBody2D
-## 적 (범용) ─ def(Enemies.ENEMY_DEFS)로 종류별 스탯·생김새·행동을 받는다.
+## 적 (범용) - def(Enemies.ENEMY_DEFS)로 종류별 스탯·생김새·행동을 받는다.
 ##   침입자 10종 모두 실제 스프라이트(ENEMY_FRAMES: 회색3·박쥐·벌·참새·거미 + 검은3=회색 셰이더 리스킨).
 ##   placeholder(_draw 도형)는 보스 2종(boss_fungus·boss_snake, def "sprite":false)만.
 ##   kind: melee 근접 / lob 포물선투척 / shoot 직선발사 / dive 공중→근접
@@ -43,7 +43,7 @@ const SIZE_MULT := {
 }
 # 발 위치 미세조정(양수=아래로 내려 지면에 더 가깝게). fh*sc 비율.
 const FOOT_NUDGE := {"spider": 0.14}
-## 발 그림자 보정 ─ 스프라이트별 [발 중심 x(프레임px·중심기준), 발 반폭(프레임px)]. ×스프라이트배율 = 화면px.
+## 발 그림자 보정 - 스프라이트별 [발 중심 x(프레임px·중심기준), 발 반폭(프레임px)]. ×스프라이트배율 = 화면px.
 ##   그림자를 실제 발 footprint에 맞춤(좌우 쏠림·폭 보정). 미등록 적=기본(중심·_body_r). black=gray 프레임 재사용.
 const SHADOW_FOOT := {
 	"gray": [36.0, 81.0], "gray_roller": [28.0, 67.0], "gray_thrower": [2.0, 161.0],
@@ -308,7 +308,7 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-## 공격 트리거 ─ 모션을 먼저 재생, 발사/타격은 release 프레임(또는 폴백 시간)에.
+## 공격 트리거 - 모션을 먼저 재생, 발사/타격은 release 프레임(또는 폴백 시간)에.
 func _start_attack(is_ranged: bool) -> void:
 	_pending_release = true
 	_release_ranged = is_ranged
@@ -398,7 +398,7 @@ func _resolve_attack() -> void:
 				player.apply_status(_status)
 
 
-## 침입자 평타 크리 ─ 길냥이(base)와 동일하게 통일(5%·strike ×1.5, base 스탯 참조). [최종dmg, 크리여부].
+## 침입자 평타 크리 - 길냥이(base)와 동일하게 통일(5%·strike ×1.5, base 스탯 참조). [최종dmg, 크리여부].
 func _crit_dmg() -> Array:
 	var bs: Dictionary = GameState.JOB_STATS["base"]
 	var c: bool = randf() < float(bs.get("crit", 0.05))
@@ -495,7 +495,7 @@ func _draw() -> void:
 	_draw_damage_popups()
 	if dead:
 		return
-	# 발밑 그림자 ─ 발 footprint에 맞춤(좌우 쏠림 보정 + 폭=max(_body_r, 발폭)) + 공중 높이 연동.
+	# 발밑 그림자 - 발 footprint에 맞춤(좌우 쏠림 보정 + 폭=max(_body_r, 발폭)) + 공중 높이 연동.
 	var sh_t := 1.0
 	if _air:
 		sh_t = clampf(1.0 - _air_raise() / 500.0, 0.30, 1.0)
@@ -510,7 +510,7 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, sh_rx * sh_t, Color(0, 0, 0, 0.3 * sh_t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-	# placeholder 몸 (스프라이트 안 쓰는 적 ─ 보스 등. 공중 스프라이트 적은 여기 안 옴)
+	# placeholder 몸 (스프라이트 안 쓰는 적 - 보스 등. 공중 스프라이트 적은 여기 안 옴)
 	if not _use_sprite:
 		var cy := -_body_r - 12.0 - _air_raise()
 		var lunge_off := Vector2(-(_lunge / 0.16) * 18.0, 0.0)
@@ -574,7 +574,7 @@ func is_dead() -> bool:
 	return dead
 
 
-## 공중 적인지 ─ 치즈가 지상 근접으로 못 때리고, 점프해야 닿음
+## 공중 적인지 - 치즈가 지상 근접으로 못 때리고, 점프해야 닿음
 func is_air() -> bool:
 	return _air
 
@@ -617,7 +617,7 @@ func take_damage(amount: float, knockback: float = 70.0, stun: float = 0.0, crit
 			anim.play("hit")
 
 
-## 스킬 둔화(이동 배율 factor로 dur초) ─ 왁스칠·불협화음
+## 스킬 둔화(이동 배율 factor로 dur초) - 왁스칠·불협화음
 func apply_slow(dur: float, factor: float) -> void:
 	if dead:
 		return
@@ -625,13 +625,13 @@ func apply_slow(dur: float, factor: float) -> void:
 	_eslow_factor = factor
 	Fx.burst("slime_drip", global_position + Vector2(0, -42.0 - _air_raise()), 0.4, 44, 14.0, true, minf(dur, 1.2))
 
-## 스킬 스턴(완전 정지 dur초) ─ 자장가. 데미지·넉백 없음
+## 스킬 스턴(완전 정지 dur초) - 자장가. 데미지·넉백 없음
 func apply_stun(dur: float) -> void:
 	if dead:
 		return
 	_begin_stun(dur)
 
-## 스턴 적용 공통 ─ 타이머 갱신 + 별빙글 이펙트(스턴=별빙글 통일: 자장가·음악가 크리 둘 다).
+## 스턴 적용 공통 - 타이머 갱신 + 별빙글 이펙트(스턴=별빙글 통일: 자장가·음악가 크리 둘 다).
 func _begin_stun(dur: float) -> void:
 	if dur <= 0.0 or dead:
 		return

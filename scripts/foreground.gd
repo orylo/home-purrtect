@@ -1,12 +1,12 @@
 extends Node2D
-## 근경(Foreground) ─ 3중 배경의 가장 가까운 레이어. z_index로 캐릭터보다 "앞".
+## 근경(Foreground) - 3중 배경의 가장 가까운 레이어. z_index로 캐릭터보다 "앞".
 ##   stage_background가 고른 near_pieces(0~2개)를 각자 해당 화면 모서리에 고정해 그린다.
 ##   바람: 각 식물을 뿌리(모서리)를 중심으로 살랑살랑 회전. 잘림 방지로 모서리 밖으로 살짝 깊이 박음.
 
 const NEAR_REF_H := 768.0     # 근경 원본 세로(이 기준으로 화면에 스케일)
 const SWAY_AMP := 0.05        # 바람 흔들림 최대 각(rad ≈ 2.9°)
 const SWAY_SPD := 1.0         # 흔들림 속도 배율
-const OVERSHOOT := 26.0       # 뿌리를 모서리 밖으로 밀어넣는 깊이(px) ─ 흔들려도 안 잘리게
+const OVERSHOOT := 26.0       # 뿌리를 모서리 밖으로 밀어넣는 깊이(px) - 흔들려도 안 잘리게
 
 var _t := 0.0
 

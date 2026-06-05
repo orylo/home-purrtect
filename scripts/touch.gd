@@ -8,7 +8,7 @@ var ranged_held: bool = false    # 원거리 공격 버튼을 누르고 있는 �
 var crouch_held: bool = false    # 조이스틱을 아래로 당겨 앉기(회피) 중인지
 var _jump_queued: bool = false
 
-## UI 차단 영역(디버그 오버레이 등) ─ 이 컨트롤들 위 터치는 조이스틱/점프로 새지 않게.
+## UI 차단 영역(디버그 오버레이 등) - 이 컨트롤들 위 터치는 조이스틱/점프로 새지 않게.
 var _block_controls: Array = []
 
 

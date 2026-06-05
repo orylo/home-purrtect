@@ -1,8 +1,8 @@
 extends ColorRect
-## 하프톤 배경 셰이더 제어 ─ 시간 주입 + 스테이지별 모션/속도 랜덤 + 특정 스테이지 폭풍 분위기.
+## 하프톤 배경 셰이더 제어 - 시간 주입 + 스테이지별 모션/속도 랜덤 + 특정 스테이지 폭풍 분위기.
 ##   material(ShaderMaterial)의 uniform을 _ready에서 스테이지에 맞게 세팅, u_time은 매 프레임 주입.
 
-## 하프톤 날씨 프리셋 ─ 셰이더 uniform 묶음. 점 크기/밀도는 셰이더 기본값 유지, 모션·농도만 바꿈.
+## 하프톤 날씨 프리셋 - 셰이더 uniform 묶음. 점 크기/밀도는 셰이더 기본값 유지, 모션·농도만 바꿈.
 const PRESETS := {
 	"calm":    {"anim_speed": 0.25, "warp": 1.0, "drift": 0.05, "contrast": 1.5, "brightness": 0.30, "alpha": 0.35, "noise": 2.0},  # 잔잔
 	"fog":     {"anim_speed": 0.28, "warp": 1.3, "drift": 0.10, "contrast": 1.6, "brightness": 0.42, "alpha": 0.50, "noise": 1.3},  # 안개 자욱(큰 덩어리, 빈틈 있게)
@@ -28,14 +28,14 @@ var _t := 0.0
 func _ready() -> void:
 	if material is ShaderMaterial:
 		_setup(material as ShaderMaterial)
-	# (태양 연출은 halftone이 아니라 weather.gd "shower"(1-3 비→쾌청)가 담당 ─ 여기서 그리지 않음)
+	# (태양 연출은 halftone이 아니라 weather.gd "shower"(1-3 비→쾌청)가 담당 - 여기서 그리지 않음)
 
 
 func _setup(m: ShaderMaterial) -> void:
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
 	var name: String = STAGE_HALFTONE.get(key, NORMAL_POOL[randi() % NORMAL_POOL.size()])
 	var p: Dictionary = PRESETS[name]
-	# drift 방향은 매 판 랜덤(왼/오) ─ 한쪽으로만 흐르지 않게
+	# drift 방향은 매 판 랜덤(왼/오) - 한쪽으로만 흐르지 않게
 	var dir := 1.0 if randf() < 0.5 else -1.0
 	m.set_shader_parameter("anim_speed", p["anim_speed"])
 	m.set_shader_parameter("warp_strength", p["warp"])

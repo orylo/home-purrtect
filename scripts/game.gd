@@ -1,5 +1,5 @@
 extends Node2D
-## 게임 코디네이터 (Main) ─ 스포너/플레이어 신호를 받아 클리어·게임오버를 연출.
+## 게임 코디네이터 (Main) - 스포너/플레이어 신호를 받아 클리어·게임오버를 연출.
 
 @onready var spawner: Node = $Spawner
 @onready var player: Node = $Player
@@ -31,7 +31,7 @@ func _on_wave_for_timing(current: int, _total: int) -> void:
 		_timing = true
 
 
-## 전투 시작 큐 ─ 첫 웨이브 대기 시작 시(적 등장보다 ~1.5s 먼저) 배너+팡파르
+## 전투 시작 큐 - 첫 웨이브 대기 시작 시(적 등장보다 ~1.5s 먼저) 배너+팡파르
 func _on_battle_starting() -> void:
 	Music.clear_override()                  # 인트로 전용 BGM(보스 등) 해제 → 씬 기준 battle BGM 복귀
 	if hud.has_method("show_battle_start"):
@@ -44,7 +44,7 @@ func _process(delta: float) -> void:
 		_battle_time += delta
 		if hud.has_method("set_battle_time"):
 			hud.set_battle_time(_battle_time)
-	# 화면 흔들림 ─ 월드(Main)와 배경(BG)을 같이 흔들고 HUD는 고정
+	# 화면 흔들림 - 월드(Main)와 배경(BG)을 같이 흔들고 HUD는 고정
 	var off := Vector2.ZERO
 	if Fx.shake > 0.0:
 		Fx.shake = move_toward(Fx.shake, 0.0, 45.0 * delta)
@@ -54,7 +54,7 @@ func _process(delta: float) -> void:
 
 
 func _on_stage_cleared() -> void:
-	# ★ 별점 판정 ─ 클리어 시점(전투 시간)으로 확정
+	# ★ 별점 판정 - 클리어 시점(전투 시간)으로 확정
 	_timing = false
 	var stg := GameState.stage_minor
 	var stars := GameState.rate_stars(stg, _battle_time)
@@ -66,7 +66,7 @@ func _on_stage_cleared() -> void:
 		first_gem = GameState.first_clear_star_gem(stars)   # ★2/★3 첫클리어 보석
 		if first_gem != "":
 			GameState.add_material(first_gem)
-	# 구간 올스타 보석은 자동 지급 안 함 ─ 스테이지 맵 [받기]로 수동 수령(claim_allstar).
+	# 구간 올스타 보석은 자동 지급 안 함 - 스테이지 맵 [받기]로 수동 수령(claim_allstar).
 	var star_info := {
 		"stars": stars, "time": _battle_time, "first_gem": first_gem,
 		"is_first": is_first, "new_best": stars > prev_best,
@@ -74,7 +74,7 @@ func _on_stage_cleared() -> void:
 	}
 
 	if stg == 5 and is_first:
-		GameState.add_material("gem_pebble")          # 1-5 펄 해금: 빛나는 조약돌 고정 지급(헌납 튜토, 첫 클리어만 ─ 재도전 파밍 중복 방지)
+		GameState.add_material("gem_pebble")          # 1-5 펄 해금: 빛나는 조약돌 고정 지급(헌납 튜토, 첫 클리어만 - 재도전 파밍 중복 방지)
 	var bonus := GameState.award_stage_clear(stars)   # 첫 클리어 보너스 코인(별 차등, 파밍은 0)
 	if GameState.mode != "dev" and GameState.AUTOSAVE:
 		GameState.save_game()                         # 별·보석 즉시 저장
@@ -106,18 +106,18 @@ func _play_gameover_cutscene() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
-# ── 전투 씬 내 컷씬(케이스 A 해금형: 1-3 보안관 / 1-5 펄 / 1-7 맥스) ──────────
+# -- 전투 씬 내 컷씬(케이스 A 해금형: 1-3 보안관 / 1-5 펄 / 1-7 맥스) ----------
 #   결과창 [확인] 후 씬전환 없이 이어서: 대상에 다가감/상호작용 → 화면 줌인 → 컷씬(플레이스홀더) → 홈.
 const CRATE_X_FRAC := 0.25   # 1-3 나무 궤짝 화면 x(뷰포트 비율, 좌측). 필요 시 조정.
 const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 var _event_char: Node2D = null   # 펄/맥스 플레이스홀더(전투 내내 상주)
 
-# ── 컷씬 페이지 데이터(대본 `기획_이벤트대본_1막.md` 충실) ─ 장 수 맞춰 플레이스홀더 ─────
+# -- 컷씬 페이지 데이터(대본 `기획_이벤트대본_1막.md` 충실) - 장 수 맞춰 플레이스홀더 -----
 #   각 페이지 = {"img": 그릴 그림 설명, "line": 대사(없으면 무대사)}. 실제 아트는 추후 교체.
 const CUT_SHERIFF := [   # 1-3 보안관 획득(⑤-b, 4장·사일런트+해금)
-	{"img": "햇빛 아래, 나무 궤짝이 끼익─ 열리며 먼지가 폭 인다.", "line": ""},
+	{"img": "햇빛 아래, 나무 궤짝이 끼익- 열리며 먼지가 폭 인다.", "line": ""},
 	{"img": "궤짝 안, 카우보이 모자·별 배지·권총집 한 벌이 반짝인다. (★)", "line": ""},
-	{"img": "치즈가 장비를 걸치고 별 배지가 반짝 ─ 변신 완료(보안관).", "line": ""},
+	{"img": "치즈가 장비를 걸치고 별 배지가 반짝 - 변신 완료(보안관).", "line": ""},
 	{"img": "보안관이 된 치즈, 늠름한 포즈.", "line": ""},
 	{"img": "보안관이 된 치즈, 늠름한 포즈.", "line": "보안관 획득!", "sys": true},
 ]
@@ -125,17 +125,17 @@ const CUT_PEARL := [   # 1-5 펄 첫 만남(④, 6장)
 	{"img": "옆집 2층 창가의 펄, 우아한 미소. 치즈와 오묘한 눈빛을 주고받는다.", "line": "펄 : …드디어, 이쪽을 봐주셨군요."},
 	{"img": "창가의 펄, 차분히 치즈를 내려다본다.", "line": "펄 : 줄곧 지켜보고 있었답니다. 당신이 이 집을 지키는 모습을…"},
 	{"img": "치즈, 완전히 반한 표정(♥)으로 빛나는 돌을 슥 내민다.", "line": "빛나는 조약돌을 펄에게 건넸다", "sys": true},
-	{"img": "펄, 받아들고 저도 모르게 환하게 활짝 웃는다(♥) ─ 진짜 모습.", "line": "펄 : 어머…! 저에게…?"},
-	{"img": "펄, 아차 하고 크흠─ 헛기침하며 다시 고고한 여신 표정.", "line": "펄 : …크흠. 나쁘진 않네요. 그럭저럭, 봐줄 만해요."},
-	{"img": "펄, 아차 하고 크흠─ 헛기침하며 다시 고고한 여신 표정.", "line": "펄의 호감도가 1 올랐다 ♥", "sys": true},
+	{"img": "펄, 받아들고 저도 모르게 환하게 활짝 웃는다(♥) - 진짜 모습.", "line": "펄 : 어머…! 저에게…?"},
+	{"img": "펄, 아차 하고 크흠- 헛기침하며 다시 고고한 여신 표정.", "line": "펄 : …크흠. 나쁘진 않네요. 그럭저럭, 봐줄 만해요."},
+	{"img": "펄, 아차 하고 크흠- 헛기침하며 다시 고고한 여신 표정.", "line": "펄의 호감도가 1 올랐다 ♥", "sys": true},
 	{"img": "펄, 창틀에 기대며 우아하게 손을 내민다.", "line": "펄 : 답례로… 저는 늘 이곳, 집에 있을게요. 싸우러 나서기 전 절 찾아주신다면, 작은 힘을 빌려드리죠."},
 	{"img": "펄, 창틀에 기대며 우아하게 손을 내민다.", "line": "펄의 축복 해금!", "sys": true},
 ]
 const CUT_MAX := [   # 1-7 맥스 첫 거래(③, 7장)
 	{"img": "맥스(한쪽 눈 흉터, 입에 성냥개비). 치즈를 알아본 듯 피식.", "line": "맥스 : 요즘 동네가 시끌시끌하길래 누군가 했더니… 너였구만, 응?"},
 	{"img": "성냥개비를 까딱, 능글맞은 표정.", "line": "맥스 : 이 형님이 말이야~ 싸움에 쓸 만한 물건을 아주 그냥 잔뜩 쟁여놨거든."},
-	{"img": "수레 덮개를 휙 젖히면 소모품들이 좌르륵.", "line": "맥스 : 자, 봐봐. 상처엔 붕대, 힘 딸리면 멸치 한 입, 떼거리로 몰려오면 폭죽 한 방이면 끝이지. ─ 싸게싸게 줄게!"},
-	{"img": "목소리를 쫙 낮추며 뜸을 들인다.", "line": "맥스 : 근데 말이야, 진짜배기는 따로 있다 이거야… 두구두구두구─"},
+	{"img": "수레 덮개를 휙 젖히면 소모품들이 좌르륵.", "line": "맥스 : 자, 봐봐. 상처엔 붕대, 힘 딸리면 멸치 한 입, 떼거리로 몰려오면 폭죽 한 방이면 끝이지. - 싸게싸게 줄게!"},
+	{"img": "목소리를 쫙 낮추며 뜸을 들인다.", "line": "맥스 : 근데 말이야, 진짜배기는 따로 있다 이거야… 두구두구두구-"},
 	{"img": "짠, 하고 장비를 꺼내 보인다.", "line": "맥스 : 바로~ 장비 되시겠다! 거리 악사에 초급 메이드까지. 어이, 군침 좀 도는데?"},
 	{"img": "손가락을 까딱, 약 올리듯.", "line": "맥스 : 뭐, 이건 특별 주문이라 네가 재료를 좀 긁어모아 와야 하지만 말이야. 공짜가 어딨어, 안 그래?"},
 	{"img": "엄지로 골목 쪽을 가리킨다.", "line": "맥스 : 요 앞 골목에 죽치고 있을 테니까, 살 거 있으면 언제든 찾아오라구. 어흠!"},
@@ -151,12 +151,12 @@ const CUT_DOVE := [   # 1-13 비둘기 치료(③, 4장)
 const CUT_CHIHUAHUA := [   # 1-16 치와와 해방(③, 3장)
 	{"img": "치즈가 케이지 빗장을 척 열어준다.", "line": "치와와 : 으르르… 드디어! 야, 너 때문에 나온 거 아니다, 내가 나온 거야, 알겠냐?!"},
 	{"img": "씩씩대며 폴짝 뛰어나온다.", "line": "치와와 : 낮잠 한숨 자는 사이에 그 빌어먹을 쥐새끼들이! 감히! 이 몸을! 우리에 처넣어?!"},
-	{"img": "분이 안 풀린 채 치즈를 째려보다 흥─ 콧방귀.", "line": "치와와 : …뭐, 꺼내준 건 인정한다. 갚아주지. 그 쥐새끼들 싹 다 오른쪽으로 처박아줄 테니까, 부르기나 해!"},
-	{"img": "분이 안 풀린 채 치즈를 째려보다 흥─ 콧방귀.", "line": "동료 치와와 합류!", "sys": true},
+	{"img": "분이 안 풀린 채 치즈를 째려보다 흥- 콧방귀.", "line": "치와와 : …뭐, 꺼내준 건 인정한다. 갚아주지. 그 쥐새끼들 싹 다 오른쪽으로 처박아줄 테니까, 부르기나 해!"},
+	{"img": "분이 안 풀린 채 치즈를 째려보다 흥- 콧방귀.", "line": "동료 치와와 합류!", "sys": true},
 ]
 const CUT_GAMEOVER := [   # 게임오버 영감의 전보(3장)
-	{"img": "치즈가 문밖으로 뻥─ 쫓겨나 빗속에 나뒹군다. (비)", "line": ""},
-	{"img": "골드의 전보가 클로즈업된다.", "line": "골드 : 침입 발생! 넌 해고─ …아니다. 마지막 기회를 주마. 정신 차려라! ─ G", "voice": "gold"},
+	{"img": "치즈가 문밖으로 뻥- 쫓겨나 빗속에 나뒹군다. (비)", "line": ""},
+	{"img": "골드의 전보가 클로즈업된다.", "line": "골드 : 침입 발생! 넌 해고- …아니다. 마지막 기회를 주마. 정신 차려라! - G", "voice": "gold"},
 	{"img": "치즈가 닫힌 문 앞에서 무릎 꿇고 싹싹 빈다 → 벌떡 일어나 주먹 불끈!", "line": "치즈가 싹싹 빈 덕분에 한 번 더 기회를 얻었다! 이번엔 진짜 잘 지켜보자.", "sys": true},
 ]
 
@@ -297,7 +297,7 @@ func _zoom_and_cutscene(focus: Vector2, pages: Array, voice: String = "") -> voi
 const CUT_VOICE_NAME := {"pearl": "펄", "max": "맥스"}
 const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.52, 0.32)}
 
-## 다중 페이지 컷씬(플레이스홀더) ─ 각 페이지 = {"img": 그림 설명, "line": 대사}. 탭으로 넘김.
+## 다중 페이지 컷씬(플레이스홀더) - 각 페이지 = {"img": 그림 설명, "line": 대사}. 탭으로 넘김.
 ##   voice = NPC 재잘 보이스 프로필("pearl"/"max"/""=무음). 화자가 한 명일 때 전 페이지 동일.
 func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
@@ -310,6 +310,7 @@ func _play_cutscene(pages: Array, voice: String = "") -> void:
 
 ## 컷씬 한 페이지: 어두운 바탕 + 회색 "이미지 플레이스홀더([그림] 설명)" + 대사 + 페이지수 + 탭.
 func _cut_page(img: String, line: String, idx: int, total: int, voice: String = "", sys: bool = false) -> void:
+	line = Design.sentence_breaks(line)   # 대체로 한 줄에 한 문장(한글)
 	var vp := get_viewport_rect().size
 	var layer := CanvasLayer.new()
 	layer.layer = 80
@@ -348,7 +349,7 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 	pc.size = Vector2(120.0, 26.0)
 	pc.position = Vector2(vp.x - 150.0, 28.0)
 	layer.add_child(pc)
-	# ── 대화창 = 공용 DialoguePanel ── ★대사 있을 때만(무대사 장면은 대화창 미노출).
+	# -- 대화창 = 공용 DialoguePanel -- ★대사 있을 때만(무대사 장면은 대화창 미노출).
 	#   sys=시스템 알림: 초상화·이름표 없이 박스 전체폭 가운데 정렬(화자 대사와 분리).
 	var tlbl: Label = null
 	if line != "":
@@ -365,7 +366,7 @@ func _cut_page(img: String, line: String, idx: int, total: int, voice: String = 
 			tlbl.size = Vector2(sbox.size.x - 48.0, sbox.size.y - 64.0)
 			tlbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			tlbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	# 탭(전체) ─ 타이핑 중이면 스킵, 아니면 다음
+	# 탭(전체) - 타이핑 중이면 스킵, 아니면 다음
 	var tap := Button.new()
 	tap.flat = true
 	tap.focus_mode = Control.FOCUS_NONE

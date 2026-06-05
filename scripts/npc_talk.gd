@@ -1,5 +1,5 @@
 extends Control
-## NPC 대화 화면(미연시/비주얼노벨) 베이스 ─ 카툰 톤(design.md): 크림 대화창 + 잉크 외곽선 + 빨강/크림.
+## NPC 대화 화면(미연시/비주얼노벨) 베이스 - 카툰 톤(design.md): 크림 대화창 + 잉크 외곽선 + 빨강/크림.
 ##   서브클래스가 _start() 오버라이드로 흐름을 짠다. (pearl.gd / maxtalk.gd)
 ##   API: portrait(색,표정) / say(이름,색,대사) / choices([[라벨,Callable]...]) / go(씬경로)
 
@@ -38,14 +38,14 @@ func _build() -> void:
 	_figure.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_figure)
 
-	# 하단 대화창 ─ 크림 패널 + 잉크 외곽선
+	# 하단 대화창 - 크림 패널 + 잉크 외곽선
 	var panel := Panel.new()
 	panel.position = Vector2(24, vp.y - 264)
 	panel.size = Vector2(vp.x - 48, 248)
 	panel.add_theme_stylebox_override("panel", Design.panel_box())
 	add_child(panel)
 
-	# 이름 띠 (잉크 박스 + 크림 역상) ─ 레퍼런스 "제목 검정 박스"
+	# 이름 띠 (잉크 박스 + 크림 역상) - 레퍼런스 "제목 검정 박스"
 	var band := Panel.new()
 	band.position = Vector2(24, -22)
 	band.size = Vector2(300, 52)

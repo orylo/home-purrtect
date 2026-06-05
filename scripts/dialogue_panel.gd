@@ -1,6 +1,6 @@
 class_name DialoguePanel
 extends RefCounted
-## 공용 NPC 대화창 ─ "인게임 이벤트 펑거스 대화창" 스타일(크림 패널 + 잉크 외곽 + 초상화 + 이름띠 + 본문).
+## 공용 NPC 대화창 - "인게임 이벤트 펑거스 대화창" 스타일(크림 패널 + 잉크 외곽 + 초상화 + 이름띠 + 본문).
 ##   게임 내 모든 대화(펑거스 이벤트 / 펄·맥스 컷씬 등)가 동일하게 쓰도록 한 곳에서 빌드 → 통일.
 ##   build()가 parent에 하단 박스를 붙이고 노드 참조 dict 반환. 타이핑/탭/보이스는 호출부가 담당.
 
@@ -38,7 +38,7 @@ static func _mk_label(fsize: int, col: Color, pos: Vector2) -> Label:
 	return l
 
 
-## 단색 초상화 플레이스홀더(스프라이트 없는 NPC용) ─ 그 색으로 채운 텍스처.
+## 단색 초상화 플레이스홀더(스프라이트 없는 NPC용) - 그 색으로 채운 텍스처.
 static func solid_portrait(col: Color) -> ImageTexture:
 	var img := Image.create(8, 8, false, Image.FORMAT_RGBA8)
 	img.fill(col)
@@ -53,7 +53,7 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 	box.size = Vector2(vp.x - 48, BOX_H)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(box)
-	# 커스텀 프레임 이미지(배경) ─ 나인패치: 코너 장식은 고정, 가운데 양피지만 늘어남(화면비 무관 왜곡 0).
+	# 커스텀 프레임 이미지(배경) - 나인패치: 코너 장식은 고정, 가운데 양피지만 늘어남(화면비 무관 왜곡 0).
 	var frame := NinePatchRect.new()
 	frame.texture = FRAME
 	frame.patch_margin_left = 150     # 코너 플로리시 크기(텍스처 px). 측정값.

@@ -1,5 +1,5 @@
 extends Control
-## 홈 화면 (메인 허브) ─ 카툰 톤(design.md): 크림 패널·잉크 외곽선·빨강 CTA·골든 강조.
+## 홈 화면 (메인 허브) - 카툰 톤(design.md): 크림 패널·잉크 외곽선·빨강 CTA·골든 강조.
 ##   상단: 코인(골든)·스테이지 / 가방·설정 / 중앙: 치즈·펄·맥스 진입 / 하단: 전투준비·맵·출격(CTA)
 
 var _toast: Label
@@ -18,10 +18,10 @@ func _build() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var E := float(Design.EDGE)   # 24
 
-	# ── 배경(실내 플레이스홀더) ─ 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 ──
+	# -- 배경(실내 플레이스홀더) - 벽(위)/바닥(아래) 2톤 + 중앙 받침 + 라벨 --
 	_room_placeholder(vp)
 
-	# ── 중앙: 치즈(대기) ─ 1080 기준 키 500px, 발 바닥 100px 위. 인게임처럼 idle 사이클 + 탭=hit ──
+	# -- 중앙: 치즈(대기) - 1080 기준 키 500px, 발 바닥 100px 위. 인게임처럼 idle 사이클 + 탭=hit --
 	var frames := load(GameState.job_frames_path())
 	if frames:
 		var sf := frames as SpriteFrames
@@ -79,12 +79,12 @@ func _build() -> void:
 		tb.pressed.connect(cat.tap_hit)
 		add_child(tb)
 
-	# ── 상/하단 그라데이션 딤(배경 위 버튼 가독) — 1080 기준 150px. 치즈 위·버튼 아래 레이어 ──
+	# -- 상/하단 그라데이션 딤(배경 위 버튼 가독) — 1080 기준 150px. 치즈 위·버튼 아래 레이어 --
 	var dim_h := 260.0 * (vp.y / 1080.0)
 	_edge_scrim(true, dim_h)
 	_edge_scrim(false, dim_h)
 
-	# ── 아이콘 배치 = 목업 assets.png 좌표 그대로(배경과 같은 2520×1080·세로고정·가로중앙) ──
+	# -- 아이콘 배치 = 목업 assets.png 좌표 그대로(배경과 같은 2520×1080·세로고정·가로중앙) --
 	var bg_sc := vp.y / 1080.0
 	var bg_x0 := (vp.x - 2520.0 * bg_sc) * 0.5
 	var coach := []
@@ -93,8 +93,8 @@ func _build() -> void:
 	_icon_btn(ICON_MAP, bg_x0, bg_sc, MOCK["map"], func(): get_tree().change_scene_to_file("res://scenes/stagemap.tscn"))
 	_icon_btn(ICON_SORTIE, bg_x0, bg_sc, MOCK["sortie"], func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
 	# 우상단 3(좌→우): 알림 / 메일 / 설정 — 셋 다 항상 노출
-	_icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): _toast_msg("알림 ─ 준비중"))
-	_icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): _toast_msg("메일 ─ 준비중"))
+	_icon_btn(ICON_TR1, bg_x0, bg_sc, MOCK["tr1"], func(): _toast_msg("알림 - 준비중"))
+	_icon_btn(ICON_TR2, bg_x0, bg_sc, MOCK["tr2"], func(): _toast_msg("메일 - 준비중"))
 	_icon_btn(ICON_TR3, bg_x0, bg_sc, MOCK["tr3"], func(): _toast_msg("배경음악 " + ("켜짐" if Music.toggle() else "꺼짐")))
 	# 좌하단: 전투 준비(해금 1-3)
 	if GameState.cleared_stages.has(3):
@@ -152,7 +152,7 @@ func _process(delta: float) -> void:
 			_toast.visible = false
 
 
-## 가방(인벤토리) 오버레이 ─ 크림 패널 + 잉크 외곽선(design.md 패널 규칙)
+## 가방(인벤토리) 오버레이 - 크림 패널 + 잉크 외곽선(design.md 패널 규칙)
 func _show_bag() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var ov := ColorRect.new()
@@ -173,7 +173,7 @@ func _show_bag() -> void:
 	vb.add_theme_constant_override("separation", 8)
 	vb.custom_minimum_size = Vector2(sc.size.x, 0)
 	sc.add_child(vb)
-	vb.add_child(Design.label("가방 ─ 보유 현황", "title", Design.INK))
+	vb.add_child(Design.label("가방 - 보유 현황", "title", Design.INK))
 	_bag_section(vb, "◆ 전리품")
 	var any_mat := false
 	for id in GameState.MAT_ORDER:
@@ -182,7 +182,7 @@ func _show_bag() -> void:
 			any_mat = true
 			vb.add_child(Design.label("   %s  ×%d" % [String(GameState.MATERIALS[id]["name"]), n], "body"))
 	if not any_mat:
-		vb.add_child(Design.label("   (없음 ─ 전투에서 침입자 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 - 전투에서 침입자 처치 시 드랍)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	_bag_section(vb, "◆ 소모품")
 	var any_item := false
 	for id in ["bandage", "anchovy", "firecracker"]:
@@ -191,10 +191,10 @@ func _show_bag() -> void:
 			any_item = true
 			vb.add_child(Design.label("   %s  ×%d" % [String(GameState.CONSUMABLES[id]["name"]), n], "body"))
 	if not any_item:
-		vb.add_child(Design.label("   (없음 ─ 맥스 상점에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 - 맥스 상점에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	_bag_section(vb, "◆ 보유 스킬")
 	if GameState.owned_skills.is_empty():
-		vb.add_child(Design.label("   (없음 ─ 맥스 상점 [스킬]에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
+		vb.add_child(Design.label("   (없음 - 맥스 상점 [스킬]에서 구매)", "caption", Design.PAPER_DEEP.darkened(0.2)))
 	else:
 		var jk := {"sheriff": "보안관", "maid": "메이드", "jazz": "음악가"}
 		for sid in GameState.owned_skills:

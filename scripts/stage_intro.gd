@@ -17,7 +17,7 @@ const CHEESE := Color("F2B33D")
 const CHEESE_DEEP := Color("D4912A")
 
 const SPRITE_FOOT := 81.875   # enemy 기준: 발(원점)→스프라이트 중심 오프셋
-const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) ─ 급하지 않게
+const WALK_SPEED := 230.0     # NPC 걷는 속도(px/s) - 급하지 않게
 
 ## 스테이지별 이벤트 데이터
 const EVENTS := {
@@ -27,42 +27,42 @@ const EVENTS := {
 			{"text": "흐흐… 드디어 돌아왔다, 나의 안식처여……", "name": "?", "anim": "idle"},
 			{"text": "…뭐야? 웬 고양이가 길을 막고 서 있지? 비켜라, 여긴 내 집이다!", "name": "?", "anim": "fear"},
 			{"text": "너… 그때 날 걷어찬 그 고양이?! 이 펑거스, 그 발길질을 잊을 줄 알았더냐!", "anim": "angry"},
-			{"text": "좋다, 오늘 집도 복수도 한꺼번에 되찾아주마. 가라, 나의 정예들이여─!", "anim": "angry"},
+			{"text": "좋다, 오늘 집도 복수도 한꺼번에 되찾아주마. 가라, 나의 정예들이여-!", "anim": "angry"},
 		],
-		"first_kill": [                                     # ② 첫 몹 처치(1회) ─ 당황
+		"first_kill": [                                     # ② 첫 몹 처치(1회) - 당황
 			{"text": "뭐…?! 어떻게 싸울 줄 아는 거지?! 한낱 길바닥 출신인 주제에…!", "anim": "fear"},
 		],
-		"on_wave": {                                        # ③ 웨이브 시작 팝업 ─ 비웃음
-			2: [{"text": "제법이군. 허나 이 몸은 위대한 책략가! 부대는 얼마든지 있다 ─ 가라, 제2진!", "anim": "laugh"}],
+		"on_wave": {                                        # ③ 웨이브 시작 팝업 - 비웃음
+			2: [{"text": "제법이군. 허나 이 몸은 위대한 책략가! 부대는 얼마든지 있다 - 가라, 제2진!", "anim": "laugh"}],
 		},
-		"outro": [                                          # ④ 전 웨이브 클리어 후 ─ 분노
+		"outro": [                                          # ④ 전 웨이브 클리어 후 - 분노
 			{"text": "이…이럴 수가! 오늘의 수치, 이 펑거스가 절대 잊지 않겠다!", "anim": "angry"},
-			{"text": "이번이 마지막이라 생각 마라! 이 몸은 반드시 다시 돌아온다, 치즈으으─!", "anim": "angry"},
+			{"text": "이번이 마지막이라 생각 마라! 이 몸은 반드시 다시 돌아온다, 치즈으으-!", "anim": "angry"},
 		],
 	},
 	"1-3": {
 		"name": "펑거스",
-		"intro": [                                          # ① 전투 시작 전(흐림+비) ─ 비웃음
+		"intro": [                                          # ① 전투 시작 전(흐림+비) - 비웃음
 			{"text": "또 만났군, 치즈. 허나 이 몸을 우습게 보지 마라!", "anim": "laugh"},
 			{"text": "이 위대한 펑거스가… 새로운 비밀 병기를 준비했거든!", "anim": "laugh"},
-			{"text": "멀찍이서 던져주마. 네놈이 손도 못 대게 말이야 ─ 가라, 나의 정예들이여!", "anim": "laugh"},
+			{"text": "멀찍이서 던져주마. 네놈이 손도 못 대게 말이야 - 가라, 나의 정예들이여!", "anim": "laugh"},
 		],
 		"on_wave": {
-			2: [{"text": "후하하─! 등장이다, 나의 투척 부대! 멀리서 깔끔하게 처리해주마!", "anim": "laugh"}],   # ② 투척쥐 첫 등장
+			2: [{"text": "후하하-! 등장이다, 나의 투척 부대! 멀리서 깔끔하게 처리해주마!", "anim": "laugh"}],   # ② 투척쥐 첫 등장
 			3: [   # ③ 웨이브3 시작 + 비 그침→해, 당황
-				{"text": "아닛─! 나의 비장의 카드, 투척쥐를 물리치다니…!", "anim": "fear"},
+				{"text": "아닛-! 나의 비장의 카드, 투척쥐를 물리치다니…!", "anim": "fear"},
 				{"text": "게다가 이 타이밍에 비는 왜 그치는 거야?! 그것도… 희망차게?!", "anim": "fear"},
 			],
 		},
 		"outro": [                                          # ④ 전 웨이브 클리어 후
 			{"text": "흥… 이번엔 제법 진땀 좀 뺐겠다, 치즈?", "anim": "laugh"},
-			{"text": "두고 봐라! 다음엔 투척쥐를 잔뜩, 아주 잔뜩 데려올 테니까! 끄으윽─!", "anim": "angry"},
+			{"text": "두고 봐라! 다음엔 투척쥐를 잔뜩, 아주 잔뜩 데려올 테니까! 끄으윽-!", "anim": "angry"},
 		],
 		"reward": "보안관",                                  # ⑤ 클리어 후 보안관 획득
 		"reward_text": "[전투 준비 > 직업]에서 장착·교체할 수 있어요.",
 	},
-	# 케이스 0 ─ 새 적 등장 스테이지 펑거스 약올리기(인트로만, 해금 없음)
-	"1-5": {    # 박쥐 첫 등장(첫 공중 적). 펄 해금(케이스 A)은 클리어 후 인스씬(game.gd)으로 별개 ─ 시간상 분리 공존.
+	# 케이스 0 - 새 적 등장 스테이지 펑거스 약올리기(인트로만, 해금 없음)
+	"1-5": {    # 박쥐 첫 등장(첫 공중 적). 펄 해금(케이스 A)은 클리어 후 인스씬(game.gd)으로 별개 - 시간상 분리 공존.
 		"name": "펑거스",
 		"intro": [
 			{"text": "오늘은 하늘이다! 가라, 나의 박쥐 떼!", "anim": "laugh"},
@@ -73,20 +73,20 @@ const EVENTS := {
 		"name": "펑거스",
 		"intro": [
 			{"text": "치즈… 네놈한테 당한 그 수모, 곱씹고 또 곱씹었다.", "anim": "angry"},
-			{"text": "회색 따위는 잊어라. 어둠에 절은 나의 정예 ─ 검은 부대다. 더 단단하고, 더 사납지.", "anim": "laugh"},
+			{"text": "회색 따위는 잊어라. 어둠에 절은 나의 정예 - 검은 부대다. 더 단단하고, 더 사납지.", "anim": "laugh"},
 		],
 	},
 	"1-12": {   # 거미(둔화)
 		"name": "펑거스",
 		"intro": [
-			{"text": "오늘은 특별한 손님을 모셨지 ─ 거미님 되시겠다.", "anim": "laugh"},
+			{"text": "오늘은 특별한 손님을 모셨지 - 거미님 되시겠다.", "anim": "laugh"},
 			{"text": "끈적한 거미줄에 발이 쩍 붙으면, 굼떠진 네놈을 실컷 두들겨주마!", "anim": "laugh"},
 		],
 	},
 	"1-14": {   # 벌(독)
 		"name": "펑거스",
 		"intro": [
-			{"text": "윙윙─ 들리나? 이번엔 나의 벌 부대다.", "anim": "laugh"},
+			{"text": "윙윙- 들리나? 이번엔 나의 벌 부대다.", "anim": "laugh"},
 			{"text": "한 방만 쏘여도 독이 짜릿하게 퍼지지. 긁어도 소용없다고, 후하하!", "anim": "laugh"},
 		],
 	},
@@ -145,7 +145,7 @@ func _process(delta: float) -> void:
 	queue_redraw()   # 펑거스 발밑 그림자 갱신(이동 추종)
 
 
-## 펑거스 NPC 발밑 그림자 ─ 캐릭터·적과 동일 톤(검정 30% 납작 타원). NPC가 있을 때만.
+## 펑거스 NPC 발밑 그림자 - 캐릭터·적과 동일 톤(검정 30% 납작 타원). NPC가 있을 때만.
 func _draw() -> void:
 	if _npc == null or not is_instance_valid(_npc):
 		return
@@ -157,10 +157,10 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-# ── 인트로(웨이브 전, NPC 도보 등장) ─────────────────────
+# -- 인트로(웨이브 전, NPC 도보 등장) ---------------------
 func _run_intro() -> void:
 	_busy = true
-	# ★ hold은 await보다 먼저 ─ 한 프레임이라도 spawner._process가 돌아 "전투 시작!" 큐가
+	# ★ hold은 await보다 먼저 - 한 프레임이라도 spawner._process가 돌아 "전투 시작!" 큐가
 	#   인트로 대화 전에 새어나가는 것을 방지(battle_starting은 hold 중엔 안 뜸).
 	if _spawner != null and _spawner.has_method("hold_intro"):
 		_spawner.hold_intro()
@@ -200,7 +200,7 @@ func _run_intro() -> void:
 	_busy = false
 
 
-# ── 팝업(일시정지 + Dim + 대화) ─────────────────────────
+# -- 팝업(일시정지 + Dim + 대화) -------------------------
 func _on_enemy_killed() -> void:
 	if _first_kill_done or _busy or not _data.has("first_kill"):
 		return
@@ -227,7 +227,7 @@ func _run_popup(beats: Array) -> void:
 	_busy = false
 
 
-## ③ 웨이브 시작 팝업(on_wave[N]) ─ current는 1부터.
+## ③ 웨이브 시작 팝업(on_wave[N]) - current는 1부터.
 func _on_wave_popup(current: int, _total: int) -> void:
 	if _busy:
 		return
@@ -236,7 +236,7 @@ func _on_wave_popup(current: int, _total: int) -> void:
 		await _run_popup(ow[current])
 
 
-# ── ④ 클리어 후 퇴장(+⑤ 보상) ─ game.gd가 클리어 패널 직전에 await ─────
+# -- ④ 클리어 후 퇴장(+⑤ 보상) - game.gd가 클리어 패널 직전에 await -----
 func has_outro() -> bool:
 	return _data.has("outro")
 
@@ -256,7 +256,7 @@ func play_outro() -> void:
 	_set_cat_idle(true)
 	_set_bg_alive(true)
 	var vp := get_viewport().get_visible_rect().size
-	# ── #4·#5: 인트로처럼 화면 우측 가까이 등장하되, 치즈를 통과/추월하지 않는다.
+	# -- #4·#5: 인트로처럼 화면 우측 가까이 등장하되, 치즈를 통과/추월하지 않는다.
 	#   치즈는 펑거스 왼쪽에 서고(겹침 금지), 치즈가 너무 우측이면 왼쪽으로 밀어 자리 확보.
 	var gap := 240.0                                   # 펑거스↔치즈 대화 간격
 	var npc_max := vp.x - 140.0                         # 펑거스가 화면 안에 보이는 우측 한계
@@ -321,7 +321,7 @@ func _set_bg_alive(on: bool) -> void:
 			n.process_mode = mode
 
 
-# ── NPC ────────────────────────────────────────────────
+# -- NPC ------------------------------------------------
 func _spawn_npc(start_x: float) -> void:
 	_npc = AnimatedSprite2D.new()
 	_npc.sprite_frames = FUNGUS                        # 펑거스 실제 스프라이트
@@ -346,7 +346,7 @@ func _walk_to(tx: float, anim: String = "walk", speed: float = WALK_SPEED) -> vo
 		_npc.play("idle")                              # 멈춰서 말하기(idle)
 
 
-# ── 대화 UI(코드 생성) ──────────────────────────────────
+# -- 대화 UI(코드 생성) ----------------------------------
 func _sb(bg: Color, radius: int = 10) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = bg
@@ -382,7 +382,7 @@ func _build_ui(dim_alpha: float) -> void:
 	_tap.pressed.connect(_on_tap)
 	_ui.add_child(_tap)
 
-	# 공용 대화창(DialoguePanel) ─ 게임 내 모든 대화창과 동일 스타일. 펑거스 초상화 전달.
+	# 공용 대화창(DialoguePanel) - 게임 내 모든 대화창과 동일 스타일. 펑거스 초상화 전달.
 	var d := DialoguePanel.build(_ui, vp, FUNGUS.get_frame_texture("idle", 0))
 	_face = d["face"]
 	_name_lbl = d["name_lbl"]
@@ -418,6 +418,7 @@ func _voice_id() -> String:
 
 ## 대사를 한 글자씩 표시 + 글자마다 재잘 블립. 탭하면 즉시 전체 표시(스킵).
 func _type_text(text: String, profile_id: String) -> void:
+	text = Design.sentence_breaks(text)   # 대체로 한 줄에 한 문장(한글)
 	_typing = true
 	VoiceBlip.reset(profile_id)
 	_text_lbl.text = text

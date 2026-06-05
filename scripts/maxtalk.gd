@@ -1,5 +1,5 @@
 extends "res://scripts/npc_talk.gd"
-## 맥스 ─ 상점 주인 NPC 인사 화면. [상점을 연다] → shop.tscn.
+## 맥스 - 상점 주인 NPC 인사 화면. [상점을 연다] → shop.tscn.
 
 const ORANGE := Color(1.0, 0.6, 0.15)
 

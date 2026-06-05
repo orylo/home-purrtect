@@ -20,7 +20,7 @@ var _base_speed: float = 700.0     # 잔상 방향/길이용
 var grav: float = 0.0              # lob 중력 (Area2D 내장 gravity와 이름 충돌 피함)
 var max_range: float = 0.0         # straight: 0=무제한, >0=이 거리까지(페이드 후 소멸)
 var fade_start: float = 0.6        # 사거리의 이 비율부터 투명해지기 시작
-var wave_amp: float = 0.0          # 물결 진폭(px) ─ 0이면 직선
+var wave_amp: float = 0.0          # 물결 진폭(px) - 0이면 직선
 var wave_freq: float = 0.0         # 물결 주파수(rad/px)
 var _trail: Array = []             # 음표 잔상용 과거 위치(글로벌)
 var damage: float = 8.0
@@ -138,7 +138,7 @@ func _physics_process(delta: float) -> void:
 			queue_free()
 			return
 
-	# 던지기: 바닥에 떨어지면 ─ 접시·돌은 깨짐 연출 후 소멸, 그 외는 바로 소멸
+	# 던지기: 바닥에 떨어지면 - 접시·돌은 깨짐 연출 후 소멸, 그 외는 바로 소멸
 	if mode == "lob":
 		queue_redraw()
 		if global_position.y >= _ground_y:
@@ -165,7 +165,7 @@ func _on_area_entered(area: Area2D) -> void:
 	# 깨지는 중이면 데미지 없음
 	if _shattering:
 		return
-	# 불발(데미지 0)은 통과 ─ 그냥 바닥에 떨어짐
+	# 불발(데미지 0)은 통과 - 그냥 바닥에 떨어짐
 	if damage <= 0.0:
 		return
 	# 투명해진 탄환(음악가 사거리 끝)은 데미지 없음
@@ -186,7 +186,7 @@ func _draw() -> void:
 		else:
 			_draw_shatter_stone(p)                       # 돌: 회색 덩어리 + 먼지
 		return
-	# 바닥 그림자 ─ 모든 탄환. 회전(돌·접시)해도 바닥에 평평하게(역회전 보정).
+	# 바닥 그림자 - 모든 탄환. 회전(돌·접시)해도 바닥에 평평하게(역회전 보정).
 	var dy := _ground_y - global_position.y
 	if dy > 2.0:
 		var t := clampf(1.0 - dy / 450.0, 0.3, 1.0)
@@ -201,7 +201,7 @@ func _draw() -> void:
 		_:       _draw_dot(_alpha)
 
 
-## 회색 돌멩이 ─ 흰 탄환의 약 2배 크기
+## 회색 돌멩이 - 흰 탄환의 약 2배 크기
 func _draw_stone(a: float) -> void:
 	var r := radius * 2.0   # ≈16
 	var body := Color(0.55, 0.55, 0.58, a)
@@ -214,7 +214,7 @@ func _draw_stone(a: float) -> void:
 	draw_arc(Vector2.ZERO, r, 0.0, TAU, 24, edge, 2.0, true)
 
 
-## 접시 ─ 큰 타원형(가로로 납작)
+## 접시 - 큰 타원형(가로로 납작)
 func _draw_plate(a: float) -> void:
 	var col := Color(0.96, 0.96, 0.92, a)   # 크림빛 도자기
 	var edge := Color(0.5, 0.5, 0.55, a)
@@ -226,7 +226,7 @@ func _draw_plate(a: float) -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)         # 변환 원복
 
 
-## 깨짐 ─ 얇은 파편이 사방으로 튀며 사라짐(접시용)
+## 깨짐 - 얇은 파편이 사방으로 튀며 사라짐(접시용)
 func _draw_shatter(p: float, base: Color) -> void:
 	var a := 1.0 - p
 	var dirs := [Vector2(-1, -0.5), Vector2(-0.4, -0.95), Vector2(0.3, -1.0), Vector2(0.9, -0.6), Vector2(1.1, -0.1)]
@@ -236,7 +236,7 @@ func _draw_shatter(p: float, base: Color) -> void:
 		draw_circle(pos, 4.0 * a + 1.0, Color(base.r, base.g, base.b, a))
 
 
-## 돌멩이 깨짐 ─ 회색 덩어리 6조각 + 먼지 퍼프
+## 돌멩이 깨짐 - 회색 덩어리 6조각 + 먼지 퍼프
 func _draw_shatter_stone(p: float) -> void:
 	var a := 1.0 - p
 	# 먼지 퍼프(연하게 퍼짐)
@@ -256,14 +256,14 @@ func _draw_shatter_stone(p: float) -> void:
 
 func _draw_dot(a: float) -> void:
 	var dir := _velocity.normalized()
-	# ① 부드러운 외광(글로우) ─ 따뜻한 빛 번짐
+	# ① 부드러운 외광(글로우) - 따뜻한 빛 번짐
 	draw_circle(Vector2.ZERO, radius * 2.4, Color(1.0, 0.85, 0.5, 0.10 * a))
 	draw_circle(Vector2.ZERO, radius * 1.6, Color(1.0, 0.9, 0.6, 0.18 * a))
 	# ② 모션 스트릭(뒤로 길게 늘어지는 빛줄기)
 	for i in range(1, 6):
 		var p := -dir * (i * 6.0)
 		draw_circle(p, radius * (1.0 - i * 0.16), Color(1.0, 0.88, 0.55, (0.30 - i * 0.05) * a))
-	# ③ 본체 ─ 달궈진 탄알(가장자리 금속, 중심 흰빛)
+	# ③ 본체 - 달궈진 탄알(가장자리 금속, 중심 흰빛)
 	draw_circle(Vector2.ZERO, radius, Color(0.95, 0.82, 0.55, a))
 	draw_circle(Vector2.ZERO, radius * 0.62, Color(1.0, 0.98, 0.9, a))
 	draw_circle(Vector2(-radius * 0.3, -radius * 0.32), radius * 0.34, Color(1, 1, 1, a))  # 광택
@@ -271,7 +271,7 @@ func _draw_dot(a: float) -> void:
 
 
 func _draw_note(a: float, t: int) -> void:
-	# 잔상(트레일) ─ 지나온 물결 경로에 금빛 글로우. 오래된 것일수록 흐리고 작게.
+	# 잔상(트레일) - 지나온 물결 경로에 금빛 글로우. 오래된 것일수록 흐리고 작게.
 	var n := _trail.size()
 	for i in n:
 		var age := float(i + 1) / float(n + 1)        # 0(오래)~1(최근)
@@ -287,18 +287,18 @@ func _draw_note(a: float, t: int) -> void:
 	var edge := Color(0.55, 0.40, 0.10, a)
 	match t:
 		1:
-			# 잇단음표(♫) ─ 머리 2개 + 기둥 2개 + 위쪽 빔(beam)
+			# 잇단음표(♫) - 머리 2개 + 기둥 2개 + 위쪽 빔(beam)
 			_note_head(Vector2(-6, 4.0), col, edge)
 			_note_head(Vector2(10, 1.0), col, edge)
 			draw_line(Vector2(-0.5, 2.0), Vector2(-0.5, -24.0), col, 2.6)
 			draw_line(Vector2(15.5, -1.0), Vector2(15.5, -27.0), col, 2.6)
 			draw_line(Vector2(-1.5, -24.0), Vector2(16.5, -27.0), col, 3.2)  # 빔
 		2:
-			# 4분음표(♩) ─ 머리 + 기둥만(깃발 없음)
+			# 4분음표(♩) - 머리 + 기둥만(깃발 없음)
 			_note_head(Vector2(0, 2.0), col, edge)
 			draw_line(Vector2(6.5, 0.0), Vector2(6.5, -28.0), col, 2.6)
 		_:
-			# 8분음표(♪) ─ 머리 + 기둥 + 깃발
+			# 8분음표(♪) - 머리 + 기둥 + 깃발
 			_note_head(Vector2(0, 2.0), col, edge)
 			var stem_top := Vector2(6.5, -28.0)
 			draw_line(Vector2(6.5, 0.0), stem_top, col, 2.6)

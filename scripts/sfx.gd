@@ -1,8 +1,8 @@
 extends Node
-## Sfx (오토로드) ─ 효과음.
+## Sfx (오토로드) - 효과음.
 ##   Sfx.play("click" / "coin" / "hit" / "crit" / "pop" / "jump" / "shoot" / "heal" / "buff")
-##   · 실제 음원(assets/sfx/, Kenney CC0)이 있으면 그걸 재생 ─ click·coin·hit·crit·heal·buff.
-##   · 없으면 코드 합성음으로 폴백 ─ pop·jump·shoot(직업별 피치 변주가 살아서 합성 유지).
+##   · 실제 음원(assets/sfx/, Kenney CC0)이 있으면 그걸 재생 - click·coin·hit·crit·heal·buff.
+##   · 없으면 코드 합성음으로 폴백 - pop·jump·shoot(직업별 피치 변주가 살아서 합성 유지).
 ##   폴링 플레이어로 동시재생 + 미세 피치 변주.
 
 const RATE := 22050
@@ -14,13 +14,13 @@ const FILES := {
 	"jump":  ["res://assets/sfx/jump.wav"],    # 점프(카툰)
 	"clear": ["res://assets/sfx/clear.wav"],   # 스테이지 클리어 딩!
 	"hit":   ["res://assets/sfx/hit_a.wav", "res://assets/sfx/hit_b.wav"],   # 음량 정규화(-1.5dB)
-	"punch": ["res://assets/sfx/punch.wav"],   # 평타 근접(카툰 펀치) ─ 휘두름당 1번
+	"punch": ["res://assets/sfx/punch.wav"],   # 평타 근접(카툰 펀치) - 휘두름당 1번
 	"swing": ["res://assets/sfx/swing.wav"],   # 근접 버튼 누를 때 휘두르는 소리
 	"crit":  ["res://assets/sfx/crit.ogg"],
 	"heal":  ["res://assets/sfx/heal.ogg"],
 	"buff":  ["res://assets/sfx/buff.ogg"],
 }
-## 사운드별 추가 음량(dB) ─ 파일 음량이 다른 소리와 안 맞을 때 보정.
+## 사운드별 추가 음량(dB) - 파일 음량이 다른 소리와 안 맞을 때 보정.
 const VOL := {
 	"swing": -9.0,   # 근접 휘두르는 소리(너무 커서 줄임)
 	"punch": -6.0,   # 근접·원거리 공통 타격음(너무 커서 줄임)
@@ -50,14 +50,14 @@ func play(name: String, pitch: float = 1.0, vol_db: float = -4.0) -> void:
 	p.play()
 
 
-## 타격 효과음 ─ 근접·원거리 공통(맞는 소리 통일 = punch).
+## 타격 효과음 - 근접·원거리 공통(맞는 소리 통일 = punch).
 ##   크리는 punch를 아주 빠르게 2연타(볼륨 살짝 다르게) = "퍼벅!".
 func impact(crit: bool) -> void:
 	if not crit:
 		play("punch")
 		return
 	play("punch", 1.0, -5.0)   # 퍼(살짝 작게)
-	# 벅 ─ 0.045초 뒤, 살짝 높고 크게(두 번 볼륨 다르게)
+	# 벅 - 0.045초 뒤, 살짝 높고 크게(두 번 볼륨 다르게)
 	get_tree().create_timer(0.045).timeout.connect(func(): play("punch", 1.07, -1.5))
 
 
@@ -76,7 +76,7 @@ func _stream_for(name: String) -> AudioStream:
 	return _cache[name]
 
 
-# ── 합성 헬퍼 ───────────────────────────────────────────
+# -- 합성 헬퍼 -------------------------------------------
 func _wav(s: PackedFloat32Array) -> AudioStreamWAV:
 	var data := PackedByteArray()
 	data.resize(s.size() * 2)
@@ -137,7 +137,7 @@ func _add(a: PackedFloat32Array, b: PackedFloat32Array) -> PackedFloat32Array:
 	return s
 
 
-## 트럼펫(브라스) 한 음 ─ 배음 풍부 + 어택에 살짝 'blat' 노이즈 + 미세 비브라토.
+## 트럼펫(브라스) 한 음 - 배음 풍부 + 어택에 살짝 'blat' 노이즈 + 미세 비브라토.
 ##   음악가 평타. play 시 pitch_scale로 음표 종류별 음높이 차이.
 func _trumpet(dur := 0.30) -> PackedFloat32Array:
 	var n := int(RATE * dur)
@@ -164,7 +164,7 @@ func _trumpet(dur := 0.30) -> PackedFloat32Array:
 	return s
 
 
-## 천둥 ─ 깊게 굴러가는 럼블(여러 스웰이 시간차로 겹침) + 부드러운 크랙.
+## 천둥 - 깊게 굴러가는 럼블(여러 스웰이 시간차로 겹침) + 부드러운 크랙.
 ##   총소리처럼 안 들리게: 날카로운 크랙 대신 저역 섞은 약한 크랙 + 3단 저역통과.
 func _thunder() -> PackedFloat32Array:
 	var dur := 1.9

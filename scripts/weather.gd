@@ -1,5 +1,5 @@
 extends Node2D
-## 날씨 ─ 3개 하위 레이어로 분리해 근경(z50) 기준 위/아래를 나눈다.
+## 날씨 - 3개 하위 레이어로 분리해 근경(z50) 기준 위/아래를 나눈다.
 ##   · 알갱이/햇빛(비·눈·낙엽·먼지·태양·플레어) = z49 (근경 아래)
 ##   · 색감 틴트(노을·밤·쾌청 워밍) = z51 (근경 위, 화면 전체 덮음)
 ##   · 빛(반딧불·번개 섬광) = z52 (색감 위)
@@ -8,7 +8,7 @@ extends Node2D
 
 ## 스테이지별 날씨 배정. 기본=비움(날씨 없음). 실제 배정은 추후 기획에 맞춰 채운다.
 ## 테스트하려면 예: {"1-3": "sunny", "1-9": "lightning"} 처럼 넣고 F5.
-## ─ 구현된 날씨 종류 ─────────────────────────────────────────────
+## - 구현된 날씨 종류 ---------------------------------------------
 ##   입자(z49 근경 아래): "rain" 비 · "snow" 눈 · "leaves" 낙엽 · "motes" 먼지(갈/회 알갱이)
 ##   빛(z52 색감 위):     "fireflies" 반딧불 · "lightning" 번개(천둥→섬광+비)
 ##   화면 색감(z51 근경 위): "sunny" 쾌청(렌즈플레어+워밍) · "sunset" 노을(주황→분홍+태양) · "night" 밤(네이비→하늘색) · "overcast" 흐림(회색)
@@ -26,7 +26,7 @@ const LAND := 50.0   # 착지 ground_y ± 이 값 랜덤
 const Z_PARTICLES := 49   # 근경 아래(비·눈·낙엽·먼지·햇빛 알갱이)
 const Z_TINT := 51        # 근경 위(화면 전체 색감)
 const Z_LIGHT := 52       # 색감 위(반딧불·번개 빛)
-## 세로 그라데이션 스톱(틴트) ─ [pos0..1, Color(알파포함)]
+## 세로 그라데이션 스톱(틴트) - [pos0..1, Color(알파포함)]
 const _SUNSET := [[0.0, Color(0.94, 0.34, 0.06, 0.55)], [0.42, Color(1.0, 0.74, 0.18, 0.34)], [0.72, Color(1.0, 0.55, 0.42, 0.24)], [1.0, Color(0.97, 0.42, 0.66, 0.16)]]
 const _NIGHT := [[0.0, Color(0.04, 0.05, 0.22, 0.62)], [0.45, Color(0.12, 0.22, 0.46, 0.42)], [1.0, Color(0.55, 0.74, 0.92, 0.20)]]
 const _DAWN := [[0.0, Color(0.22, 0.16, 0.34, 0.55)], [0.5, Color(0.95, 0.48, 0.30, 0.40)], [1.0, Color(1.0, 0.72, 0.58, 0.22)]]
@@ -34,7 +34,7 @@ const _MORNING := [[0.0, Color(0.55, 0.74, 0.95, 0.20)], [1.0, Color(1.0, 0.93, 
 const _OVERCAST := [[0.0, Color(0.52, 0.55, 0.59, 0.46)], [1.0, Color(0.72, 0.74, 0.76, 0.30)]]   # 흐림(채도 낮은 회색)
 
 
-## 하위 레이어 ─ 자식 캔버스. 자기 _draw 때 부모(w)의 paint를 호출(자기 자신에 그림).
+## 하위 레이어 - 자식 캔버스. 자기 _draw 때 부모(w)의 paint를 호출(자기 자신에 그림).
 class WLayer extends Node2D:
 	var w
 	var kind := ""
@@ -55,8 +55,8 @@ var _trans := 0.0       # 전환 진행(0=시작 → 1=완료). transition/showe
 var _clearing := false  # shower: 웨이브3 시작 후 비→태양 전환 진행 플래그
 var _layers: Array = [] # [WLayer ...]
 var _glow: GradientTexture2D    # 라디얼 그라데이션(부드러운 글로우/고스트용, 중심부터 falloff)
-var _sun: GradientTexture2D     # 태양 코어용 ─ 중심에 불투명 평지대(스킬슬롯 크기) → 블러 falloff
-var _ring: GradientTexture2D    # 도넛(링) 고스트용 ─ 가운데 비고 가장자리 블러
+var _sun: GradientTexture2D     # 태양 코어용 - 중심에 불투명 평지대(스킬슬롯 크기) → 블러 falloff
+var _ring: GradientTexture2D    # 도넛(링) 고스트용 - 가운데 비고 가장자리 블러
 
 
 func _ready() -> void:
@@ -85,7 +85,7 @@ func _ready() -> void:
 			sp.wave_started.connect(_on_wave_started)
 
 
-## 웨이브 시작 신호 ─ 소나기 모드에서 마지막 웨이브(3) 진입 시 전환 시작.
+## 웨이브 시작 신호 - 소나기 모드에서 마지막 웨이브(3) 진입 시 전환 시작.
 func _on_wave_started(current: int, _total: int) -> void:
 	if _mode == "shower" and current >= 3:
 		_clearing = true
@@ -156,7 +156,7 @@ func _process(delta: float) -> void:
 		if s.t < 0.26:
 			keep.append(s)
 	_splash = keep
-	# 번개: 불규칙 간격 ─ 천둥 소리 먼저, 섬광은 _flash_delay 뒤
+	# 번개: 불규칙 간격 - 천둥 소리 먼저, 섬광은 _flash_delay 뒤
 	if _mode == "lightning":
 		_flash = maxf(0.0, _flash - delta * 5.5)
 		if _flash2 > 0.0:
@@ -211,7 +211,7 @@ func _step_one(d: Dictionary, delta: float, vp: Vector2, gy: float) -> void:
 			if d.y < top or d.y > bot: d.vy = -d.vy
 
 
-# ── 하위 레이어별 그리기(자식 캔버스 ci에 그림) ───────────────────────
+# -- 하위 레이어별 그리기(자식 캔버스 ci에 그림) -----------------------
 func paint(ci: CanvasItem, kind: String) -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var gy := Layout.ground_y()
@@ -221,7 +221,7 @@ func paint(ci: CanvasItem, kind: String) -> void:
 		"light":     _paint_light(ci, vp, gy)        # z52 색감 위
 
 
-## 근경 아래 ─ 비/눈/낙엽/먼지 + 햇빛(태양·플레어). 반딧불·번개섬광은 제외.
+## 근경 아래 - 비/눈/낙엽/먼지 + 햇빛(태양·플레어). 반딧불·번개섬광은 제외.
 func _paint_particles(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 	match _mode:
 		"sunny":
@@ -242,7 +242,7 @@ func _paint_particles(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 			_draw_ground_particles(ci, gy, 1.0)
 
 
-## 근경 위 ─ 화면 전체 색감(노을·밤 그라데이션, 쾌청 워밍 틴트, 반딧불=밤 색감).
+## 근경 위 - 화면 전체 색감(노을·밤 그라데이션, 쾌청 워밍 틴트, 반딧불=밤 색감).
 func _paint_tint(ci: CanvasItem, vp: Vector2) -> void:
 	match _mode:
 		"sunny":
@@ -271,7 +271,7 @@ func _paint_tint(ci: CanvasItem, vp: Vector2) -> void:
 			if mornA > 0.0:  _draw_vgradient(ci, vp, _MORNING, mornA)
 
 
-## 색감 위 ─ 빛(반딧불, 번개 섬광).
+## 색감 위 - 빛(반딧불, 번개 섬광).
 func _paint_light(ci: CanvasItem, vp: Vector2, gy: float) -> void:
 	match _mode:
 		"fireflies":
@@ -316,7 +316,7 @@ func _draw_light_particles(ci: CanvasItem, _gy: float, gA: float) -> void:
 		_soft_disc(ci, pos, float(d.r) * 2.2, Color(1.0, 1.0, 0.6), 0.85 * bl * gA)    # 밝은 심(블러, 외곽선 없음)
 
 
-## 잎 ─ 잎자루+주맥+측맥+톱니. 외곽·잎맥 모두 같은 갈색·같은 두께 스트로크.
+## 잎 - 잎자루+주맥+측맥+톱니. 외곽·잎맥 모두 같은 갈색·같은 두께 스트로크.
 func _draw_leaf(ci: CanvasItem, c: Vector2, r: float, rot: float, col: Color) -> void:
 	var dir := Vector2(cos(rot), sin(rot))
 	var perp := Vector2(-dir.y, dir.x)
@@ -353,7 +353,7 @@ func _leaf_w(t: float) -> float:
 	return body * 0.52 * teeth
 
 
-## 쾌청 태양 ─ 강하게 번진 후광 + 퓨어화이트 불투명 코어 + 화면 중~하단 렌즈 플레어.
+## 쾌청 태양 - 강하게 번진 후광 + 퓨어화이트 불투명 코어 + 화면 중~하단 렌즈 플레어.
 func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
 	var sun := Vector2(vp.x * 0.86, 0.0)   # 우상단, 중심이 상단선(y=0)에 걸림 → 하단 반원만 보임
 	var px := 0.0
@@ -374,7 +374,7 @@ func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
 	_draw_flare(ci, sun, center - sun, a)                                # 렌즈 플레어 고스트 체인
 
 
-## 렌즈 플레어 고스트 ─ 태양→반대편 축을 따라 컬러풀한 원/링이 줄지어. (첨부 레퍼런스 톤)
+## 렌즈 플레어 고스트 - 태양→반대편 축을 따라 컬러풀한 원/링이 줄지어. (첨부 레퍼런스 톤)
 func _draw_flare(ci: CanvasItem, sun: Vector2, v: Vector2, a: float) -> void:
 	var gpos := [0.30, 0.45, 0.60, 0.74, 0.86, 1.00, 1.16, 1.34, 1.55, 1.80]   # 축 위 위치(0=태양,1=중심)
 	var grad := [30.0, 16.0, 46.0, 12.0,  9.0, 34.0, 64.0, 20.0, 30.0, 80.0]   # 반경
@@ -397,7 +397,7 @@ func _draw_flare(ci: CanvasItem, sun: Vector2, v: Vector2, a: float) -> void:
 			_soft_disc(ci, pos, rad, col, al)
 
 
-## 노을 태양 ─ 따뜻한 화이트 솔리드 코어(스킬슬롯 크기) + 블러 후광. z49(근경 아래).
+## 노을 태양 - 따뜻한 화이트 솔리드 코어(스킬슬롯 크기) + 블러 후광. z49(근경 아래).
 func _draw_warm_sun(ci: CanvasItem, vp: Vector2) -> void:
 	var sun := Vector2(vp.x * 0.86, vp.y * 0.15)
 	_soft_disc(ci, sun, 240.0, Color(1.0, 0.82, 0.5), 0.18)              # 따뜻한 후광
@@ -405,7 +405,7 @@ func _draw_warm_sun(ci: CanvasItem, vp: Vector2) -> void:
 	_soft_disc(ci, sun, rtot, Color(1.0, 0.95, 0.8), 0.95, _sun)         # 또렷한 코어 + 블러 가장자리
 
 
-## 가우시안풍 원반 ─ 알파가 매끄럽게 0이 되는 라디얼 텍스처(진짜 블러). 딱딱한 외곽 없음. tex 생략 시 _glow.
+## 가우시안풍 원반 - 알파가 매끄럽게 0이 되는 라디얼 텍스처(진짜 블러). 딱딱한 외곽 없음. tex 생략 시 _glow.
 func _soft_disc(ci: CanvasItem, c: Vector2, rmax: float, rgb: Color, peak: float, tex: Texture2D = null) -> void:
 	var t: Texture2D = tex if tex != null else _glow
 	if t == null:
@@ -414,12 +414,12 @@ func _soft_disc(ci: CanvasItem, c: Vector2, rmax: float, rgb: Color, peak: float
 	ci.draw_texture_rect(t, Rect2(c - Vector2(rmax, rmax), Vector2(sz, sz)), false, Color(rgb.r, rgb.g, rgb.b, peak))
 
 
-## 글로우 텍스처 ─ 중심 알파1 → 가장자리 알파0(가우시안풍 falloff, 평지대 없음).
+## 글로우 텍스처 - 중심 알파1 → 가장자리 알파0(가우시안풍 falloff, 평지대 없음).
 func _make_glow() -> GradientTexture2D:
 	return _radial([0.0, 0.25, 0.55, 1.0], [1.0, 0.55, 0.16, 0.0])
 
 
-## 태양 코어 텍스처 ─ 중심부 알파1 평지대(0~0.30) 유지 후 0으로 falloff = 솔리드 코어 + 블러 가장자리.
+## 태양 코어 텍스처 - 중심부 알파1 평지대(0~0.30) 유지 후 0으로 falloff = 솔리드 코어 + 블러 가장자리.
 func _make_sun() -> GradientTexture2D:
 	return _radial([0.0, 0.30, 0.62, 1.0], [1.0, 1.0, 0.30, 0.0])
 
@@ -443,7 +443,7 @@ func _radial(offsets: Array, alphas: Array) -> GradientTexture2D:
 	return t
 
 
-## 세로 그라데이션 ─ 인접 쿼드가 색 공유 → 가로 줄(이음새) 없음. mul=전체 알파 배율(전환 페이드용).
+## 세로 그라데이션 - 인접 쿼드가 색 공유 → 가로 줄(이음새) 없음. mul=전체 알파 배율(전환 페이드용).
 func _draw_vgradient(ci: CanvasItem, vp: Vector2, stops: Array, mul: float = 1.0) -> void:
 	for i in range(stops.size() - 1):
 		var p0: float = float(stops[i][0]);     var s0: Color = stops[i][1]

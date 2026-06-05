@@ -1,5 +1,5 @@
 extends Control
-## 전투준비 = 장비창(로드아웃) + 탭 픽커 ─ v3 (Brawl Stars식 펀치: 큰 캐릭터·아이콘 스탯칩·굵은 위계, 우리 카툰 톤)
+## 전투준비 = 장비창(로드아웃) + 탭 픽커 - v3 (Brawl Stars식 펀치: 큰 캐릭터·아이콘 스탯칩·굵은 위계, 우리 카툰 톤)
 ##  좌: 큰 치즈 + 이름 + 등급 배지   /   우: 스탯 칩 + 장비 슬롯(직업/동료/스킬/소지품)   /   하단: [출격]
 ##  슬롯 탭 → 인벤토리 픽커(보유 목록 + 설명 + 장착). ★직업=등급별 장비. (시스템밸런스 §5.2)
 
@@ -89,7 +89,7 @@ func _build_base() -> void:
 	var lx := E
 	var rx := E + lw + G
 
-	# ── 좌: 큰 캐릭터 + 이름 + 등급 배지 ──
+	# -- 좌: 큰 캐릭터 + 이름 + 등급 배지 --
 	var lp := _panel(Vector2(lx, y0), Vector2(lw, ph))
 	_base.add_child(lp)
 	var lcol := _vbox(lp, GL, G)
@@ -107,7 +107,7 @@ func _build_base() -> void:
 	pill.custom_minimum_size = Vector2(0, 48)
 	lcol.add_child(pill)
 
-	# ── 우: 스탯 칩(2열) + 장비 슬롯 4 ──
+	# -- 우: 스탯 칩(2열) + 장비 슬롯 4 --
 	var rp := _panel(Vector2(rx, y0), Vector2(rw, ph))
 	_base.add_child(rp)
 	var rcol := _vbox(rp, GL, G)
@@ -123,7 +123,7 @@ func _build_base() -> void:
 		slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		rcol.add_child(slot)
 
-	# ── 하단 중앙: 출격 ──
+	# -- 하단 중앙: 출격 --
 	var go := Design.button("출격 ▶", "primary", Design.FS_DISPLAY_S)
 	var gw := 380.0
 	go.position = Vector2((_vp.x - gw) * 0.5, go_y); go.custom_minimum_size = Vector2(gw, go_h); go.size = Vector2(gw, go_h)
@@ -216,7 +216,7 @@ func _item_slot_text() -> String:
 	return "  ·  ".join(parts)
 
 
-# ── 장비 슬롯(아이콘박스 + 라벨/값 + ▶) ──
+# -- 장비 슬롯(아이콘박스 + 라벨/값 + ▶) --
 func _slot_button(cat: String, label: String) -> Button:
 	var b := Button.new()
 	b.name = "Slot_" + cat
@@ -442,7 +442,7 @@ func _close_picker() -> void:
 	_refresh_base()
 
 
-# ── helpers ──
+# -- helpers --
 func _panel(pos: Vector2, sz: Vector2) -> Panel:
 	var p := Panel.new()
 	p.position = pos; p.size = sz

@@ -1,7 +1,7 @@
 extends Node
-## Design (오토로드) ─ design.md UI 디자인 시스템의 단일 토큰/헬퍼 소스(SSOT).
+## Design (오토로드) - design.md UI 디자인 시스템의 단일 토큰/헬퍼 소스(SSOT).
 ## 색·폰트크기·간격·버튼·라벨·패널을 여기서만 정의. 화면들은 이 함수/상수만 호출(직접 색·매직넘버 금지).
-## 톤: 고전 카툰 ─ 두꺼운 잉크 외곽선 + 단색 면 + 단색(블러0) 오프셋 그림자 + 베벨 입체 + 물건화 패널 + 8px 그리드.
+## 톤: 고전 카툰 - 두꺼운 잉크 외곽선 + 단색 면 + 단색(블러0) 오프셋 그림자 + 베벨 입체 + 물건화 패널 + 8px 그리드.
 ## 버튼=Design.style_button(b, kind) / 패널=Design.make_panel(panel, ...).
 
 const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")        # 본문·숫자·캡션 = 서울알림체 Bold(700)
@@ -22,7 +22,7 @@ const TEAL := Color("2e8b8b")
 const BLUE := Color("3e6fb0")
 const GREEN := Color("5e8c4e")
 const PINK := Color("e8729c")
-# 등급색 ─ 인덱스 1~5 ([0]=INK, 미사용/대체) (design.md §1)
+# 등급색 - 인덱스 1~5 ([0]=INK, 미사용/대체) (design.md §1)
 const RANK := [INK, Color("9a8c7a"), Color("5e8c4e"), Color("3e6fb0"), Color("8a5ba6"), Color("f2b33d")]
 
 # --- 간격 토큰 (design.md §3.5, 8px 그리드) ---
@@ -50,7 +50,7 @@ const FS_BODY := 22
 const FS_CAPTION := 18
 const FS_NUM := 30
 
-# 글자 외곽선 두께 (design.md §2.2 위계표) ─ STROKE는 갱신본 명칭, OUTLINE은 하위호환 별칭
+# 글자 외곽선 두께 (design.md §2.2 위계표) - STROKE는 갱신본 명칭, OUTLINE은 하위호환 별칭
 const STROKE := {"display": 7, "display_s": 4, "title": 3, "body": 1, "caption": 0, "num": 3}
 const OUTLINE := {"display": 8, "display_s": 5, "title": 3, "body": 0, "caption": 0, "num": 3}
 const FS := {"display": FS_DISPLAY_L, "display_s": FS_DISPLAY_S, "title": FS_TITLE, "body": FS_BODY, "caption": FS_CAPTION, "num": FS_NUM}
@@ -62,7 +62,7 @@ const MOTION := {
 }
 
 
-## 라벨 생성 ─ kind: display/display_s/title/body/caption/num
+## 라벨 생성 - kind: display/display_s/title/body/caption/num
 func label(text: String, kind: String = "body", color: Color = INK) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -79,9 +79,9 @@ func apply_label(l: Label, kind: String = "body", color: Color = INK) -> void:
 		l.add_theme_constant_override("outline_size", ow)
 
 
-# ──────────────────────────────────────────────────────────
-#  버튼 ─ 베벨 입체 (design.md §0-8 / §3 버튼 시스템)
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
+#  버튼 - 베벨 입체 (design.md §0-8 / §3 버튼 시스템)
+# ----------------------------------------------------------
 
 # 4색 알약 버튼 텍스처(나노바나나 에셋). 베벨·외곽선·질감이 그림에 구워져 있음. 색=의미(§1).
 const TEX_PILL := {
@@ -92,7 +92,7 @@ const TEX_PILL := {
 	"gray": preload("res://assets/ui/buttons/pill2_gray.png"),
 }
 
-## (폴백) 코드 알약 박스 ─ 텍스처 못 쓰는 icon kind 등에서 사용
+## (폴백) 코드 알약 박스 - 텍스처 못 쓰는 icon kind 등에서 사용
 func _btn_box(bg: Color, shadow := true) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
@@ -178,11 +178,11 @@ func button(text: String, kind: String = "secondary", fs: int = FS_TITLE) -> But
 	return b
 
 
-# ──────────────────────────────────────────────────────────
-#  패널 ─ 물건화 (design.md §0-7 / §3 패널)
-# ──────────────────────────────────────────────────────────
+# ----------------------------------------------------------
+#  패널 - 물건화 (design.md §0-7 / §3 패널)
+# ----------------------------------------------------------
 
-## 패널 스타일박스 ─ 크림 + 잉크 외곽선 + 단색 그림자
+## 패널 스타일박스 - 크림 + 잉크 외곽선 + 단색 그림자
 func panel_box(bg: Color = PAPER, border := 5, radius := 12) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
@@ -195,7 +195,7 @@ func panel_box(bg: Color = PAPER, border := 5, radius := 12) -> StyleBoxFlat:
 	return sb
 
 
-## 툴팁 ─ 크림 바탕 + 얇은 본문 폰트(FONT) + 가는 잉크 테두리. 자동 줄바꿈(max_w 폭). PanelContainer라 내용맞춤.
+## 툴팁 - 크림 바탕 + 얇은 본문 폰트(FONT) + 가는 잉크 테두리. 자동 줄바꿈(max_w 폭). PanelContainer라 내용맞춤.
 func tooltip(text: String, max_w: float = 340.0, fs: int = 20) -> PanelContainer:
 	var box := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
@@ -213,7 +213,7 @@ func tooltip(text: String, max_w: float = 340.0, fs: int = 20) -> PanelContainer
 	box.add_theme_stylebox_override("panel", sb)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var lbl := Label.new()
-	lbl.text = text
+	lbl.text = sentence_breaks(text)
 	lbl.add_theme_font_override("font", FONT)              # 얇은 본문 폰트(어그로체 Medium)
 	lbl.add_theme_font_size_override("font_size", fs)
 	lbl.add_theme_color_override("font_color", INK)
@@ -223,7 +223,27 @@ func tooltip(text: String, max_w: float = 340.0, fs: int = 20) -> PanelContainer
 	box.add_child(lbl)
 	return box
 
-# 빈티지 간판 패널 텍스처(나노바나나) ─ 장식 코너 크림 패널(불투명, 9-slice 가능)
+
+## 문장 단위 줄바꿈 - 문장끝(. ! ?) 뒤 공백을 줄바꿈으로(대체로 한 줄에 한 문장, 한글 기준).
+##   …(여운)는 제외해 과분할 방지. 기존 줄바꿈 유지. 긴 문장은 라벨 autowrap이 추가로 감쌈.
+func sentence_breaks(text: String) -> String:
+	var enders := [".", "!", "?"]
+	var out := ""
+	var i := 0
+	var n := text.length()
+	while i < n:
+		var ch := text[i]
+		out += ch
+		i += 1
+		if enders.has(ch):
+			if i < n and (text[i] == " " or text[i] == "\t"):
+				while i < n and (text[i] == " " or text[i] == "\t"):
+					i += 1
+				if i < n and text[i] != "\n":
+					out += "\n"
+	return out
+
+# 빈티지 간판 패널 텍스처(나노바나나) - 장식 코너 크림 패널(불투명, 9-slice 가능)
 const TEX_SIGNBOARD := preload("res://assets/ui/panels/panel_signboard.png")
 
 ## 패널 배경을 빈티지 간판 텍스처로 (9-slice). panel은 stylebox를 비우고 이 NinePatch를 맨 뒤에 깖.
@@ -254,7 +274,7 @@ func card_box(bg: Color = PAPER, border := 3, radius := 10) -> StyleBoxFlat:
 	return sb
 
 
-## 작은 볼트(나사머리) 도형 ─ 모서리 하드웨어
+## 작은 볼트(나사머리) 도형 - 모서리 하드웨어
 func bolt(diam: float = 12.0, col: Color = CHEESE_DEEP) -> Panel:
 	var p := Panel.new()
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -328,7 +348,7 @@ func make_panel(panel: Control, with_bolts := true, ribbon := "", ribbon_color :
 		panel.add_child(rib)
 
 
-## 작은 명판(framed plate) 한 줄 ─ 텍스트 한 줄 + 잉크 외곽선 + 볼트 2개(물건화 데모)
+## 작은 명판(framed plate) 한 줄 - 텍스트 한 줄 + 잉크 외곽선 + 볼트 2개(물건화 데모)
 func framed_plate(text: String, kind := "caption", fill := PAPER_DEEP) -> Panel:
 	var p := Panel.new()
 	var sb := StyleBoxFlat.new()

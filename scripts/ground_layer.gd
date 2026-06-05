@@ -1,5 +1,5 @@
 extends Node2D
-## 지면 레이어 ─ stage_background가 고른 ground_texture를 그린다.
+## 지면 레이어 - stage_background가 고른 ground_texture를 그린다.
 ##   하프톤 셰이더(ColorRect)보다 "앞"에 오도록 별도 노드로 분리(far → 하프톤 → 지면 순서).
 ##   그리기 규칙은 stage_background._draw_ground와 동일(발선을 길 구간 중앙에, 크롭 상한).
 

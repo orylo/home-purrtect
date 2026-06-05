@@ -1,8 +1,8 @@
 extends Control
-## 스테이지 맵 (별점 허브) ─ design.md 토큰(Design 오토로드)만 사용.
+## 스테이지 맵 (별점 허브) - design.md 토큰(Design 오토로드)만 사용.
 ##   상단바(홈·막이름·별총합·코인) / 스테이지 그리드(1-1~1-20, best_star 표시·재도전) / 컬렉션 보상 띠(올스타 수령).
 ##   읽기: cleared_stages·stage_stars·allstar_claimed.  쓰기: [받기] 수령(claim_allstar)뿐.
-##   게이팅 없음(BM) ─ 맵은 정보·수령·재도전용. 별로 본편 진행 막지 않음.
+##   게이팅 없음(BM) - 맵은 정보·수령·재도전용. 별로 본편 진행 막지 않음.
 
 const COLS := 5
 const ROWS := 4
@@ -24,7 +24,7 @@ func _build() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var E := float(Design.EDGE)
 
-	# ── 배경 ──
+	# -- 배경 --
 	var bg := ColorRect.new()
 	bg.color = Design.CANVAS
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -37,7 +37,7 @@ func _build() -> void:
 	_build_grid(vp, E, grid_top, grid_h)
 	_build_collection(vp, E, vp.y - E - band_h, band_h)
 
-	# 토스트(수령 알림) ─ 상단중앙 PAPER 알약(§3.6)
+	# 토스트(수령 알림) - 상단중앙 PAPER 알약(§3.6)
 	var tw := 420.0
 	_toast = Panel.new()
 	_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -65,7 +65,7 @@ func _process(delta: float) -> void:
 			_toast.visible = false
 
 
-# ── 상단 바 ───────────────────────────────────────────────────────────────
+# -- 상단 바 ---------------------------------------------------------------
 func _build_topbar(vp: Vector2, E: float) -> void:
 	# [← 홈]
 	var home := Design.button("← 홈", "paper", Design.FS_BODY)
@@ -74,7 +74,7 @@ func _build_topbar(vp: Vector2, E: float) -> void:
 	home.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/home.tscn"))
 	add_child(home)
 
-	# 막 이름(중앙) ─ 명판(물건화: 볼트 포함)
+	# 막 이름(중앙) - 명판(물건화: 볼트 포함)
 	var sub: String = ACT_NAME.get(GameState.stage_major, "")
 	var title_txt := "%d막 %s" % [GameState.stage_major, sub] if sub != "" else "%d막 스테이지" % GameState.stage_major
 	var plate := Design.framed_plate(title_txt, "title")
@@ -93,12 +93,12 @@ func _build_topbar(vp: Vector2, E: float) -> void:
 	add_child(star_cap)
 
 
-## 재화 캡슐 ─ 명판(PAPER_DEEP 바탕·잉크 외곽·볼트, 물건화). 글자=잉크(크림 위 골든 금지 §14).
+## 재화 캡슐 - 명판(PAPER_DEEP 바탕·잉크 외곽·볼트, 물건화). 글자=잉크(크림 위 골든 금지 §14).
 func _coin_capsule(text: String) -> Panel:
 	return Design.framed_plate(text, "num")
 
 
-# ── 스테이지 그리드 (1-1 ~ 1-20) ───────────────────────────────────────────
+# -- 스테이지 그리드 (1-1 ~ 1-20) -------------------------------------------
 func _build_grid(vp: Vector2, E: float, top: float, h: float) -> void:
 	var gap := float(Design.GAP)   # 16 (8px 그리드)
 	var cw := (vp.x - 2.0 * E - (COLS - 1) * gap) / COLS
@@ -178,13 +178,13 @@ func _make_cell(n: int, pos: Vector2, sz: Vector2) -> void:
 		cell.add_child(tag)
 
 
-## [재도전] ─ 진행 포인터 격리(begin_replay) 후 해당 스테이지로 출격(파밍·별 갱신).
+## [재도전] - 진행 포인터 격리(begin_replay) 후 해당 스테이지로 출격(파밍·별 갱신).
 func _replay(n: int) -> void:
 	GameState.begin_replay(n)
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
-# ── 컬렉션 보상 띠 (구간 올스타 3칸) ────────────────────────────────────────
+# -- 컬렉션 보상 띠 (구간 올스타 3칸) ----------------------------------------
 func _build_collection(vp: Vector2, E: float, top: float, h: float) -> void:
 	var gap := 16.0
 	var w := (vp.x - 2.0 * E - 2.0 * gap) / 3.0
@@ -251,7 +251,7 @@ func _claim(seg_id: String, gem_name: String) -> void:
 	_toast_t = 2.0
 
 
-# ── helpers ──
+# -- helpers --
 ## 패널 모서리 볼트 4개(물건화, §0-7). Design.bolt 재사용.
 func _corner_bolts(panel: Control) -> void:
 	var corners := [Vector2(8, 8), Vector2(panel.size.x - 20, 8), Vector2(8, panel.size.y - 20), Vector2(panel.size.x - 20, panel.size.y - 20)]

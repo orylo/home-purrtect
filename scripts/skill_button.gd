@@ -1,5 +1,5 @@
 extends Control
-## 전투 중 스킬 발동 (로드맵 5단계) ─ HUD 스킬칸 1~4 (터치/클릭) + 키 skill_1~4.
+## 전투 중 스킬 발동 (로드맵 5단계) - HUD 스킬칸 1~4 (터치/클릭) + 키 skill_1~4.
 ##   장착 슬롯(GameState.equipped_for(현재 직업))대로 발동, 슬롯별 쿨타임.
 ##   효과는 전부 placeholder(색 플래시 + 실제 게임플레이 효과). 그림은 bottom_hud가 그림.
 

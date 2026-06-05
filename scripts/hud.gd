@@ -1,5 +1,5 @@
 extends CanvasLayer
-## 전투 HUD ─ 상단 정보바 + 일시정지/클리어/게임오버 패널
+## 전투 HUD - 상단 정보바 + 일시정지/클리어/게임오버 패널
 ##   좌: ♥ 체력 + 숫자 / 우: 웨이브·남은 적 + 일시정지[II]
 
 ## 전투결과 [확인]을 눌렀고, 그 스테이지가 "전투 씬 내 컷씬"이면 발신(game.gd가 받아 처리).
@@ -80,13 +80,13 @@ func _ready() -> void:
 	_style_ghost(clear_restart)
 	_style_primary(gameover_restart)
 	_build_coin_label()
-	# iOS 안전영역(노치)만큼 상단 HUD를 코너에서 안으로 ─ 배경은 풀블리드, HUD는 안 가리게.
+	# iOS 안전영역(노치)만큼 상단 HUD를 코너에서 안으로 - 배경은 풀블리드, HUD는 안 가리게.
 	_apply_safe_hud()
 	get_viewport().size_changed.connect(_apply_safe_hud)
 	get_tree().create_timer(0.7).timeout.connect(_apply_safe_hud)   # env 인셋 늦게 확정 대비
 
 
-# ── iOS 안전영역 상단 HUD 인셋 (적용 델타 추적 = 누적/리사이즈 안전) ──
+# -- iOS 안전영역 상단 HUD 인셋 (적용 델타 추적 = 누적/리사이즈 안전) --
 var _hud_applied := {}   # 노드 → 현재 적용된 인셋(Vector2)
 
 func _safe_shift(n: Control, delta: Vector2) -> void:
@@ -110,7 +110,7 @@ func _apply_safe_hud() -> void:
 		_safe_shift(n, Vector2(0, t))
 
 
-## 상단 코인 표시 ─ 동전 이모지 대신 금색 "코인 N"으로(숫자는 항상 렌더)
+## 상단 코인 표시 - 동전 이모지 대신 금색 "코인 N"으로(숫자는 항상 렌더)
 func _build_coin_label() -> void:
 	coin_label = Label.new()
 	coin_label.add_theme_font_override("font", UI_FONT)
@@ -141,7 +141,7 @@ func _fmt_mmss(t: float) -> String:
 	return "%02d:%02d" % [sec / 60, sec % 60]
 
 
-## 알약(pill) 스타일 박스 ─ bw>0이면 테두리(고스트)
+## 알약(pill) 스타일 박스 - bw>0이면 테두리(고스트)
 func _pill(bg: Color, bw: float, bc: Color) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg
@@ -195,7 +195,7 @@ func set_wave(current: int, total: int) -> void:
 	_wave_total = total
 
 
-## 전투 시작 큐 ─ 첫 웨이브 시작 시 "전투 시작!" 배너를 짧게 띄운다.
+## 전투 시작 큐 - 첫 웨이브 시작 시 "전투 시작!" 배너를 짧게 띄운다.
 ##   인게임 이벤트(대화)→전투 전환을 명확히. 트럼펫 팡파르 + 팝인→유지→페이드.
 func show_battle_start() -> void:
 	var vp := get_viewport().get_visible_rect().size
@@ -221,13 +221,13 @@ func show_battle_start() -> void:
 
 func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	Sfx.play("clear")
-	# 깨끗한 결과 화면(쿠키런 톤) ─ 전투 HUD(체력·조이스틱·하단버튼 등) 숨기고 클리어 패널만.
+	# 깨끗한 결과 화면(쿠키런 톤) - 전투 HUD(체력·조이스틱·하단버튼 등) 숨기고 클리어 패널만.
 	for c in get_children():
 		if c != clear_panel and c is CanvasItem:
 			c.visible = false
 	var stg := GameState.stage_minor
 	var ev := GameState.clear_event_for(stg)
-	# 알림형(D/D+): 드랍 정산 결과창 하단에 해금 알림 한 줄(드랍과 사건 분리 ─ 가이드 §1-B).
+	# 알림형(D/D+): 드랍 정산 결과창 하단에 해금 알림 한 줄(드랍과 사건 분리 - 가이드 §1-B).
 	#   인스씬 컷씬(A)·보스(C)는 사건을 컷씬/별도 씬이 알리므로 결과창엔 안 얹음.
 	var show_notice := ev != "" and not GameState.replaying and not (stg in INSCENE_EVENT_STAGES) and not (stg in [10, 20])
 
@@ -240,7 +240,7 @@ func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 
 	_build_clear_content(star_info, bonus, show_notice, ev)
 	# 라우팅: (파밍 재도전) 맵 복귀 / 인스씬 컷씬(A) / 홈+코치마크(D+) / 별도 알림씬(보스) / 일반(D·없음)
-	if GameState.replaying:                   # 스테이지 맵 [재도전] 파밍 ─ 진행 안 올리고 맵 복귀(이벤트 생략)
+	if GameState.replaying:                   # 스테이지 맵 [재도전] 파밍 - 진행 안 올리고 맵 복귀(이벤트 생략)
 		_event_pending = false; _inscene_event = false; _home_event = false
 		clear_next.text = "지도로 ▶"
 		clear_restart.visible = true; clear_restart.text = "다시 도전"
@@ -250,16 +250,16 @@ func show_clear(bonus: int = 0, star_info: Dictionary = {}) -> void:
 	elif stg in HOME_EVENT_STAGES:
 		_event_pending = true; _inscene_event = false; _home_event = true
 		clear_next.text = "확인 ▶"; clear_restart.visible = false
-	elif ev != "" and (stg in [10, 20]):     # 보스(C) ─ 추후 컷씬, 현재 별도 알림 씬
+	elif ev != "" and (stg in [10, 20]):     # 보스(C) - 추후 컷씬, 현재 별도 알림 씬
 		_event_pending = true; _inscene_event = false; _home_event = false
 		_event_text = ev; clear_next.text = "확인 ▶"; clear_restart.visible = false
-	else:                                    # D(알림만) 또는 이벤트 없음 ─ 일반 진행
+	else:                                    # D(알림만) 또는 이벤트 없음 - 일반 진행
 		_event_pending = false; _inscene_event = false; _home_event = false
 		clear_next.text = "다음 ▶"; clear_restart.visible = true
 	clear_panel.visible = true
 
 
-# ── 클리어 결과 콘텐츠(별·시간·보상 박스) 동적 구성 ─────────────────────────
+# -- 클리어 결과 콘텐츠(별·시간·보상 박스) 동적 구성 -------------------------
 const LOOT_DIR := "res://assets/items/loot/"
 ## 전리품 id ↔ 아이콘 파일명 예외(나머지는 id.png 그대로). 출처: 기획_아이템도감.md
 const ICON_ALIAS := {"sparrow_feather": "feather", "spider_silk": "cobweb", "wheel": "steel_wheel", "sack": "loot_sack"}
@@ -274,7 +274,7 @@ func _build_clear_content(star_info: Dictionary, bonus: int, show_notice: bool, 
 	_clear_dyn.clear()
 	var vp := get_viewport().get_visible_rect().size
 
-	# ① 별 3개(채움/빈칸) ─ 큰 별 줄
+	# ① 별 3개(채움/빈칸) - 큰 별 줄
 	if not star_info.is_empty():
 		var sr := StarRow.new()
 		sr.got = int(star_info.get("stars", 1))
@@ -293,7 +293,7 @@ func _build_clear_content(star_info: Dictionary, bonus: int, show_notice: bool, 
 		if not bool(star_info.get("is_first", true)) and bool(star_info.get("new_best", false)):
 			_add_dyn(box, _center_label("★ 신기록!  최고 ★%d 갱신" % int(star_info.get("stars", 1)), "title", Design.CHEESE))
 
-	# ④ 보상 박스(코인 + 전리품) ─ 물건화 패널 안 타일 그리드
+	# ④ 보상 박스(코인 + 전리품) - 물건화 패널 안 타일 그리드
 	var tiles: Array = []
 	if GameState.run_coins > 0:
 		tiles.append(_reward_tile(_coin_tex(), _commafy(GameState.run_coins)))
@@ -377,7 +377,7 @@ func _coin_tex() -> Texture2D:
 	return load(LOOT_DIR + "coin.png")
 
 
-## 별 3개(획득 채움=골든 / 미획득=빈 크림) ─ 가운데 별 살짝 크게(쿠키런 톤)
+## 별 3개(획득 채움=골든 / 미획득=빈 크림) - 가운데 별 살짝 크게(쿠키런 톤)
 class StarRow extends Control:
 	var got := 0
 	func _draw() -> void:
@@ -423,7 +423,7 @@ func _on_to_select_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/home.tscn")   # 전투 포기 → 홈
 
 
-## [다음 ▶ / 확인 ▶] ─ 이벤트 스테이지면 [확인]→이벤트 씬으로 랜딩, 아니면 다음 스테이지
+## [다음 ▶ / 확인 ▶] - 이벤트 스테이지면 [확인]→이벤트 씬으로 랜딩, 아니면 다음 스테이지
 func _on_clear_next() -> void:
 	# 파밍 재도전(스테이지 맵): 진행 안 올리고 맵으로 복귀(프론티어 복원).
 	if GameState.replaying:
@@ -464,7 +464,7 @@ func _on_clear_next() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 
-## [홈으로 / 다시 도전] ─ 클리어 후 허브로 (개발자 모드는 개발자 메뉴로)
+## [홈으로 / 다시 도전] - 클리어 후 허브로 (개발자 모드는 개발자 메뉴로)
 func _on_clear_home() -> void:
 	get_tree().paused = false
 	# 파밍 재도전: 같은 스테이지 한 번 더(진행·replaying 유지).

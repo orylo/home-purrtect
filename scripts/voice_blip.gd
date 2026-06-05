@@ -1,5 +1,5 @@
 extends Node
-## VoiceBlip (오토로드) ─ NPC "재잘거림" 보이스(절차적 합성). 동물의숲/Undertale식.
+## VoiceBlip (오토로드) - NPC "재잘거림" 보이스(절차적 합성). 동물의숲/Undertale식.
 ##   NPC 대사가 한 글자씩 타이핑될 때 짧은 블립음을 쏴 "지껄이는" 분위기를 준다.
 ##   실제 단어는 안 들리는 게 의도(분위기용). 치즈는 무대사라 미적용.
 ##   외부 에셋/라이브러리 0개: AudioStreamWAV를 런타임 합성, 글자마다 pitch_scale로 변조.
@@ -7,13 +7,13 @@ extends Node
 
 const RATE := 22050
 const REF_FREQ := 200.0        # 합성 기준 주파수(실제 음정은 pitch_scale로 변조)
-const BLIP_MS := 75            # 블립 길이(60~90ms) ─ pitch_scale로 더 짧아짐
+const BLIP_MS := 75            # 블립 길이(60~90ms) - pitch_scale로 더 짧아짐
 const VOL_DB := -15.0          # 분위기용, 작게(빠른 연타라 너무 크면 시끄러움)
 const ATK_MS := 5.0            # 어택(톡 끊김)
 const DECAY := 40.0            # 디케이 계수(클수록 빨리 사라짐)
 const POOL := 6               # 동시 블립 풀(빠른 연타 대비)
 
-## 캐릭터별 피치 프로필 ─ 새 NPC는 여기 한 줄 추가로 확장. 전부 시작값·튜닝 대상.
+## 캐릭터별 피치 프로필 - 새 NPC는 여기 한 줄 추가로 확장. 전부 시작값·튜닝 대상.
 ##   base_freq Hz(낮을수록 굵음: 맥스<펑거스<펄) / jitter(클수록 지껄임) / waveform(음색)
 ##   blip_every(N글자마다 1회) / char_ms(타이핑 속도, 작을수록 빠름) / sample_path(있으면 .ogg 변조)
 ## sample_path 채워짐 = 녹음 음절(.wav) pitch_scale 변조 재생(합성 대신). 펑거스=시스템 알림 음색도 겸함.
@@ -28,8 +28,8 @@ const VOICE_PROFILES := {
 ## 샘플 재생 피치 배율(profile "sample_pitch", 기본 1.0). <1=낮게(굵게)·길게, >1=높게. 합성음 프로필엔 영향 없음.
 const DEFAULT_SAMPLE_PITCH := 1.0
 
-## 무음 처리할 글자(공백·개행·일부 문장부호 ─ 글자에만 블립).
-const SILENT := [" ", "\n", "\t", " ", "「", "」", "(", ")", "·", "─", "-", "ㅡ", "\"", "'"]
+## 무음 처리할 글자(공백·개행·일부 문장부호 - 글자에만 블립).
+const SILENT := [" ", "\n", "\t", " ", "「", "」", "(", ")", "·", "-", "-", "ㅡ", "\"", "'"]
 
 var _players: Array = []
 var _pool_i := 0
@@ -87,18 +87,18 @@ func blip(profile_id: String, ch: String, char_index: int, total: int) -> void:
 	var p: AudioStreamPlayer = _next_player()
 	var sample_path: String = String(prof.get("sample_path", ""))
 	if sample_path != "":
-		# ── 샘플 스왑: base_freq 대신 pitch_scale로 음절 변조 + sample_pitch로 전체 톤 이동(골드=0.62 낮게) ──
+		# -- 샘플 스왑: base_freq 대신 pitch_scale로 음절 변조 + sample_pitch로 전체 톤 이동(골드=0.62 낮게) --
 		p.stream = _load_sample(sample_path)
 		var sp: float = float(prof.get("sample_pitch", DEFAULT_SAMPLE_PITCH))
 		p.pitch_scale = clampf((freq / base) * sp, 0.3, 2.0)
 	else:
-		# ── 기본: 절차적 합성음(파형 1개 + pitch_scale 변조) ──
+		# -- 기본: 절차적 합성음(파형 1개 + pitch_scale 변조) --
 		p.stream = _tone(String(prof.get("waveform", "sine")))
 		p.pitch_scale = clampf(freq / REF_FREQ, 0.4, 3.0)
 	p.play()
 
 
-## 시스템 알림(즉시표시·非타이핑)용 ─ 합성 시스템음 단발 블립 1회(과하지 않게).
+## 시스템 알림(즉시표시·非타이핑)용 - 합성 시스템음 단발 블립 1회(과하지 않게).
 ##   타이핑되는 시스템 알림은 blip("system", …)을 글자마다 쓸 것(녹음 펑거스 말고 합성음).
 func notify() -> void:
 	blip("system", "A", 0, 1)
@@ -125,7 +125,7 @@ func _load_sample(path: String) -> AudioStream:
 	return st
 
 
-## 파형별 짧은 톤(REF_FREQ) 1회 합성·캐시 ─ 빠른 어택 + 빠른 디케이로 "톡" 끊김.
+## 파형별 짧은 톤(REF_FREQ) 1회 합성·캐시 - 빠른 어택 + 빠른 디케이로 "톡" 끊김.
 func _tone(waveform: String) -> AudioStreamWAV:
 	if _wave_cache.has(waveform):
 		return _wave_cache[waveform]

@@ -1,5 +1,5 @@
 extends Node
-## 연출 공용 모듈 (오토로드 "Fx") ─ 화면 흔들림 + 히트스톱
+## 연출 공용 모듈 (오토로드 "Fx") - 화면 흔들림 + 히트스톱
 ## 다른 스크립트가 request_shake / request_hitstop를 호출하면 발동.
 
 var shake: float = 0.0          # 현재 흔들림 세기(px). game.gd가 읽어 화면에 적용.
@@ -11,7 +11,7 @@ func request_shake(amount: float) -> void:
 	shake = maxf(shake, amount)
 
 
-## 히트스톱 ─ 아주 잠깐 시간을 멈췄다 복구(타격의 묵직함)
+## 히트스톱 - 아주 잠깐 시간을 멈췄다 복구(타격의 묵직함)
 func request_hitstop(duration: float) -> void:
 	_hitstop_token += 1
 	var my := _hitstop_token
@@ -22,7 +22,7 @@ func request_hitstop(duration: float) -> void:
 		Engine.time_scale = 1.0
 
 
-# ── 이펙트 스프라이트 (assets/fx/<name>/0~8.png, 9프레임) ──────────
+# -- 이펙트 스프라이트 (assets/fx/<name>/0~8.png, 9프레임) ----------
 var _sf_cache: Dictionary = {}   # "name|loop" → SpriteFrames
 
 func _frames(anim: String, loop: bool) -> SpriteFrames:
