@@ -355,7 +355,7 @@ func _leaf_w(t: float) -> float:
 
 ## 쾌청 태양 — 강하게 번진 후광 + 퓨어화이트 불투명 코어 + 화면 중~하단 렌즈 플레어.
 func _draw_sun(ci: CanvasItem, vp: Vector2, a: float) -> void:
-	var sun := Vector2(vp.x * 0.86, vp.y * 0.15)
+	var sun := Vector2(vp.x * 0.86, 0.0)   # 우상단, 중심이 상단선(y=0)에 걸림 → 하단 반원만 보임
 	var px := 0.0
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null and pl is Node2D:
