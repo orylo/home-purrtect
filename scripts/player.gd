@@ -636,6 +636,10 @@ func take_damage(amount: float) -> void:
 		amount *= (1.0 - _guard_pct)   # 방패 자세: 피해 감소
 	if amount >= 1.0:
 		_hurt_popups.append({"amount": int(round(amount)), "t": 0.0})   # 받은 데미지 숫자
+		# 적이 치즈 평타에 맞을 때와 동일한 타격 연출(소리+임팩트 번쩍+흔들림)
+		Sfx.impact(false)
+		Fx.request_shake(3.0)
+		Fx.burst("impact_flash", global_position + Vector2(0, -110), 0.42, 45)
 	health -= amount
 	_hurt_flash_timer = 0.15
 	_committed_anim = "hit"   # 피격 모션(끝까지·빠르게), 진행 중 공격 취소
