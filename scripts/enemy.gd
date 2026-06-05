@@ -403,10 +403,18 @@ func _fire_projectile() -> void:
 		return
 	_lunge = 0.16
 	var b := ENEMY_BULLET.instantiate()
+	var bcol := _bcolor            # 발사체 색(아래에서 종류별 지정)
 	if _kind == "lob":
-		b.shape = "stone"          # 투척쥐 2종 = 길냥이 돌멩이와 동일
+		b.shape = "stone"          # 투척쥐 = 돌멩이. 회색=치즈 돌과 동일 / 검은투척쥐=어둡게.
+		bcol = Color(0.26, 0.23, 0.22) if _id == "black_thrower" else Color(0.55, 0.55, 0.58)
 	elif _id == "bee":
 		b.shape = "cone"           # 벌 = 원뿔 독침
+	elif _id == "spider":
+		b.shape = "web"            # 거미 = 흰 거미줄
+		bcol = Color(1, 1, 1)
+	elif _id == "bat":
+		b.shape = "sonic"          # 박쥐 = 초음파
+		bcol = Color(0.85, 0.95, 1.0)
 
 	# 박쥐: 입 위치(현재 비행 높이=최저점이면 치즈 얼굴)에서 수평 음파. 서면 맞고 앉으면 회피.
 	if _high:
@@ -415,7 +423,7 @@ func _fire_projectile() -> void:
 		b.hit_y_offset = emit.y - global_position.y    # 음파가 지나는 높이(바닥 기준)
 		b.dodge_by_crouch = true
 		get_parent().add_child(b)
-		b.setup(Vector2(-460.0, 0.0), damage, _status, _bcolor, 0.0)   # 수평 직선
+		b.setup(Vector2(-460.0, 0.0), damage, _status, bcol, 0.0)   # 수평 직선
 		return
 
 	var origin := _emit_pos()
@@ -429,10 +437,10 @@ func _fire_projectile() -> void:
 		var t := clampf(absf(to.x) / 420.0, 0.55, 1.4)   # 거리 멀수록 길게(과하지 않게 clamp)
 		var vx := to.x / t
 		var vy := (to.y - 0.5 * g * t * t) / t
-		b.setup(Vector2(vx, vy), damage, _status, _bcolor, g)
+		b.setup(Vector2(vx, vy), damage, _status, bcol, g)
 	else:
 		var dir := (target - origin).normalized()
-		b.setup(dir * 520.0, damage, _status, _bcolor, 0.0)                   # 직선
+		b.setup(dir * 520.0, damage, _status, bcol, 0.0)                   # 직선
 
 
 ## 탄환 생성 위치(월드). 스프라이트 부위(EMIT_OFFSET) 기준, 없으면 폴백.

@@ -38,6 +38,8 @@ func _physics_process(delta: float) -> void:
 		rotation += delta * 6.0            # 돌멩이: 날아가며 빙글
 	elif shape == "cone":
 		rotation = _vel.angle()            # 원뿔 독침: 진행 방향 향함
+	elif shape == "web":
+		rotation += delta * 2.2            # 거미줄: 천천히 회전
 	queue_redraw()
 
 	# 트리 일시정지(클리어·일시정지 메뉴) 중엔 날아가되 데미지는 주지 않음(시각적으로만 낙하).
@@ -72,22 +74,53 @@ func _draw() -> void:
 	match shape:
 		"stone": _draw_stone()
 		"cone":  _draw_cone()
+		"web":   _draw_web()
+		"sonic": _draw_sonic()
 		_:
 			draw_circle(Vector2.ZERO, 11.0, color)
 			draw_arc(Vector2.ZERO, 11.0, 0.0, TAU, 14, Color(0, 0, 0, 0.5), 1.5, true)
 
 
-## 밝은 회색 돌멩이 — 너무 까맣지 않게(따뜻한 톤).
+## 돌멩이 — body=color(투척쥐별), 음영/외곽은 거기서 파생. 회색=치즈 돌과 동일 / 검은투척쥐=어둡게.
 func _draw_stone() -> void:
 	var r := 16.0
-	var body := Color(0.68, 0.66, 0.62)
-	var edge := Color(0.40, 0.38, 0.34)
-	var shade := Color(0.55, 0.53, 0.49)
-	var hi := Color(0.88, 0.86, 0.82)
+	var body := color
+	var edge := color.darkened(0.45)
+	var shade := color.darkened(0.22)
+	var hi := color.lightened(0.35)
 	draw_circle(Vector2.ZERO, r, body)
 	draw_circle(Vector2(r * 0.28, r * 0.3), r * 0.55, shade)   # 아래쪽 그림자
 	draw_circle(Vector2(-r * 0.32, -r * 0.32), r * 0.28, hi)   # 위쪽 하이라이트
 	draw_arc(Vector2.ZERO, r, 0.0, TAU, 24, edge, 2.0, true)
+
+
+## 흰 거미줄 — 거미 전용. 방사형 스포크 + 동심 거미줄(아이템 모양, 블랙 스트로크 없이 흰색).
+func _draw_web() -> void:
+	var r := 17.0
+	var spokes := 8
+	var col := Color(1, 1, 1, 0.92)
+	var dir := PackedVector2Array()
+	for i in spokes:
+		var a := TAU * float(i) / float(spokes)
+		var u := Vector2(cos(a), sin(a))
+		dir.append(u)
+		draw_line(Vector2.ZERO, u * r, col, 1.5)            # 스포크
+	for ring in [0.42, 0.7, 1.0]:                            # 동심 거미줄(스포크 사이 직선 세그먼트)
+		var rr: float = r * ring
+		for i in spokes:
+			draw_line(dir[i] * rr, dir[(i + 1) % spokes] * rr, Color(1, 1, 1, 0.8), 1.3)
+	draw_circle(Vector2.ZERO, 1.8, col)                      # 중심 매듭
+
+
+## 초음파 — 박쥐 전용. 진행방향(-X, 왼쪽)으로 열린 동심 호 3겹(밖일수록 옅게) + 살짝 맥동.
+func _draw_sonic() -> void:
+	var base := color if color.v > 0.3 else Color(0.85, 0.95, 1.0)
+	var ph: float = fmod((4.0 - _life) * 3.0, 1.0)          # 0→1 반복(파동 퍼짐)
+	for i in 3:
+		var r := 6.0 + (float(i) + ph) * 6.0
+		var fade := clampf(1.0 - (float(i) + ph) / 3.4, 0.12, 1.0)
+		var c := Color(base.r, base.g, base.b, 0.9 * fade)
+		draw_arc(Vector2.ZERO, r, PI - 0.95, PI + 0.95, 18, c, 3.0 - float(i) * 0.5, true)
 
 
 ## 원뿔 독침 — 벌 전용(진행 방향 +X로 그리고 rotation으로 정렬).
