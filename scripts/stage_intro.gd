@@ -120,8 +120,8 @@ var _walk_speed := WALK_SPEED
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS   # 일시정지 중에도 동작
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	if GameState.sandbox or not EVENTS.has(key):
-		queue_free()
+	if GameState.sandbox or GameState.cheats.get("skip_events", false) or not EVENTS.has(key):
+		queue_free()      # 샌드박스 / DEV 이벤트스킵(전투만) / 이벤트 없는 스테이지 → 인트로·아웃트로·팝업 전부 생략
 		return
 	_data = EVENTS[key]
 	_spawner = get_parent().get_node_or_null("Spawner")

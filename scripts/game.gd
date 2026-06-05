@@ -99,7 +99,8 @@ func _on_player_died() -> void:
 
 # 게임오버 = 영감의 전보 컷씬(플레이스홀더) → 같은 스테이지 재도전(자산·코인 유지).
 func _play_gameover_cutscene() -> void:
-	await _play_cutscene(CUT_GAMEOVER)
+	if not GameState.cheats.get("skip_events", false):   # DEV 이벤트스킵: 게임오버 컷씬 생략
+		await _play_cutscene(CUT_GAMEOVER)
 	# 같은 스테이지 재도전(보유 자산·코인·전리품 유지)
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
@@ -197,13 +198,14 @@ func _on_inscene_event() -> void:
 	hud.visible = false                       # 깨끗한 컷씬(HP바 등 숨김)
 	if player.has_method("set_event_idle"):
 		player.set_event_idle(true)
-	match GameState.stage_minor:
-		3: await _event_crate()
-		5: await _event_pearl()
-		7: await _event_max()
-		13: await _event_rescue(CUT_DOVE)
-		16: await _event_rescue(CUT_CHIHUAHUA)
-		_: pass
+	if not GameState.cheats.get("skip_events", false):   # DEV 이벤트스킵(전투만): 클리어 컷씬 생략
+		match GameState.stage_minor:
+			3: await _event_crate()
+			5: await _event_pearl()
+			7: await _event_max()
+			13: await _event_rescue(CUT_DOVE)
+			16: await _event_rescue(CUT_CHIHUAHUA)
+			_: pass
 	# 진행 저장 → 홈
 	GameState.advance_stage()
 	if GameState.mode != "dev" and GameState.AUTOSAVE:

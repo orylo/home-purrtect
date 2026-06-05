@@ -4,6 +4,13 @@ extends CanvasLayer
 
 const FONT := preload("res://assets/fonts/Pretendard-Regular.ttf")
 const ENEMY_SCENE := preload("res://scenes/enemy.tscn")
+# 가독성 토큰 — 어두운 패널 + 밝은 크림 버튼 + 진한 잉크 글씨(밝은 게임화면 위에서도 또렷).
+const BG_PANEL := Color("17140F")    # 어두운 패널
+const PAPER := Color("F3E3BE")       # 크림 버튼 바탕
+const PAPER_HI := Color("FBEFCF")    # 버튼 호버
+const INK := Color("241F1B")         # 진한 글씨
+const GOLD := Color("E0A53B")        # 헤더·강조
+const REDC := Color("E45A45")        # ON 상태 강조
 ## 스폰 버튼 순서(적 10종)
 const SPAWN_ORDER := [
 	"gray", "gray_roller", "gray_thrower",
@@ -34,6 +41,7 @@ func _build_ui() -> void:
 	_panel = PanelContainer.new()
 	_panel.position = Vector2(10, 150)
 	_panel.visible = false
+	_panel.add_theme_stylebox_override("panel", _box(BG_PANEL, GOLD, 8))   # 어두운 불투명 패널(글씨 가독)
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override("separation", 16)
 	_panel.add_child(cols)
@@ -58,6 +66,25 @@ func _build_ui() -> void:
 	_sec(left, "스킬/동료(전투 중)")
 	_btn(left, "스킬 지급+장착", func(): GameState.dev_grant_skills())
 	_btn(left, "동료 지급+장착", func(): GameState.dev_grant_companions())
+
+	_sec(left, "전투 진행")
+	# 이벤트 스킵(전투만) — 토글. ON이면 인트로/클리어·게임오버 컷씬 전부 생략(인트로는 다음 스테이지 진입부터 적용).
+	var ev := Button.new()
+	var ev_upd := func():
+		var on: bool = GameState.cheats.get("skip_events", false)
+		ev.text = "이벤트 스킵(전투만): " + ("ON" if on else "OFF")
+		ev.add_theme_color_override("font_color", REDC if on else INK)
+	ev_upd.call()
+	_font(ev, 18)
+	ev.pressed.connect(func():
+		GameState.cheats["skip_events"] = not GameState.cheats.get("skip_events", false)
+		ev_upd.call())
+	left.add_child(ev)
+	# 웨이브 건너뛰기 — 현재 웨이브 즉시 종료 → 다음 웨이브(또는 클리어).
+	_btn(left, "웨이브 건너뛰기 ⏭", func():
+		var sp: Node = get_parent().get_node_or_null("Spawner")
+		if sp != null and sp.has_method("dev_skip_wave"):
+			sp.dev_skip_wave())
 
 	_sec(left, "스테이지 이동")
 	var srow := HBoxContainer.new()
@@ -131,8 +158,8 @@ func _sec(box: VBoxContainer, text: String) -> void:
 	l.text = text
 	l.add_theme_font_override("font", FONT)
 	l.add_theme_font_size_override("font_size", 16)
-	# 섹션 헤더 = 빨강(밝은 패널 위 가독·강조). 기존 골드(1.0,0.7,0.2)는 크림 위 저대비라 교체(§14).
-	l.add_theme_color_override("font_color", Color(0.84, 0.25, 0.18))
+	# 섹션 헤더 = 골드(어두운 패널 위 또렷).
+	l.add_theme_color_override("font_color", GOLD)
 	box.add_child(l)
 
 
@@ -147,5 +174,35 @@ func _btn(box: VBoxContainer, label: String, fn: Callable) -> void:
 func _font(c: Control, fs: int) -> void:
 	c.add_theme_font_override("font", FONT)
 	c.add_theme_font_size_override("font_size", fs)
-	# 글자색 INK 강제 — SpinBox 등 타입별 색 미지정 컨트롤이 밝은 바탕에 흰 글씨로 안 보이는 것 방지.
-	c.add_theme_color_override("font_color", Color(0.0275, 0.0235, 0.0275))
+	c.add_theme_color_override("font_color", INK)
+	if c is Button:
+		# 버튼 = 크림 바탕 + 잉크 글씨(모든 상태) → 밝은 게임화면 위에서도 또렷.
+		c.add_theme_color_override("font_color", INK)
+		c.add_theme_color_override("font_hover_color", INK)
+		c.add_theme_color_override("font_pressed_color", INK)
+		c.add_theme_color_override("font_focus_color", INK)
+		c.add_theme_stylebox_override("normal", _box(PAPER, INK, 6))
+		c.add_theme_stylebox_override("hover", _box(PAPER_HI, INK, 6))
+		c.add_theme_stylebox_override("pressed", _box(GOLD, INK, 6))
+		c.add_theme_stylebox_override("focus", _box(PAPER, INK, 6))
+	elif c is SpinBox:
+		var le := (c as SpinBox).get_line_edit()
+		le.add_theme_font_override("font", FONT)
+		le.add_theme_font_size_override("font_size", fs)
+		le.add_theme_color_override("font_color", INK)
+		le.add_theme_stylebox_override("normal", _box(PAPER, INK, 6))
+		le.add_theme_stylebox_override("focus", _box(PAPER_HI, INK, 6))
+
+
+## 디버그 UI용 스타일박스(바탕+테두리). 작은 패딩.
+func _box(bg: Color, border: Color, radius: int = 6) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.set_border_width_all(2)
+	s.border_color = border
+	s.set_corner_radius_all(radius)
+	s.content_margin_left = 8.0
+	s.content_margin_right = 8.0
+	s.content_margin_top = 4.0
+	s.content_margin_bottom = 4.0
+	return s

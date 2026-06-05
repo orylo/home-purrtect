@@ -45,6 +45,19 @@ func release_intro() -> void:
 	_hold = false
 
 
+## DEV: 현재 웨이브 즉시 종료 — 남은 스폰 큐 비우고 생존 적 전멸 → 다음 웨이브(또는 스테이지 클리어)로.
+func dev_skip_wave() -> void:
+	if _hold or _state == "cleared":
+		return
+	_queue.clear()
+	_to_spawn = 0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if is_instance_valid(e) and e.has_method("take_damage"):
+			e.take_damage(999999.0)
+	if _state == "delay":
+		_delay_timer = 0.0   # 웨이브 사이면 다음 웨이브 즉시 시작
+
+
 func _process(delta: float) -> void:
 	if _hold:
 		return
