@@ -29,30 +29,27 @@ var _weather := ""
 func _ready() -> void:
 	if material is ShaderMaterial:
 		_setup(material as ShaderMaterial)
-	if _weather == "calm":
-		_add_sun()   # 쾌청(맑음)일 때만 태양 — 중심이 화면 맨 위(y=0), 하단 반원만 보임
+	if _weather == "shimmer":
+		_add_sun()   # 쾌청(아지랑이=맑고 더운 날, 1-3 등)일 때 흰 태양. (calm=잔잔엔 없음)
 
 
-## 태양: 중심을 화면 최상단(y=0)에 맞춰 아래쪽 반원만 보이게. 가로 중앙. Halftone 자식(하늘에 떠 지면 뒤).
+## 흰 태양: 중심을 우상단 상단선(y=0)에 걸어 아래쪽 반원만 보이게. Halftone 자식(하늘에 떠 지면 뒤).
 func _add_sun() -> void:
 	var vp := get_viewport_rect().size
 	var sun := Sun.new()
-	sun.radius = vp.y * 0.22
-	sun.position = Vector2(vp.x * 0.5, 0.0)
+	sun.radius = vp.y * 0.18
+	sun.position = Vector2(vp.x * 0.80, 0.0)   # 우상단, 중심이 상단선에 걸림 → 하단 반원만
 	add_child(sun)
 
 
 class Sun extends Node2D:
-	var radius := 180.0
+	var radius := 130.0
 	func _draw() -> void:
-		var gold := Color("F2B33D")       # 골든(빈티지 카툰 톤)
-		var core := Color("FBD774")       # 밝은 속
-		var ink := Color("3A2A12")        # 잉크 외곽
-		for i in range(3):                # 부드러운 후광
-			draw_circle(Vector2.ZERO, radius * (1.0 + 0.14 * float(i + 1)), Color(gold.r, gold.g, gold.b, 0.06))
-		draw_circle(Vector2.ZERO, radius, gold)
-		draw_circle(Vector2.ZERO, radius * 0.70, core)
-		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 72, ink, 5.0, true)   # 외곽선(상단은 화면 밖이라 자연 클립)
+		var white := Color(1, 1, 1, 1)
+		var ink := Color("241F1B")                                   # 잉크 외곽(밝은 하늘 위 가독)
+		draw_circle(Vector2.ZERO, radius * 1.10, Color(1, 1, 1, 0.12))  # 옅은 흰 후광
+		draw_circle(Vector2.ZERO, radius, white)                     # 흰 원
+		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 72, ink, 4.0, true) # 외곽선(상단은 화면 밖 자연 클립)
 
 
 func _setup(m: ShaderMaterial) -> void:
