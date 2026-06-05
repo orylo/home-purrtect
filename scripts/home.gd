@@ -340,7 +340,7 @@ class _HomeBG extends Control:
 	func _draw() -> void:
 		if tex == null:
 			return
-		var vp := size
+		var vp := get_viewport_rect().size   # ★self.size는 0일 수 있어 뷰포트 직접 사용
 		var ts := tex.get_size()
 		if ts.y <= 0.0:
 			return
