@@ -44,25 +44,16 @@ var _fog_tex: ImageTexture
 const POOL_COUNT := {
 	"wall": {"far": 12, "ground": 21, "near": 7},
 }
-## 특정 스테이지 지면 고정(보스 등). 키="막-스테이지". 다른 스테이지도 여기 추가하면 고정.
-const FIXED_GROUND := {
-	"1-2":  "res://assets/backgrounds/wall/test/BG_Ground1.png",   # 신규 21:9 풀프레임 테스트
-	"1-3":  "res://assets/backgrounds/wall/ground/fixed/1-3.png",
-	"1-10": "res://assets/backgrounds/wall/ground/fixed/1-10.png",
-	"1-20": "res://assets/backgrounds/wall/ground/fixed/1-20.png",
-}
-## 특정 스테이지 원경 고정. 키="막-스테이지".
-const FIXED_FAR := {
-	"1-2":  "res://assets/backgrounds/wall/test/BG_Far1.png",      # 신규 21:9 풀프레임 테스트
-	"1-10": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
-	"1-20": "res://assets/backgrounds/wall/far/fixed/1-20.jpg",
-}
-## 신규 21:9 풀프레임 배경 스테이지 — far·ground를 같은 커버 스케일로 꽉 채워 그림(패럴랙스 올림·지면 휴리스틱 OFF).
-##   디자인이 far+ground 같은 2520x1080 캔버스로 정렬돼 있어 바닥선(310px 설계)이 자동으로 ground_y에 맞음.
-const FULLFRAME_STAGES := {
-	"1-2": true,
-}
-var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음)
+## ── 신규 21:9 풀프레임 배경(현재 전 스테이지 공통, 사용자가 스테이지별로 수동 교체 예정) ──
+##   far·ground를 같은 커버 스케일로 꽉(높이맞춤·바닥고정), 패럴랙스 올림·지면 휴리스틱 OFF.
+##   디자인이 far+ground 같은 2520x1080 캔버스로 정렬돼 바닥선(310px 설계)이 자동으로 ground_y에 맞음.
+const DEFAULT_FAR := "res://assets/backgrounds/wall/test/BG_Far1.png"        # 기본 원경(임시 공통)
+const DEFAULT_GROUND := "res://assets/backgrounds/wall/test/BG_Ground1.png"  # 기본 지면(임시 공통)
+## per-stage 풀프레임 override — 키="막-스테이지" → res 경로. 그 스테이지만 다른 그림(비면 DEFAULT 사용).
+##   스테이지별 실제 그림 나오면 여기에 한 줄씩 추가. 예) "1-3": "res://.../1-3_far.png"
+const FIXED_FAR := {}
+const FIXED_GROUND := {}
+var _fullframe := false   # 이번 판이 풀프레임 배경인지(GroundLayer가 읽음). 현재 전 스테이지 true.
 const NEAR_CORNERS := ["tl", "tr", "bl", "br"]
 ## 직전 판 반복 방지(세션 동안만 기억 — 앱 껐다 켜면 리셋, 저장 안 함). 이어서 할 때만 적용.
 static var _last_far := ""
@@ -90,26 +81,15 @@ func _pick_backgrounds() -> void:
 	var theme := _theme_for(GameState.stage_major, GameState.stage_minor)
 	var cnt: Dictionary = POOL_COUNT.get(theme, {})
 	var key := "%d-%d" % [GameState.stage_major, GameState.stage_minor]
-	_fullframe = FULLFRAME_STAGES.has(key)     # 신규 21:9 풀프레임 배경?
-	# 원경 = 고정 스테이지면 고정, 아니면 랜덤(직전 판과 다르게)
+	# 현재 전 스테이지 = 신규 21:9 풀프레임 배경(스테이지별 override 있으면 그것, 없으면 DEFAULT 공통).
+	#   사용자가 스테이지별 실제 그림을 주면 FIXED_FAR/FIXED_GROUND에 한 줄씩 추가만 하면 됨.
+	_fullframe = true
+	_far_lift = 0.0                            # 풀프레임 = 패럴랙스 안 띄움(far+ground 정렬)
 	if far_texture == null:
-		if FIXED_FAR.has(key):
-			far_texture = _load_tex(FIXED_FAR[key])
-			_far_lift = 0.0 if _fullframe else FAR_LIFT_DEFAULT   # 풀프레임=안 띄움(far+ground 정렬), 그 외 고정값
-		else:
-			far_texture = _pick_seq("res://assets/backgrounds/%s/far/far%%02d.jpg" % theme, int(cnt.get("far", 0)), [_last_far])
-			if far_texture != null:
-				_last_far = far_texture.resource_path
-	# 지면 = 고정 스테이지면 고정, 아니면 랜덤
+		far_texture = _load_tex(FIXED_FAR.get(key, DEFAULT_FAR))
 	if ground_texture == null:
-		if FIXED_GROUND.has(key):
-			ground_texture = _load_tex(FIXED_GROUND[key])
-		else:
-			ground_texture = _pick_seq("res://assets/backgrounds/%s/ground/g%%02d.png" % theme, int(cnt.get("ground", 0)))
-	# 지면 정렬 비율(이미지별 예외 보정 or 기본)
-	if ground_texture != null:
-		_ground_surf = float(GROUND_SURF.get(ground_texture.resource_path.get_file(), SURF_FRAC))
-	# 근경 = 0~2개, 서로 다른 코너에서(한 코너 중복 금지)
+		ground_texture = _load_tex(FIXED_GROUND.get(key, DEFAULT_GROUND))
+	# 근경(랜덤) — 기존 그대로 유지(요청)
 	near_pieces = _pick_near(theme, int(cnt.get("near", 0)))
 
 
