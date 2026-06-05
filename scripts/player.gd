@@ -406,7 +406,8 @@ func _draw() -> void:
 	var rx := lerpf(76.0, 120.0, blend)          # 좌우 반경(누울수록 넓게)
 	var ry_scale := lerpf(0.26, 0.30, blend)     # 위아래 납작 정도
 	var sy := gy_local - 20.0 * blend            # 누울수록 위로
-	draw_set_transform(Vector2(0.0, sy), 0.0, Vector2(1.0, ry_scale))
+	var sx := 18.0 * (-1.0 if anim.flip_h else 1.0)   # 발 중심이 프레임 중심보다 +18px 오른쪽 → 그림자도(반전 반영)
+	draw_set_transform(Vector2(sx, sy), 0.0, Vector2(1.0, ry_scale))
 	draw_circle(Vector2.ZERO, rx * t, Color(0, 0, 0, 0.3 * t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_draw_hurt_popups()

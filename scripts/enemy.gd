@@ -43,6 +43,13 @@ const SIZE_MULT := {
 }
 # 발 위치 미세조정(양수=아래로 내려 지면에 더 가깝게). fh*sc 비율.
 const FOOT_NUDGE := {"spider": 0.14}
+## 발 그림자 보정 — 스프라이트별 [발 중심 x(프레임px·중심기준), 발 반폭(프레임px)]. ×스프라이트배율 = 화면px.
+##   그림자를 실제 발 footprint에 맞춤(좌우 쏠림·폭 보정). 미등록 적=기본(중심·_body_r). black=gray 프레임 재사용.
+const SHADOW_FOOT := {
+	"gray": [36.0, 81.0], "gray_roller": [28.0, 67.0], "gray_thrower": [2.0, 161.0],
+	"black": [36.0, 81.0], "black_roller": [28.0, 67.0], "black_thrower": [2.0, 161.0],
+	"spider": [-10.0, 153.0], "bee": [30.0, 37.0], "sparrow": [40.0, 104.0], "bat": [48.0, 42.0],
+}
 const WINDUP_MELEE := 0.22    # 근접(placeholder 폴백): 모션 시작 후 타격까지
 const WINDUP_RANGED := 0.30   # 원거리(placeholder 폴백): 모션 시작 후 발사까지
 # attack 애니에서 발사/타격이 일어나는 프레임(스프라이트 분석값).
@@ -110,6 +117,7 @@ var _loop_prev_frame: int = -1     # 발사프레임 통과 감지용(직전 프
 var _air_phase: float = 0.0        # 공중 상하진동 위상
 var _air_dip_armed: bool = true    # 바닥(최저점) 1회 트리거 준비
 var _sprite_foot_y: float = 0.0    # 스프라이트 발 기준 y
+var _sprite_sc: float = 1.0        # 스프라이트 배율(그림자 발 footprint 환산용)
 var _size_mult: float = 1.0        # 화면 크기 배율(그림자 크기에도 반영)
 var _popups: Array = []
 
@@ -178,6 +186,7 @@ func _apply_def() -> void:
 			var fh: float = float(sf.get_frame_texture("walk", 0).get_height())
 			_size_mult = float(SIZE_MULT.get(_id, 1.0))       # 종류별 크기 보정(그림자에도)
 			var sc: float = (_body_r * 2.6) / maxf(fh, 1.0) * _size_mult
+			_sprite_sc = sc                                    # 그림자 발 footprint 환산용
 			anim.scale = Vector2(sc, sc)
 			var nudge: float = float(FOOT_NUDGE.get(_id, 0.0)) * fh * sc
 			_sprite_foot_y = -fh * sc * 0.5 + nudge           # 발이 원점(+nudge=지면에 더 가깝게)
@@ -467,12 +476,18 @@ func _draw() -> void:
 	_draw_damage_popups()
 	if dead:
 		return
-	# 발밑 그림자 — 크기 배율 + 공중 높이 연동(높이 뜰수록 작고 옅게, 치즈 점프와 동일 로직)
+	# 발밑 그림자 — 발 footprint에 맞춤(좌우 쏠림 보정 + 폭=max(_body_r, 발폭)) + 공중 높이 연동.
 	var sh_t := 1.0
 	if _air:
 		sh_t = clampf(1.0 - _air_raise() / 500.0, 0.30, 1.0)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.28))
-	draw_circle(Vector2.ZERO, _body_r * _size_mult * sh_t, Color(0, 0, 0, 0.3 * sh_t))
+	var sh_rx := _body_r * _size_mult
+	var sh_x := 0.0
+	if SHADOW_FOOT.has(_id):
+		var sfd: Array = SHADOW_FOOT[_id]
+		sh_x = float(sfd[0]) * _sprite_sc * (-1.0 if (_use_sprite and anim.flip_h) else 1.0)   # 발 중심으로(반전 반영)
+		sh_rx = maxf(sh_rx, float(sfd[1]) * _sprite_sc)                                          # 발폭이 넓으면 그만큼
+	draw_set_transform(Vector2(sh_x, 0.0), 0.0, Vector2(1.0, 0.28))
+	draw_circle(Vector2.ZERO, sh_rx * sh_t, Color(0, 0, 0, 0.3 * sh_t))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	# placeholder 몸 (스프라이트 안 쓰는 적 — 보스 등. 공중 스프라이트 적은 여기 안 옴)

@@ -141,6 +141,18 @@ func _process(delta: float) -> void:
 		if absf(_npc.position.x - _walk_target) <= _walk_speed * delta:
 			_npc.position.x = _walk_target
 			_walking = false
+	queue_redraw()   # 펑거스 발밑 그림자 갱신(이동 추종)
+
+
+## 펑거스 NPC 발밑 그림자 — 캐릭터·적과 동일 톤(검정 30% 납작 타원). NPC가 있을 때만.
+func _draw() -> void:
+	if _npc == null or not is_instance_valid(_npc):
+		return
+	var sc: float = _npc.scale.x                        # height 280 스케일
+	var rx := 95.0 * sc                                 # 발 반폭(프레임 ~190px/2) × 스케일
+	draw_set_transform(Vector2(_npc.position.x, Layout.ground_y()), 0.0, Vector2(1.0, 0.28))
+	draw_circle(Vector2.ZERO, rx, Color(0, 0, 0, 0.3))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 # ── 인트로(웨이브 전, NPC 도보 등장) ─────────────────────
