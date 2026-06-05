@@ -452,13 +452,7 @@ func _show_coachmark(c: Dictionary) -> void:
 	dim.material = mat
 	ov.add_child(dim)
 
-	# 강조 링
-	var ring := CoachRing.new()
-	ring.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ring.c = center
-	ring.r = radius
-	ov.add_child(ring)
+	# (노란 강조 링 제거 — 다크 딤 + 원형 하이라이트 마스크만)
 
 	# 안내 = 툴팁(크림·얇은 폰트)을 하이라이트 아이콘 옆에 배치(화면 중앙 쪽). 크기 확정 후 위치.
 	var tip := Design.tooltip(String(c["text"]), 320.0)
@@ -490,11 +484,7 @@ func _show_coachmark(c: Dictionary) -> void:
 			ov.queue_free())
 
 
-class CoachRing extends Control:
-	var c := Vector2.ZERO
-	var r := 90.0
-	func _draw() -> void:
-		draw_arc(c, r, 0.0, TAU, 72, Color("F2B33D"), 5.0, true)   # 골든 강조 링(다크 스트로크 제거)
+# (CoachRing 제거 — 노란 강조 링 폐기, 다크 딤+원형 마스크만 사용)
 
 
 # --- helpers ---
