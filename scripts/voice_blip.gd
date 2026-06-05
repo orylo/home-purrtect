@@ -21,6 +21,7 @@ const VOICE_PROFILES := {
 	"fungus": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 34.0, "sample_path": "res://assets/audio/voice/blip_fungus.wav"},  # 거들먹·종알종알(녹음 음절이 겹쳐 뭉치지 않게 22→34ms = 펄45·기존22 중간)
 	"pearl":  {"base_freq": 330.0, "jitter": 0.05, "waveform": "sine",     "blip_every": 2, "char_ms": 45.0, "sample_path": "res://assets/audio/voice/blip_pearl.wav"},  # 또박또박·우아·느림
 	"max":    {"base_freq": 180.0, "jitter": 0.10, "waveform": "triangle", "blip_every": 2, "char_ms": 35.0, "sample_path": "res://assets/audio/voice/blip_max.wav"},  # 능글·낮음·느긋
+	"system": {"base_freq": 220.0, "jitter": 0.15, "waveform": "square",   "blip_every": 1, "char_ms": 32.0, "sample_path": ""},  # 시스템 알림 = 합성음(녹음 안 씀). 녹음 펑거스와 구분되는 "기계 비프" 톤.
 }
 
 ## 무음 처리할 글자(공백·개행·일부 문장부호 — 글자에만 블립).
@@ -92,10 +93,10 @@ func blip(profile_id: String, ch: String, char_index: int, total: int) -> void:
 	p.play()
 
 
-## 시스템 알림(즉시표시·非타이핑)용 — 펑거스 음색 단발 블립 1회(과하지 않게).
-##   타이핑되는 시스템 알림은 blip("fungus", …)을 글자마다 쓸 것(별도 system 프로필 없음 = 펑거스 그대로).
+## 시스템 알림(즉시표시·非타이핑)용 — 합성 시스템음 단발 블립 1회(과하지 않게).
+##   타이핑되는 시스템 알림은 blip("system", …)을 글자마다 쓸 것(녹음 펑거스 말고 합성음).
 func notify() -> void:
-	blip("fungus", "A", 0, 1)
+	blip("system", "A", 0, 1)
 
 
 ## 화자가 바뀌거나 대사 시작 시 호출(blip_every 카운터 리셋). 선택.

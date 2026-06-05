@@ -299,8 +299,8 @@ const CUT_VOICE_COL := {"pearl": Color(0.95, 0.55, 0.78), "max": Color(0.72, 0.5
 func _play_cutscene(pages: Array, voice: String = "") -> void:
 	for i in pages.size():
 		var p: Dictionary = pages[i]
-		var is_sys: bool = bool(p.get("sys", false))   # 시스템 알림 페이지(호감도·해금 등) → 펑거스 음색·초상화/이름표 없음·가운데 정렬
-		var pv: String = "fungus" if is_sys else voice
+		var is_sys: bool = bool(p.get("sys", false))   # 시스템 알림 페이지(호감도·해금 등) → 합성 시스템음·초상화/이름표 없음·가운데 정렬
+		var pv: String = "system" if is_sys else voice
 		await _cut_page(String(p.get("img", "")), String(p.get("line", "")), i + 1, pages.size(), pv, is_sys)
 
 
