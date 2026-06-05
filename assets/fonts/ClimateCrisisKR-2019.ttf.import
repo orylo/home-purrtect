@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://28xml3ei4w6m"
-path="res://.godot/imported/ClimateCrisisKR-2040.ttf-488e02723cbd31d095b132add131b6d6.fontdata"
+uid="uid://bxo1abp3dt4ax"
+path="res://.godot/imported/ClimateCrisisKR-2019.ttf-113ef4978fce6adc8072a0fef70180a8.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/ClimateCrisisKR-2040.ttf"
-dest_files=["res://.godot/imported/ClimateCrisisKR-2040.ttf-488e02723cbd31d095b132add131b6d6.fontdata"]
+source_file="res://assets/fonts/ClimateCrisisKR-2019.ttf"
+dest_files=["res://.godot/imported/ClimateCrisisKR-2019.ttf-113ef4978fce6adc8072a0fef70180a8.fontdata"]
 
 [params]
 
