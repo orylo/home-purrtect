@@ -46,6 +46,11 @@ window/handheld/orientation="sensor_landscape"
 theme/custom_font="res://assets/fonts/Pretendard-Regular.ttf"
 theme/custom_theme="res://assets/ui/caldera_theme.tres"
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/i18n/ui.en.translation", "res://assets/i18n/ui.ko.translation")
+locale/fallback="ko"
+
 [input]
 
 move_left={

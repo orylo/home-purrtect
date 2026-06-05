@@ -8,7 +8,7 @@ signal enemy_killed   # 적 처치 시(스테이지 이벤트 트리거용). ene
 ##   X(메이저): 출시·대폭 변경급 / Y(마이너): 장기 큰 이벤트·막 완성 단위(0.1.0=1막 완전 완성)
 ##   Z(패치): 자잘한 모든 업데이트마다 +1, 99에서 안 넘어가고 100으로 계속(0.0.99 → 0.0.100).
 ##   1.0.0 = 3막까지 완성 첫 정식 출시.
-const BUILD := "0.0.143"
+const BUILD := "0.0.144"
 
 
 ## 코드로 직접 그리는 텍스트(데미지 숫자·WASD 등)도 Pretendard를 쓰도록 전역 기본 폰트 지정
@@ -16,9 +16,21 @@ func _ready() -> void:
 	var f := load("res://assets/fonts/Pretendard-Regular.ttf")
 	if f:
 		ThemeDB.fallback_font = f
+	# ★언어: 지금은 한국어 고정(영어기기에서도 안 튀게). 추후 언어분기 시 set_language()로 전환.
+	#   번역 파이프라인은 깔려있음(assets/i18n/ui.csv → tr()). docs/지침_로컬라이즈.md 참조.
+	TranslationServer.set_locale(language)
 	# 부팅 시 진행 복원(세이브 있으면) — 시작화면이 코인·프롤로그본여부 등 올바른 상태를 갖도록.
 	if AUTOSAVE:
 		load_game()   # 파일 없으면 무동작
+
+
+## 현재 언어(로케일 코드). 지금은 "ko" 고정. 추후 설정 UI/세이브와 연결.
+var language: String = "ko"
+
+## 언어 전환(미래 언어분기용). 호출 즉시 모든 tr() 텍스트가 바뀜. (라벨 갱신은 화면 재진입 또는 갱신 필요할 수 있음)
+func set_language(code: String) -> void:
+	language = code
+	TranslationServer.set_locale(code)
 
 ## --- 개발 게이트 ---  출시 빌드 만들 때 false 또는 OS.has_feature("dev")로 교체
 const DEV := true

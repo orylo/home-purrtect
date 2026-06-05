@@ -22,8 +22,8 @@ func _version_plate() -> void:
 func _ready() -> void:
 	# [게임 시작] = 게임으로 "진입/수락" → 골드 브랜드 CTA(베벨). 전투 돌입 아니므로 빨강 아님(design.md §1 CTA규칙)
 	Design.style_button($StartButton, "brand", Design.FS_DISPLAY_S)
-	if GameState.has_save():
-		$StartButton.text = "이어하기"   # 세이브 있으면 이어하기로 표시
+	# 텍스트 = tr()(로컬라이즈 파이프라인 레퍼런스). 키→문구는 assets/i18n/ui.csv. 지금은 ko 고정.
+	$StartButton.text = tr("ui.start.continue") if GameState.has_save() else tr("ui.start.play")
 	$StartButton.pressed.connect(_on_start)
 	# 버전 = 작은 금속 명판(물건화 데모, design.md §0-7). 원래 라벨은 숨김.
 	$Version.visible = false
@@ -44,7 +44,7 @@ func _ready() -> void:
 
 	# [이야기] = 프롤로그 컷씬 다시보기(좌하단). 다시보기는 끝나면 시작화면으로 복귀.
 	var vp := get_viewport_rect().size
-	var story := Design.button("이야기", "secondary", Design.FS_BODY)
+	var story := Design.button(tr("ui.start.story"), "secondary", Design.FS_BODY)
 	story.custom_minimum_size = Vector2(150, 52)
 	story.position = Vector2(40, vp.y - 80)
 	story.pressed.connect(func():
@@ -53,7 +53,7 @@ func _ready() -> void:
 	add_child(story)
 	# [처음부터] = 진행 초기화(세이브 있을 때만 노출, 확인 팝업 거침). 이야기 버튼 오른쪽.
 	if GameState.has_save():
-		var fresh := Design.button("처음부터", "secondary", Design.FS_BODY)
+		var fresh := Design.button(tr("ui.start.newgame"), "secondary", Design.FS_BODY)
 		fresh.custom_minimum_size = Vector2(150, 52)
 		fresh.position = Vector2(200, vp.y - 80)
 		fresh.pressed.connect(_confirm_new_game)
@@ -133,7 +133,7 @@ func _confirm_new_game() -> void:
 	msg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	msg.offset_top = 28.0; msg.offset_bottom = 120.0
 	panel.add_child(msg)
-	var no := Design.button("아니오", "secondary", Design.FS_BODY)
+	var no := Design.button(tr("ui.common.no"), "secondary", Design.FS_BODY)
 	no.position = Vector2(40, ph - 76.0); no.size = Vector2(200, 56); no.custom_minimum_size = no.size
 	no.pressed.connect(func(): ov.queue_free())
 	panel.add_child(no)
