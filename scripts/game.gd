@@ -46,7 +46,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 ## [DEV] [ 키 - 현재 화면을 보이는 그대로(HUD·캐릭터 포함) 1장 캡처. [버그] 버튼은 잠깐 숨겨 제외.
 func _capture_full() -> void:
 	var dbg := get_node_or_null("DebugOverlay")
-	var dbg_was := dbg.visible if dbg != null else false
+	var dbg_was: bool = dbg.visible if dbg != null else false
 	if dbg != null:
 		dbg.visible = false                  # [버그] 버튼/패널은 캡처에서 빼기
 	await get_tree().process_frame
