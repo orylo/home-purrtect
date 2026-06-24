@@ -122,23 +122,23 @@ func _build_stage_area() -> void:
 	add_child(_stage_plate)
 	# 시간 홀더 = ui_dialogue 프레임 작게(9-slice, 코너 작게)
 	_timer_holder = Control.new()
-	_timer_holder.size = Vector2(220, 78)
+	_timer_holder.size = Vector2(210, 48)   # 슬림하게(원래 다이얼로그보다 비율 확 낮춤)
 	_timer_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var np := NinePatchRect.new()
 	np.texture = DLG_FRAME
-	np.patch_margin_left = 60; np.patch_margin_right = 60   # 코너 플로리시(작게) 고정, 가운데만 신축
-	np.patch_margin_top = 30; np.patch_margin_bottom = 30
+	np.patch_margin_left = 34; np.patch_margin_right = 34   # 얇은 테두리만(코너 플로리시 최소) → 안 뭉침
+	np.patch_margin_top = 18; np.patch_margin_bottom = 18
 	np.set_anchors_preset(Control.PRESET_FULL_RECT)
 	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_timer_holder.add_child(np)
 	_timer_lbl = Label.new()
 	_timer_lbl.add_theme_font_override("font", UI_FONT)
-	_timer_lbl.add_theme_font_size_override("font_size", 22)
+	_timer_lbl.add_theme_font_size_override("font_size", 20)
 	_timer_lbl.add_theme_color_override("font_color", Design.INK)
 	_timer_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_timer_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_timer_lbl.offset_top = 22 * 0.23
+	_timer_lbl.offset_top = 20 * 0.23
 	_timer_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_timer_lbl.text = "0.0초"
 	_timer_holder.add_child(_timer_lbl)
