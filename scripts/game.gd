@@ -50,21 +50,22 @@ func _export_layers() -> void:
 		["6_weather_tint", wl[1] if wl.size() > 1 else null],
 		["7_weather_light", wl[2] if wl.size() > 2 else null],
 	]
-	# 게임플레이·UI 숨김(배경만 남김)
+	# 게임플레이·UI 전부 숨김(배경만 남김). ★화이트리스트: 배경 레이어 부모(BG·Foreground·Weather)만 남기고
+	#   Main의 나머지 자식(Player·Spawner·적·탄환·펑이펙트·데미지숫자·HUD·DebugOverlay·StageIntro 등) 전부 숨김.
+	#   → 그룹 추측 없이 캐릭터·HUD·이펙트가 합본/개별 캡처에 절대 안 들어감.
+	var keep: Dictionary = {bg: true}
+	var fg_node := get_node_or_null("Foreground")
+	if fg_node != null:
+		keep[fg_node] = true
+	if weather != null:
+		keep[weather] = true
 	var hidden: Dictionary = {}
-	var to_hide: Array = []
-	for p in ["Player", "Spawner", "StageIntro", "HUD", "DebugOverlay"]:
-		var n := get_node_or_null(p)
-		if n != null:
-			to_hide.append(n)
-	for grp in ["enemy", "enemies", "bullet", "enemy_bullet"]:
-		for n in get_tree().get_nodes_in_group(grp):
-			to_hide.append(n)
-	if is_instance_valid(_event_char):
-		to_hide.append(_event_char)
-	for n in to_hide:
-		hidden[n] = n.visible
-		n.visible = false
+	for c in get_children():
+		if keep.has(c):
+			continue
+		if "visible" in c:
+			hidden[c] = c.visible
+			c.visible = false
 	# 레이어 원래 가시성 저장 + 투명 배경 + 흔들림 오프셋 0
 	var lsaved: Dictionary = {}
 	for L in layers:
