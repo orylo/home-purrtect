@@ -34,8 +34,19 @@ var _event_pending: bool = false   # 클리어 이벤트 [확인] 대기 중
 var _event_text: String = ""
 var _inscene_event: bool = false   # 그 이벤트가 "전투 씬 내 컷씬"인지
 var _home_event: bool = false      # 컷씬 없이 홈+코치마크(D+)
-var coin_label: Label   # 상단 코인 표시(💰)
+var coin_label: Label   # 상단 코인 표시(숫자)
+var _coin_icon: TextureRect   # 코인 아이콘(coin.png, "코인" 텍스트 대체)
+var _face: TextureRect        # 좌상단 치즈 얼굴 아이콘(이미지 추후) - 하트 대체
+var _face_ph: Panel           # 얼굴 임시 플레이스홀더(이미지 들어오면 숨김)
 var _time_label: Label  # 별점용 전투 경과시간(상단 중앙, 작게)
+
+
+## 치즈 얼굴 이미지가 준비되면 호출 - 플레이스홀더를 진짜 이미지로 교체.
+func set_face(tex: Texture2D) -> void:
+	if is_instance_valid(_face):
+		_face.texture = tex
+	if is_instance_valid(_face_ph):
+		_face_ph.visible = false
 
 
 ## 전투 경과시간 표시(game._process가 매 프레임 호출). 라벨은 첫 호출 때 생성.
@@ -70,6 +81,7 @@ func _ready() -> void:
 	clear_restart.pressed.connect(_on_clear_home)
 	gameover_restart.pressed.connect(_on_restart)
 	stage_label.text = GameState.stage_label()   # 상단 스테이지 표시(1-1, 1-2…)
+	_build_face_slot()                           # 좌상단 하트 → 치즈 얼굴 자리(이미지 추후)
 	pause_panel.visible = false
 	clear_panel.visible = false
 	gameover_panel.visible = false
@@ -102,7 +114,7 @@ func _apply_safe_hud() -> void:
 	var l := Layout.safe_left()
 	var t := Layout.safe_top()
 	var r := Layout.safe_right()
-	for n in [get_node_or_null("Heart"), hp_bar, coin_label]:   # 좌상단 → 오른쪽·아래로
+	for n in [_face, hp_bar, coin_label, _coin_icon]:   # 좌상단 → 오른쪽·아래로
 		_safe_shift(n, Vector2(l, t))
 	for n in [enemy_label, pause_button]:                       # 우상단 → 왼쪽·아래로
 		_safe_shift(n, Vector2(-r, t))
@@ -110,15 +122,44 @@ func _apply_safe_hud() -> void:
 		_safe_shift(n, Vector2(0, t))
 
 
-## 상단 코인 표시 - 동전 이모지 대신 금색 "코인 N"으로(숫자는 항상 렌더)
+## 좌상단 치즈 얼굴 자리(하트 대체). 이미지 추후 - 일단 치즈색 원형 플레이스홀더로 영역만.
+func _build_face_slot() -> void:
+	var heart := get_node_or_null("Heart")
+	if heart != null:
+		heart.visible = false   # 기존 ♥ 라벨 숨김
+	_face = TextureRect.new()
+	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_face.position = Vector2(32, 12)
+	_face.size = Vector2(48, 48)
+	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_face)
+	_face_ph = Panel.new()   # 임시: 치즈색 원(이미지 들어오면 set_face로 교체)
+	_face_ph.add_theme_stylebox_override("panel", Design.card_box(Design.CHEESE, 3, 24))
+	_face_ph.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_face_ph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_face.add_child(_face_ph)
+
+
+## 상단 코인 표시 - "코인" 텍스트 대신 coin.png 아이콘 + 금색 숫자(숫자는 항상 렌더).
 func _build_coin_label() -> void:
+	_coin_icon = TextureRect.new()
+	_coin_icon.texture = preload("res://assets/ui/home/coin.png")   # 흑+백 더블스트로크 구워진 아이콘
+	_coin_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_coin_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_coin_icon.position = Vector2(34, 62)
+	_coin_icon.size = Vector2(30, 30)
+	_coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_coin_icon)
 	coin_label = Label.new()
 	coin_label.add_theme_font_override("font", UI_FONT)
 	coin_label.add_theme_font_size_override("font_size", 26)
 	coin_label.add_theme_color_override("font_color", Design.CHEESE)
-	coin_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
-	coin_label.add_theme_constant_override("outline_size", 4)
-	coin_label.position = Vector2(44, 62)   # HP바 아래 좌상단
+	coin_label.add_theme_color_override("font_outline_color", Color("241f1b"))
+	coin_label.add_theme_constant_override("outline_size", 5)
+	coin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	coin_label.position = Vector2(70, 60)   # 코인 아이콘 오른쪽
+	coin_label.size = Vector2(170, 34)
 	add_child(coin_label)
 
 
@@ -166,7 +207,7 @@ func _style_ghost(btn: Button) -> void:
 
 func _process(_delta: float) -> void:
 	if coin_label:
-		coin_label.text = "코인 " + _commafy(GameState.coins)
+		coin_label.text = _commafy(GameState.coins)   # 아이콘은 coin.png, 텍스트는 숫자만
 
 	# 치즈 체력
 	var player := get_tree().get_first_node_in_group("player")
