@@ -79,16 +79,16 @@ func _build_ui() -> void:
 	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_cap.add_theme_constant_override("outline_size", 8)
 	add_child(_cap)
-	# 장면 이미지(자막 아래, 가운데). 비율 유지 축소, 해당 beat에만 표시.
+	# 장면 이미지 — ★풀블리드(화면 꽉 채움, 넘침은 크롭). 해당 beat에만 표시.
+	#   맨 뒤 레이어로(자막·건너뛰기·힌트가 이미지 위에 오도록 move_child로 index 0).
 	_img = TextureRect.new()
 	_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_img.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_img.offset_left = 80; _img.offset_right = -80
-	_img.offset_top = 250; _img.offset_bottom = -96
 	_img.visible = false
 	add_child(_img)
+	move_child(_img, 0)   # 배경(이 Control의 _draw=bg·비) 위, 모든 UI 자식보다 아래
 	# 영감 대화창 - 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 프레임·스타일로 통일).
 	#   골드 영감은 초상화 에셋이 없어 portrait 생략(본문 왼쪽부터). 진행 힌트는 기존 _hint 하나로 통일.
 	var vp := get_viewport().get_visible_rect().size
