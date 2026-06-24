@@ -34,22 +34,20 @@ var _event_pending: bool = false   # 클리어 이벤트 [확인] 대기 중
 var _event_text: String = ""
 var _inscene_event: bool = false   # 그 이벤트가 "전투 씬 내 컷씬"인지
 var _home_event: bool = false      # 컷씬 없이 홈+코치마크(D+)
-var coin_label: Label   # 상단 코인 표시(숫자)
-var _coin_icon: TextureRect   # 코인 아이콘(coin.png, "코인" 텍스트 대체)
-var _face: TextureRect        # 좌상단 치즈 얼굴 아이콘(이미지 추후) - 하트 대체
-var _face_ph: Panel           # 얼굴 임시 플레이스홀더(이미지 들어오면 숨김)
+var _face_bg: TextureRect      # 좌상단 둥근 버튼 배경(공격버튼과 같은 slot2_act)
+var _face: TextureRect         # 그 위 원형 마스크된 치즈 얼굴 - 하트 대체
 var _stage_plate: Control     # STAGE 명판(게임시작 버튼과 같은 _SignPlate 방식)
 var _timer_holder: Control    # 명판 아래 시간 홀더(다이얼로그 프레임 축소)
 var _timer_lbl: Label         # 시간 텍스트
 const DLG_FRAME := preload("res://assets/ui/ui_dialogue.png")
+const FACE_BG := preload("res://assets/ui/slots/slot2_act.png")
+const CHEESE_FACE := preload("res://assets/ui/cheese_face.png")
 
 
-## 치즈 얼굴 이미지가 준비되면 호출 - 플레이스홀더를 진짜 이미지로 교체.
+## 치즈 얼굴 이미지 교체(다른 사진 주면). 원형 마스크된 PNG로.
 func set_face(tex: Texture2D) -> void:
 	if is_instance_valid(_face):
 		_face.texture = tex
-	if is_instance_valid(_face_ph):
-		_face_ph.visible = false
 
 
 ## 전투 경과시간 표시(game._process가 매 프레임 호출). 타이머 홀더 안 라벨만 갱신.
@@ -83,7 +81,7 @@ func _ready() -> void:
 	_style_primary(clear_next)
 	_style_ghost(clear_restart)
 	_style_primary(gameover_restart)
-	_build_coin_label()
+	# (전투 중 코인 표시 삭제)
 	# iOS 안전영역(노치)만큼 상단 HUD를 코너에서 안으로 - 배경은 풀블리드, HUD는 안 가리게.
 	_apply_safe_hud()
 	get_viewport().size_changed.connect(_apply_safe_hud)
@@ -106,7 +104,7 @@ func _apply_safe_hud() -> void:
 	var l := Layout.safe_left()
 	var t := Layout.safe_top()
 	var r := Layout.safe_right()
-	for n in [_face, hp_bar, coin_label, _coin_icon]:   # 좌상단 → 오른쪽·아래로
+	for n in [_face_bg, _face, hp_bar]:   # 좌상단 → 오른쪽·아래로
 		_safe_shift(n, Vector2(l, t))
 	for n in [enemy_label, pause_button]:                       # 우상단 → 왼쪽·아래로
 		_safe_shift(n, Vector2(-r, t))
@@ -118,16 +116,14 @@ func _apply_safe_hud() -> void:
 ## 상단 중앙 = STAGE 명판(게임시작 버튼과 같은 _SignPlate) + 그 아래 시간 홀더(다이얼로그 프레임 축소).
 func _build_stage_area() -> void:
 	stage_label.visible = false   # 기존 평면 라벨 숨김
-	_stage_plate = Design.signboard_plate("STAGE " + GameState.stage_label(), "cream", 30)
-	add_child(_stage_plate)
-	# 시간 홀더 = ui_dialogue 프레임 작게(9-slice, 코너 작게)
+	# ★시간 홀더를 먼저 add = 아래 레이어. (STAGE 명판이 위로 가도록)
 	_timer_holder = Control.new()
-	_timer_holder.size = Vector2(210, 48)   # 슬림하게(원래 다이얼로그보다 비율 확 낮춤)
+	_timer_holder.size = Vector2(210, 56)   # 슬림 + 글자 위아래 여백 조금 더
 	_timer_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var np := NinePatchRect.new()
 	np.texture = DLG_FRAME
 	np.patch_margin_left = 34; np.patch_margin_right = 34   # 얇은 테두리만(코너 플로리시 최소) → 안 뭉침
-	np.patch_margin_top = 18; np.patch_margin_bottom = 18
+	np.patch_margin_top = 22; np.patch_margin_bottom = 22
 	np.set_anchors_preset(Control.PRESET_FULL_RECT)
 	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_timer_holder.add_child(np)
@@ -143,6 +139,9 @@ func _build_stage_area() -> void:
 	_timer_lbl.text = "0.0초"
 	_timer_holder.add_child(_timer_lbl)
 	add_child(_timer_holder)
+	# STAGE 명판 = 나중에 add = 위 레이어, 사이즈 키움(fs 36)
+	_stage_plate = Design.signboard_plate("STAGE " + GameState.stage_label(), "cream", 36)
+	add_child(_stage_plate)
 	_position_stage_area()
 	get_viewport().size_changed.connect(_position_stage_area)
 
@@ -158,45 +157,31 @@ func _position_stage_area() -> void:
 		_timer_holder.position = Vector2((vp.x - _timer_holder.size.x) * 0.5, top + _stage_plate.size.y - 10.0)
 
 
-## 좌상단 치즈 얼굴 자리(하트 대체). 이미지 추후 - 일단 치즈색 원형 플레이스홀더로 영역만.
+## 좌상단 하트 대체 = 둥근 버튼(공격버튼과 같은 slot2_act) + 그 위 원형 마스크 치즈 얼굴.
+##   HP바는 이 얼굴과 살짝 겹치되 ★아래 레이어(얼굴이 위) — _ready에서 얼굴을 HP바보다 나중에 add(위로).
 func _build_face_slot() -> void:
 	var heart := get_node_or_null("Heart")
 	if heart != null:
 		heart.visible = false   # 기존 ♥ 라벨 숨김
-	_face = TextureRect.new()
+	var sz := 76.0
+	var pos := Vector2(24, 8)
+	_face_bg = TextureRect.new()   # 둥근 버튼 배경
+	_face_bg.texture = FACE_BG
+	_face_bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_face_bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_face_bg.position = pos
+	_face_bg.size = Vector2(sz, sz)
+	_face_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_face_bg)
+	_face = TextureRect.new()      # 원형 치즈 얼굴(이미 원형 마스크된 PNG) - 슬롯 안쪽 크림원에 맞춤
+	_face.texture = CHEESE_FACE
 	_face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_face.position = Vector2(32, 12)
-	_face.size = Vector2(48, 48)
+	var inset := sz * 0.16
+	_face.position = pos + Vector2(inset, inset)
+	_face.size = Vector2(sz - 2.0 * inset, sz - 2.0 * inset)
 	_face.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_face)
-	_face_ph = Panel.new()   # 임시: 치즈색 원(이미지 들어오면 set_face로 교체)
-	_face_ph.add_theme_stylebox_override("panel", Design.card_box(Design.CHEESE, 3, 24))
-	_face_ph.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_face_ph.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_face.add_child(_face_ph)
-
-
-## 상단 코인 표시 - "코인" 텍스트 대신 coin.png 아이콘 + 금색 숫자(숫자는 항상 렌더).
-func _build_coin_label() -> void:
-	_coin_icon = TextureRect.new()
-	_coin_icon.texture = preload("res://assets/ui/home/coin.png")   # 흑+백 더블스트로크 구워진 아이콘
-	_coin_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_coin_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_coin_icon.position = Vector2(34, 62)
-	_coin_icon.size = Vector2(30, 30)
-	_coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_coin_icon)
-	coin_label = Label.new()
-	coin_label.add_theme_font_override("font", UI_FONT)
-	coin_label.add_theme_font_size_override("font_size", 26)
-	coin_label.add_theme_color_override("font_color", Design.CHEESE)
-	coin_label.add_theme_color_override("font_outline_color", Color("241f1b"))
-	coin_label.add_theme_constant_override("outline_size", 5)
-	coin_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	coin_label.position = Vector2(70, 60)   # 코인 아이콘 오른쪽
-	coin_label.size = Vector2(170, 34)
-	add_child(coin_label)
 
 
 ## 숫자 천 단위 콤마 (1240 → 1,240)
@@ -242,9 +227,6 @@ func _style_ghost(btn: Button) -> void:
 
 
 func _process(_delta: float) -> void:
-	if coin_label:
-		coin_label.text = _commafy(GameState.coins)   # 아이콘은 coin.png, 텍스트는 숫자만
-
 	# 치즈 체력
 	var player := get_tree().get_first_node_in_group("player")
 	if player:
