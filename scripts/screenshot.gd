@@ -4,6 +4,11 @@ extends Node
 ##   현재 씬에 [버그] 오버레이(DebugOverlay)가 있으면 잠깐 숨겨 캡처에서 제외.
 
 
+func _ready() -> void:
+	# 컷신·이벤트(get_tree().paused) 중에도 [ 캡처가 먹게 일시정지 무시.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_BRACKETLEFT:
 		_capture()
