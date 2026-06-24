@@ -118,7 +118,7 @@ func _build_stage_area() -> void:
 	stage_label.visible = false   # 기존 평면 라벨 숨김
 	# ★시간 홀더를 먼저 add = 아래 레이어. (STAGE 명판이 위로 가도록)
 	_timer_holder = Control.new()
-	_timer_holder.size = Vector2(210, 56)   # 슬림 + 글자 위아래 여백 조금 더
+	_timer_holder.size = Vector2(210, 66)   # 위아래 키워 글자 상하 여백 더(폰트 크기는 유지)
 	_timer_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var np := NinePatchRect.new()
 	np.texture = DLG_FRAME
