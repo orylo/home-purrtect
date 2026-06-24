@@ -148,22 +148,25 @@ class _SignPlate extends Control:
 		show_behind_parent = true   # 부모(버튼) 글자 뒤에 그림
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 	func _process(_d: float) -> void:
-		var b := get_parent() as Button
-		if b == null:
+		var p := get_parent() as Control
+		if p == null:
 			return
-		# Button은 컨테이너가 아니라 앵커로 자식 크기를 못 맞춤 → 매 프레임 부모 크기로 직접 동기화.
-		if size != b.size or position != Vector2.ZERO:
+		# 부모는 컨테이너가 아니라 앵커로 자식 크기를 못 맞춤 → 매 프레임 부모 크기로 직접 동기화.
+		if size != p.size or position != Vector2.ZERO:
 			position = Vector2.ZERO
-			size = b.size
+			size = p.size
 			queue_redraw()
-		var m := b.get_draw_mode()
-		var c := Color.WHITE
-		if m == BaseButton.DRAW_PRESSED or m == BaseButton.DRAW_HOVER_PRESSED:
-			c = Color(0.9, 0.9, 0.9)
-		elif m == BaseButton.DRAW_DISABLED:
-			c = Color(0.75, 0.75, 0.75)
-		if c != modulate:
-			modulate = c
+		# 버튼이면 눌림/호버/비활성 밝기 반영(라벨 등 일반 Control은 그대로).
+		var b := p as Button
+		if b != null:
+			var m := b.get_draw_mode()
+			var c := Color.WHITE
+			if m == BaseButton.DRAW_PRESSED or m == BaseButton.DRAW_HOVER_PRESSED:
+				c = Color(0.9, 0.9, 0.9)
+			elif m == BaseButton.DRAW_DISABLED:
+				c = Color(0.75, 0.75, 0.75)
+			if c != modulate:
+				modulate = c
 	func _draw() -> void:
 		if tex == null:
 			return
@@ -177,6 +180,40 @@ class _SignPlate extends Control:
 		draw_texture_rect_region(tex, Rect2(W - capw, 0, capw, H), Rect2(tw - cap_px, 0, cap_px, th))
 		var midw: float = maxf(0.0, W - 2.0 * capw)
 		draw_texture_rect_region(tex, Rect2(capw, 0, midw, H), Rect2(cap_px, 0, tw - 2.0 * cap_px, th))
+
+
+## 명판 "라벨"(버튼 아님) - 게임시작 버튼과 같은 _SignPlate 방식으로 텍스트 뒤에 명판을 깐
+##   Control 반환(글자수에 맞춰 자동폭). HUD 스테이지 표시 등 비버튼 명판에 사용.
+func signboard_plate(text: String, color: String = "cream", fs: int = FS_TITLE, plate_h: float = 0.0) -> Control:
+	var tex: Texture2D = SIGN_TEX.get(color, SIGN_TEX["cream"])
+	var ph: float = plate_h if plate_h > 0.0 else float(fs) * 2.1
+	var s: float = ph / float(tex.get_height())
+	var capw: float = SIGN_CAP * s
+	var tw: float = FONT_TITLE.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, fs).x
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(tw + 2.0 * capw + 20.0, ph)
+	holder.size = holder.custom_minimum_size
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var plate := _SignPlate.new()
+	plate.tex = tex
+	plate.cap_px = SIGN_CAP
+	holder.add_child(plate)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_override("font", FONT_TITLE)
+	lbl.add_theme_font_size_override("font_size", fs)
+	lbl.add_theme_color_override("font_color", INK if color == "cream" else INK_CREAM)
+	if color != "cream":
+		lbl.add_theme_color_override("font_outline_color", INK)
+		lbl.add_theme_constant_override("outline_size", maxi(6, int(fs * 0.16)))
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	lbl.offset_top = fs * 0.23   # SB어그로 잉크 위쏠림 보정(시각 중앙)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(lbl)
+	holder.set_meta("label", lbl)   # 텍스트 갱신용
+	return holder
 
 
 ## 명판 버튼 생성 헬퍼.

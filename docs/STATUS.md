@@ -4,10 +4,12 @@
 > 기획 챗은 이 문서를 보고 "지금 실제로 뭐가 돌아가는지" 파악한 뒤 신 기획을 이어가면 됩니다.
 > **갱신 주체**: 개발(Claude Code)이 커밋할 때마다 같이 업데이트. **기획서 원본은 챗이 주인.**
 
-- **현재 버전**: `0.0.190`  (버전 체계 `X.Y.Z`: X=출시·대폭변경 / Y=막 완성·큰 이벤트(`0.1.0`=1막 완전 완성) / Z=자잘한 업데이트마다 +1, 99→100 자리올림 없음. `1.0.0`=3막 완성 첫 출시. CLAUDE.md "버전 체계" 참조)
+- **현재 버전**: `0.0.191`  (버전 체계 `X.Y.Z`: X=출시·대폭변경 / Y=막 완성·큰 이벤트(`0.1.0`=1막 완전 완성) / Z=자잘한 업데이트마다 +1, 99→100 자리올림 없음. `1.0.0`=3막 완성 첫 출시. CLAUDE.md "버전 체계" 참조)
 - **라이브(웹)**: https://orylo.github.io/home-purrtect/
 - **엔진**: Godot 4.6.3 / 출시 타깃: iOS 먼저 → 안드로이드
 - **마지막 갱신**: 2026-06-06
+- **✅ 전투 상단 STAGE 명판 + 시간 홀더(2026-06-06, v0.0.191)**: 상단 중앙을 레퍼런스 톤으로 물건화. ① STAGE 표시 = 게임시작 버튼과 **같은 `_SignPlate` 방식**(세로 균일+가로 9-slice)로 새 `Design.signboard_plate(text,color,fs)` 헬퍼(버튼 아닌 라벨용, _SignPlate를 Button 외 Control도 받게 일반화). 텍스트 "STAGE 1-1"(cream). ② 그 아래 **시간 홀더 = `ui_dialogue` 프레임 축소**(NinePatch 220×78, patch 60/30 — 코너 플로리시 작게, 가운데 시간 텍스트). `set_battle_time`이 홀더 내 라벨만 갱신(기존 평면 _time_label 폐기). hud `_build_stage_area`/`_position_stage_area`(중앙정렬·safe_top 반영). 검증: main 무에러·PIL 미리보기.
+- **✅ 전투 HUD 상단 정비(2026-06-06, v0.0.190)**: 하트→치즈얼굴 자리(이미지 추후·set_face) / '코인'텍스트→coin.png 아이콘 / 우상단 웨이브·정지 80px 간격.
 - **✅ 명판 버튼 안 보이던 버그픽스(2026-06-06, v0.0.187)**: 시작화면 붉은 명판이 사라진 원인 = `_SignPlate`가 `set_anchors_preset(FULL_RECT)`로 부모 크기를 못 따라가 size=(0,0)이던 것(Button은 컨테이너가 아니라 앵커 전파 안 함). → 앵커 폐기, `_process`에서 **매 프레임 `size=parent.size`·`position=0` 직접 동기화**(변하면 queue_redraw). 헤드리스로 plate.size=(460,130) 확인. 검증: start 무에러.
 - **✅ 코인 명판 스트로크 두께 아이콘과 맞춤(2026-06-06, v0.0.186)**: `coin_plate.png` 재생성 — 흑/백 스트로크가 홈 아이콘과 반대(흰 8px·검 4px)였던 걸 측정해 교정. 아이콘 실측(coin·prep = 흰 ~3px/검 ~8px)에 맞춰 **검은 링 바깥 4px 추가(+명판 자체 테두리 ≈ 합 8px)·흰 링 3px**로 재합성(cv2 타원팽창 AA, 합성순서 흰→검→명판). 검증: 재임포트·home 무에러·시각확인.
 - **✅ 명판 버튼 새 드로우 로직으로 재작성(2026-06-06, v0.0.185)**: 메인 버튼이 옛 `StyleBoxTexture`(세로 9-slice)라 버튼 높이≠텍스처 비율일 때 리벳이 세로로 늘어나던 문제 → 코인 명판과 동일 규칙으로 재작성. 버튼 배경=투명(`StyleBoxEmpty`, 글자만), 뒤에 **`_SignPlate`**(`show_behind_parent`)가 텍스처를 **세로=전체 균일 스케일 / 가로=9-slice**(draw_texture_rect_region 좌캡/우캡/중앙)로 직접 그림. hover/pressed/disabled는 plate가 부모 `get_draw_mode()` 폴링해 modulate. 검증: start 무에러·PIL NEW vs OLD 비교(리벳 정원 유지). (사용처=시작화면 게임시작 버튼)

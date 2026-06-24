@@ -38,7 +38,10 @@ var coin_label: Label   # 상단 코인 표시(숫자)
 var _coin_icon: TextureRect   # 코인 아이콘(coin.png, "코인" 텍스트 대체)
 var _face: TextureRect        # 좌상단 치즈 얼굴 아이콘(이미지 추후) - 하트 대체
 var _face_ph: Panel           # 얼굴 임시 플레이스홀더(이미지 들어오면 숨김)
-var _time_label: Label  # 별점용 전투 경과시간(상단 중앙, 작게)
+var _stage_plate: Control     # STAGE 명판(게임시작 버튼과 같은 _SignPlate 방식)
+var _timer_holder: Control    # 명판 아래 시간 홀더(다이얼로그 프레임 축소)
+var _timer_lbl: Label         # 시간 텍스트
+const DLG_FRAME := preload("res://assets/ui/ui_dialogue.png")
 
 
 ## 치즈 얼굴 이미지가 준비되면 호출 - 플레이스홀더를 진짜 이미지로 교체.
@@ -49,21 +52,10 @@ func set_face(tex: Texture2D) -> void:
 		_face_ph.visible = false
 
 
-## 전투 경과시간 표시(game._process가 매 프레임 호출). 라벨은 첫 호출 때 생성.
+## 전투 경과시간 표시(game._process가 매 프레임 호출). 타이머 홀더 안 라벨만 갱신.
 func set_battle_time(t: float) -> void:
-	if _time_label == null:
-		_time_label = Label.new()
-		_time_label.add_theme_font_override("font", UI_FONT)
-		_time_label.add_theme_font_size_override("font_size", 20)
-		_time_label.add_theme_color_override("font_color", Color(1, 1, 1))
-		_time_label.add_theme_color_override("font_outline_color", Color("241f1b"))
-		_time_label.add_theme_constant_override("outline_size", 4)
-		_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var vp := get_viewport().get_visible_rect().size
-		_time_label.size = Vector2(140, 26)
-		_time_label.position = Vector2(vp.x * 0.5 - 70, 58)   # 스테이지 표기 아래, 가운데
-		add_child(_time_label)
-	_time_label.text = "%.1f초" % t
+	if _timer_lbl != null:
+		_timer_lbl.text = "%.1f초" % t
 
 
 func _ready() -> void:
@@ -80,7 +72,7 @@ func _ready() -> void:
 	clear_restart.text = "홈으로"                  # 클리어 패널: 재시작 버튼을 홈으로 전환
 	clear_restart.pressed.connect(_on_clear_home)
 	gameover_restart.pressed.connect(_on_restart)
-	stage_label.text = GameState.stage_label()   # 상단 스테이지 표시(1-1, 1-2…)
+	_build_stage_area()                          # 상단 중앙: STAGE 명판 + 시간 홀더
 	_build_face_slot()                           # 좌상단 하트 → 치즈 얼굴 자리(이미지 추후)
 	pause_panel.visible = false
 	clear_panel.visible = false
@@ -118,8 +110,52 @@ func _apply_safe_hud() -> void:
 		_safe_shift(n, Vector2(l, t))
 	for n in [enemy_label, pause_button]:                       # 우상단 → 왼쪽·아래로
 		_safe_shift(n, Vector2(-r, t))
-	for n in [stage_label, get_node_or_null("AutoInfo")]:       # 상단중앙/기타 → 아래로
+	for n in [get_node_or_null("AutoInfo")]:                    # 기타 상단 → 아래로
 		_safe_shift(n, Vector2(0, t))
+	_position_stage_area()                                      # STAGE 명판·시간 홀더(safe_top 반영) 재배치
+
+
+## 상단 중앙 = STAGE 명판(게임시작 버튼과 같은 _SignPlate) + 그 아래 시간 홀더(다이얼로그 프레임 축소).
+func _build_stage_area() -> void:
+	stage_label.visible = false   # 기존 평면 라벨 숨김
+	_stage_plate = Design.signboard_plate("STAGE " + GameState.stage_label(), "cream", 30)
+	add_child(_stage_plate)
+	# 시간 홀더 = ui_dialogue 프레임 작게(9-slice, 코너 작게)
+	_timer_holder = Control.new()
+	_timer_holder.size = Vector2(220, 78)
+	_timer_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var np := NinePatchRect.new()
+	np.texture = DLG_FRAME
+	np.patch_margin_left = 60; np.patch_margin_right = 60   # 코너 플로리시(작게) 고정, 가운데만 신축
+	np.patch_margin_top = 30; np.patch_margin_bottom = 30
+	np.set_anchors_preset(Control.PRESET_FULL_RECT)
+	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_timer_holder.add_child(np)
+	_timer_lbl = Label.new()
+	_timer_lbl.add_theme_font_override("font", UI_FONT)
+	_timer_lbl.add_theme_font_size_override("font_size", 22)
+	_timer_lbl.add_theme_color_override("font_color", Design.INK)
+	_timer_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_timer_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_timer_lbl.offset_top = 22 * 0.23
+	_timer_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_timer_lbl.text = "0.0초"
+	_timer_holder.add_child(_timer_lbl)
+	add_child(_timer_holder)
+	_position_stage_area()
+	get_viewport().size_changed.connect(_position_stage_area)
+
+
+## STAGE 명판 + 시간 홀더를 상단 중앙에 배치(명판 아래 홀더가 살짝 겹쳐 매달림).
+func _position_stage_area() -> void:
+	if not is_instance_valid(_stage_plate):
+		return
+	var vp := get_viewport().get_visible_rect().size
+	var top := 14.0 + Layout.safe_top()
+	_stage_plate.position = Vector2((vp.x - _stage_plate.size.x) * 0.5, top)
+	if is_instance_valid(_timer_holder):
+		_timer_holder.position = Vector2((vp.x - _timer_holder.size.x) * 0.5, top + _stage_plate.size.y - 10.0)
 
 
 ## 좌상단 치즈 얼굴 자리(하트 대체). 이미지 추후 - 일단 치즈색 원형 플레이스홀더로 영역만.
