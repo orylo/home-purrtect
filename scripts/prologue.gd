@@ -7,6 +7,7 @@ extends Control
 const FONT := preload("res://assets/fonts/SBAggro-Medium.ttf")
 const SAD := preload("res://assets/music/prologue_sad.wav")
 const WARM := preload("res://assets/music/prologue_warm.wav")
+const IMG_STARVING := preload("res://컷신/Poor_cat_starving_on_street_202606250514.jpeg")  # 검은 우산 장면용
 
 # 장면 데이터 (순서대로)
 const BEATS := [
@@ -15,7 +16,7 @@ const BEATS := [
 	{"bg": Color(0.06, 0.07, 0.11), "rain": 3.2, "music": "sad",
 		"cap": "어느 거센 비 오는 밤,\n재난이 둘을 갈라놓았다…", "vis": "loss"},
 	{"bg": Color(0.16, 0.16, 0.21), "rain": 1.6, "music": "warm",
-		"cap": "검은 우산 하나가 다가와,\n젖은 길냥이에게 손을 내밀었다.", "vis": "umbrella"},
+		"cap": "검은 우산 하나가 다가와,\n젖은 길냥이에게 손을 내밀었다.", "vis": "umbrella", "img": IMG_STARVING},
 	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
 		"cap": "따뜻한 저택. 그때 벽 구멍에서\n쥐 한 마리와 눈이 마주쳤다 - 뻥!", "vis": "house", "fx": "light_bulb"},
 	{"bg": Color(0.34, 0.22, 0.13), "rain": 0.0, "music": "warm",
@@ -34,6 +35,7 @@ var _music: AudioStreamPlayer
 var _cur_music := ""
 
 var _cap: Label
+var _img: TextureRect       # 장면 이미지(자막 아래). 해당 beat에 "img" 있을 때만 표시
 var _dlg: Control          # 공용 DialoguePanel 박스(인게임 이벤트 대화창과 동일)
 var _dlg_name: Label
 var _dlg_line: Label
@@ -77,6 +79,16 @@ func _build_ui() -> void:
 	_cap.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	_cap.add_theme_constant_override("outline_size", 8)
 	add_child(_cap)
+	# 장면 이미지(자막 아래, 가운데). 비율 유지 축소, 해당 beat에만 표시.
+	_img = TextureRect.new()
+	_img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_img.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_img.offset_left = 80; _img.offset_right = -80
+	_img.offset_top = 250; _img.offset_bottom = -96
+	_img.visible = false
+	add_child(_img)
 	# 영감 대화창 - 공용 DialoguePanel(인게임 이벤트 펑거스 대화창과 동일 프레임·스타일로 통일).
 	#   골드 영감은 초상화 에셋이 없어 portrait 생략(본문 왼쪽부터). 진행 힌트는 기존 _hint 하나로 통일.
 	var vp := get_viewport().get_visible_rect().size
@@ -124,13 +136,19 @@ func _goto(idx: int) -> void:
 	var b: Dictionary = BEATS[idx]
 	_bg_target = b.get("bg", _bg_target)
 	_rain_amt = float(b.get("rain", 0.0))
-	_vis = String(b.get("vis", ""))
+	_vis = "" if b.has("img") else String(b.get("vis", ""))   # 실제 이미지 있으면 placeholder 도형 끔
 	# 자막 / 대화창
 	if b.has("cap"):
 		_cap.text = String(b["cap"])
 		_cap.visible = true
 	else:
 		_cap.visible = false
+	# 장면 이미지(자막 아래)
+	if b.has("img"):
+		_img.texture = b["img"]
+		_img.visible = true
+	else:
+		_img.visible = false
 	if b.has("speaker"):
 		_dlg_name.text = String(b["speaker"])
 		_dlg.visible = true
