@@ -25,6 +25,91 @@ var _battle_time: float = 0.0   # 전투 실시간(별점용). 일시정지·이
 var _timing: bool = false
 
 
+# -- [DEV] 배경 레이어 추출 (F9) --------------------------------------------
+#   전투화면 배경을 7개 레이어(뒤→앞: 원경·하프톤·중경·날씨입자·근경·날씨색감·날씨빛) + 합본으로
+#   같은 사이즈 투명 PNG로 저장. 셰이더·파티클이라 실제 렌더(F5)에서만 픽셀이 나옴 → 키 트리거.
+#   저장 위치: res://export_layers/ (에디터 실행 시 프로젝트 폴더). 출시 빌드에선 DEV=false라 비활성.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not GameState.is_dev():
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F9:
+		_export_layers()
+
+
+func _export_layers() -> void:
+	var vp := get_viewport()
+	var weather := get_node_or_null("Weather")
+	var wl: Array = weather._layers if (weather != null and "_layers" in weather) else []
+	# 레이어 정의 (뒤→앞). 날씨 하위레이어는 해당 스테이지에 날씨 없으면 null.
+	var layers: Array = [
+		["1_far", get_node_or_null("BG/StageBackground")],
+		["2_halftone", get_node_or_null("BG/Halftone")],
+		["3_ground", get_node_or_null("BG/GroundLayer")],
+		["4_weather_particles", wl[0] if wl.size() > 0 else null],
+		["5_foreground", get_node_or_null("Foreground")],
+		["6_weather_tint", wl[1] if wl.size() > 1 else null],
+		["7_weather_light", wl[2] if wl.size() > 2 else null],
+	]
+	# 게임플레이·UI 숨김(배경만 남김)
+	var hidden: Dictionary = {}
+	var to_hide: Array = []
+	for p in ["Player", "Spawner", "StageIntro", "HUD", "DebugOverlay"]:
+		var n := get_node_or_null(p)
+		if n != null:
+			to_hide.append(n)
+	for grp in ["enemy", "enemies", "bullet", "enemy_bullet"]:
+		for n in get_tree().get_nodes_in_group(grp):
+			to_hide.append(n)
+	if is_instance_valid(_event_char):
+		to_hide.append(_event_char)
+	for n in to_hide:
+		hidden[n] = n.visible
+		n.visible = false
+	# 레이어 원래 가시성 저장 + 투명 배경 + 흔들림 오프셋 0
+	var lsaved: Dictionary = {}
+	for L in layers:
+		if L[1] != null:
+			lsaved[L[1]] = L[1].visible
+	var prev_transp := vp.transparent_bg
+	var prev_pos := position
+	var prev_off := bg.offset
+	vp.transparent_bg = true
+	position = Vector2.ZERO
+	bg.offset = Vector2.ZERO
+	DirAccess.make_dir_recursive_absolute("res://export_layers")
+	# 개별 레이어 — 하나만 켜고 캡처(투명 배경이라 안 그린 곳은 alpha 0)
+	for L in layers:
+		for L2 in layers:
+			if L2[1] != null:
+				L2[1].visible = false
+		if L[1] != null:
+			L[1].visible = true
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var img := vp.get_texture().get_image()
+		img.save_png("res://export_layers/%s.png" % L[0])
+		print("[LAYER] %s  %s%s" % [L[0], img.get_size(), ("" if L[1] != null else "  (이 스테이지엔 없음 → 빈 투명)")])
+	# 합본(전 레이어 표시)
+	for L in layers:
+		if L[1] != null:
+			L[1].visible = true
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var comp := vp.get_texture().get_image()
+	comp.save_png("res://export_layers/0_composite.png")
+	# 복원
+	vp.transparent_bg = prev_transp
+	position = prev_pos
+	bg.offset = prev_off
+	for n in hidden:
+		if is_instance_valid(n):
+			n.visible = hidden[n]
+	for n in lsaved:
+		if is_instance_valid(n):
+			n.visible = lsaved[n]
+	print("[LAYER] ✅ 저장 완료 → ", ProjectSettings.globalize_path("res://export_layers"), "  (합본 0_composite.png 포함, 사이즈 ", comp.get_size(), ")")
+
+
 func _on_wave_for_timing(current: int, _total: int) -> void:
 	if current == 1:                # 첫 웨이브 스폰 = 측정 시작(인트로 등은 이미 끝난 뒤)
 		_battle_time = 0.0
