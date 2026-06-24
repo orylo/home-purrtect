@@ -5,6 +5,16 @@ extends Control
 var _toast: Label
 var _toast_t := 0.0
 var _coin_box   # 좌상단 코인 숫자 칸(_CoinBox) — 개발 도구에서 즉시 갱신용
+var _dev_btn: Button   # DEV 도구 버튼(- 키로 숨김 토글, 스샷용)
+
+
+## - 키: DEV 도구 버튼 숨김/표시 토글. _input이라 코치마크 딤(STOP)이 떠 있어도 키는 받음. DEV 전용.
+func _input(event: InputEvent) -> void:
+	if not GameState.is_dev():
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_MINUS:
+		if is_instance_valid(_dev_btn):
+			_dev_btn.visible = not _dev_btn.visible
 
 
 func _ready() -> void:
@@ -139,9 +149,9 @@ func _build() -> void:
 
 	# (보유 코인 표시는 좌상단 코인 칸으로 이동)
 
-	# DEV 도구 — 개발자 루트 홈에서만
+	# DEV 도구 — 개발자 루트 홈에서만 (- 키로 숨김 토글: 스샷용. 코치마크 떠 있어도 됨)
 	if GameState.is_dev() and GameState.mode == "dev":
-		_btn("DEV 도구", Vector2(E, E + 200.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
+		_dev_btn = _btn("DEV 도구", Vector2(E, E + 200.0), Vector2(132, 44), "cheese", Design.FS_BODY, _show_dev_panel)
 
 	# 코치마크: 해금됐는데 아직 안 본 버튼 1개(진행 순서대로 자연 안내)
 	for cid in ["prep", "pearl", "max", "skill", "dove"]:
@@ -658,13 +668,14 @@ class _Tail extends Control:
 
 
 # --- helpers ---
-func _btn(label: String, pos: Vector2, sz: Vector2, kind: String, fs: int, fn: Callable) -> void:
+func _btn(label: String, pos: Vector2, sz: Vector2, kind: String, fs: int, fn: Callable) -> Button:
 	var b := Design.button(label, kind, fs)
 	b.position = pos
 	b.custom_minimum_size = sz
 	b.size = sz
 	b.pressed.connect(fn)
 	add_child(b)
+	return b
 
 
 func _commafy(n: int) -> String:
