@@ -14,11 +14,10 @@ config/name="Home Purrtect"
 config/description="고양이 치즈가 집을 지키는 횡스크롤 액션 디펜스 (1막 개발 빌드)"
 run/main_scene="res://scenes/start.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://assets/ui/icon.png"
 boot_splash/bg_color=Color(0.886, 0.886, 0.875, 1)
+boot_splash/stretch_mode=0
 boot_splash/image="res://assets/ui/splash.png"
-boot_splash/fullsize=false
-boot_splash/use_filter=true
+config/icon="res://assets/ui/icon.png"
 
 [autoload]
 
@@ -45,11 +44,6 @@ window/handheld/orientation="sensor_landscape"
 
 theme/custom_font="res://assets/fonts/SBAggro-Medium.ttf"
 theme/custom_theme="res://assets/ui/caldera_theme.tres"
-
-[internationalization]
-
-locale/translations=PackedStringArray("res://assets/i18n/ui.en.translation", "res://assets/i18n/ui.ko.translation")
-locale/fallback="ko"
 
 [input]
 
@@ -117,6 +111,11 @@ skill_4={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":80,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://assets/i18n/ui.en.translation", "res://assets/i18n/ui.ko.translation")
+locale/fallback="ko"
 
 [rendering]
 

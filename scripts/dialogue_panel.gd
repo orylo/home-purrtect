@@ -85,11 +85,12 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 		port.add_child(face)
 		tx = 16.0 + port_sz + 24.0
 
-	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 18))
+	# 이름 = 크림 상단(테두리선 ~24px 아래). 본문과 한 묶음으로 위쪽 헤더.
+	var name_lbl := _mk_label(30, CHEESE_DEEP, Vector2(tx, 34))
 	box.add_child(name_lbl)
-	# 본문 칸 = 이름 아래(56) ~ 힌트 위(BOX_H-46) 사이 body. 그 안에서 세로 가운데.
-	var text_top := 56.0
-	var text_h := BOX_H - text_top - 46.0
+	# 본문 칸 = 이름 아래(72) ~ 하단 테두리 위 사이 body. 그 안에서 세로 가운데.
+	var text_top := 72.0
+	var text_h := BOX_H - text_top - 36.0
 	var text_lbl := _mk_label(36, INK, Vector2(tx, text_top))   # 본문 36(쿠키런급 큰 글씨)
 	text_lbl.add_theme_font_override("font", FONT_DIALOGUE)     # 대사 본문 = 서울알림체 Bold(700)
 	text_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -98,11 +99,13 @@ static func build(parent: Node, vp: Vector2, portrait: Texture2D = null) -> Dict
 	box.add_child(text_lbl)
 	var choices := HBoxContainer.new()
 	choices.add_theme_constant_override("separation", 16)
-	choices.position = Vector2(tx, 156)
+	choices.position = Vector2(tx, 170)
 	choices.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(choices)
-	# 힌트 = 코너 장식(우하단 ~150px) 피해 왼쪽으로. 본문 칸 하단.
-	var hint := _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 340.0, BOX_H - 42.0))
-	hint.text = "▶ 탭하여 계속"
+	# 힌트 = 우하단. 코너 플로리시(NinePatch 코너 150px)·하단 테두리선 피해 안쪽으로 우측정렬.
+	var hint_txt := "▶ 탭하여 계속"
+	var hint_w: float = FONT.get_string_size(hint_txt, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
+	var hint := _mk_label(18, CHEESE_DEEP, Vector2(box.size.x - 162.0 - hint_w, BOX_H - 46.0))
+	hint.text = hint_txt
 	box.add_child(hint)
 	return {"box": box, "face": face, "name_lbl": name_lbl, "text_lbl": text_lbl, "hint_lbl": hint, "choices": choices}
