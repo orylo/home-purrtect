@@ -31,6 +31,7 @@ Design="*res://scripts/style.gd"
 Sfx="*res://scripts/sfx.gd"
 Music="*res://scripts/music.gd"
 VoiceBlip="*res://scripts/voice_blip.gd"
+Screenshot="*res://scripts/screenshot.gd"
 
 [display]
 

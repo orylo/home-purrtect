@@ -32,33 +32,14 @@ var _timing: bool = false
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not GameState.is_dev():
 		return
+	# [ 전체화면 캡처는 전역 오토로드(Screenshot)가 어디서든 처리. 여기선 전투·DEV 전용 키만.
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_BRACKETRIGHT:
 			_export_layers()                 # ] = 배경 7레이어 + 합본(캐릭터·HUD 없이)
-		elif event.keycode == KEY_BRACKETLEFT:
-			_capture_full()                  # [ = 보이는 화면 그대로(HUD·캐릭터 포함, [버그]버튼 제외) 전체 캡처
 		elif event.keycode == KEY_MINUS:
 			var dbg0 := get_node_or_null("DebugOverlay")   # - = [버그] 버튼/패널 껐다켰다
 			if dbg0 != null:
 				dbg0.visible = not dbg0.visible
-
-
-## [DEV] [ 키 - 현재 화면을 보이는 그대로(HUD·캐릭터 포함) 1장 캡처. [버그] 버튼은 잠깐 숨겨 제외.
-func _capture_full() -> void:
-	var dbg := get_node_or_null("DebugOverlay")
-	var dbg_was: bool = dbg.visible if dbg != null else false
-	if dbg != null:
-		dbg.visible = false                  # [버그] 버튼/패널은 캡처에서 빼기
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var img := get_viewport().get_texture().get_image()
-	if dbg != null:
-		dbg.visible = dbg_was                # 복원
-	DirAccess.make_dir_recursive_absolute("res://screenshots")
-	var ts := Time.get_datetime_string_from_system().replace(":", "-").replace("T", "_")
-	var p := "res://screenshots/shot_%s.png" % ts
-	img.save_png(p)
-	print("[SHOT] 전체화면 저장 → ", ProjectSettings.globalize_path(p), "  ", img.get_size())
 
 
 func _export_layers() -> void:
