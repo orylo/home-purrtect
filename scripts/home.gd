@@ -120,7 +120,7 @@ func _build() -> void:
 	# 좌하단: 전투 준비(해금 1-3)
 	if GameState.cleared_stages.has(3):
 		var ppr := _icon_btn(ICON_PREP, bg_x0, bg_sc, MOCK["prep"], func(): get_tree().change_scene_to_file("res://scenes/select.tscn"))
-		coach.append({"id": "prep", "rect": ppr, "text": "여기서 직업을 갈아입을 수 있어요. 보안관으로 바꿔보세요!"})
+		coach.append({"id": "prep", "rect": ppr, "text": "획득한 장비를 착용할 수 있어요\n'견습 보안관' 장비를 착용해보세요!"})
 		if GameState.cleared_stages.has(13):
 			coach.append({"id": "dove", "rect": ppr, "text": "맥스에게 호루라기를 사서 동료를 장착하면, 전투 중 불러낼 수 있어요!"})
 
