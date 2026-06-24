@@ -33,10 +33,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not GameState.is_dev():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F9:
-			_export_layers()                 # 배경 7레이어 + 합본(캐릭터·HUD 없이)
+		if event.keycode == KEY_BRACKETRIGHT:
+			_export_layers()                 # ] = 배경 7레이어 + 합본(캐릭터·HUD 없이)
 		elif event.keycode == KEY_BRACKETLEFT:
-			_capture_full()                  # 보이는 화면 그대로(HUD·캐릭터 포함) 전체 캡처
+			_capture_full()                  # [ = 보이는 화면 그대로(HUD·캐릭터 포함) 전체 캡처
 
 
 ## [DEV] [ 키 - 현재 화면을 보이는 그대로(HUD·캐릭터 포함) 1장 캡처.
