@@ -32,8 +32,23 @@ var _timing: bool = false
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not GameState.is_dev():
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F9:
-		_export_layers()
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F9:
+			_export_layers()                 # 배경 7레이어 + 합본(캐릭터·HUD 없이)
+		elif event.keycode == KEY_BRACKETLEFT:
+			_capture_full()                  # 보이는 화면 그대로(HUD·캐릭터 포함) 전체 캡처
+
+
+## [DEV] [ 키 - 현재 화면을 보이는 그대로(HUD·캐릭터 포함) 1장 캡처.
+func _capture_full() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var img := get_viewport().get_texture().get_image()
+	DirAccess.make_dir_recursive_absolute("res://screenshots")
+	var ts := Time.get_datetime_string_from_system().replace(":", "-").replace("T", "_")
+	var p := "res://screenshots/shot_%s.png" % ts
+	img.save_png(p)
+	print("[SHOT] 전체화면 저장 → ", ProjectSettings.globalize_path(p), "  ", img.get_size())
 
 
 func _export_layers() -> void:
